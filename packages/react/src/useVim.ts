@@ -196,6 +196,7 @@ export function useVim(options: UseVimOptions): UseVimReturn {
 
       // State that is always synced from VimContext
       setCursor(newCtx.cursor);
+      setMode(newCtx.mode);
       setStatusMessage(newCtx.statusMessage);
       setVisualAnchor(newCtx.visualAnchor);
       setCommandLine(
