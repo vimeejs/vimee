@@ -9,3 +9,6 @@ export type {
   VimAction,
   UndoEntry,
 } from "./types";
+
+// Buffer
+export { TextBuffer } from "./buffer";
