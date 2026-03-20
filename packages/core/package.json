@@ -1,0 +1,38 @@
+{
+  "name": "@vimee/core",
+  "version": "0.0.0",
+  "description": "A headless vim engine for the web",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "vim",
+    "editor",
+    "vim-engine",
+    "headless",
+    "text-editor",
+    "modal-editing"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/konojunya/vimee.git",
+    "directory": "packages/core"
+  }
+}
