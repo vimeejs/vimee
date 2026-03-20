@@ -1,0 +1,339 @@
+/**
+ * insert-mode.test.ts
+ *
+ * Tests for insert mode.
+ * Verifies behavior of character input, Backspace, Delete, Enter, Tab, and Escape.
+ */
+
+import { describe, it, expect } from "vitest";
+import type { VimContext, VimAction, CursorPosition } from "../types";
+import { processInsertMode } from "../insert-mode";
+import { TextBuffer } from "../buffer";
+
+// =====================
+// Helper functions
+// =====================
+
+/** Create a VimContext in insert mode for testing */
+function createInsertContext(
+  cursor: CursorPosition,
+  overrides?: Partial<VimContext>,
+): VimContext {
+  return {
+    mode: "insert",
+    phase: "idle",
+    count: 0,
+    operator: null,
+    cursor,
+    visualAnchor: null,
+    register: "",
+    registers: {},
+    selectedRegister: null,
+    commandBuffer: "",
+    commandType: null,
+    lastSearch: "",
+    searchDirection: "forward",
+    charCommand: null,
+    lastCharSearch: null,
+    textObjectModifier: null,
+    statusMessage: "-- INSERT --",
+    indentStyle: "space",
+    indentWidth: 2,
+    lastChange: [],
+    pendingChange: [],
+    blockInsert: null,
+    marks: {},
+    macroRecording: null,
+    macros: {},
+    lastMacro: null,
+    viewportTopLine: 0,
+    viewportHeight: 24,
+    ...overrides,
+  };
+}
+
+/** Process multiple keys in sequence and return the final state */
+function pressKeys(
+  keys: string[],
+  ctx: VimContext,
+  buffer: TextBuffer,
+): { ctx: VimContext; allActions: VimAction[] } {
+  let current = ctx;
+  const allActions: VimAction[] = [];
+  for (const key of keys) {
+    const result = processInsertMode(key, current, buffer, false);
+    current = result.newCtx;
+    allActions.push(...result.actions);
+  }
+  return { ctx: current, allActions };
+}
+
+// =====================
+// Tests
+// =====================
+
+describe("Insert mode", () => {
+  // ---------------------------------------------------
+  // Character input
+  // ---------------------------------------------------
+  describe("Character input", () => {
+    it("inserts a single character", () => {
+      const buffer = new TextBuffer("hllo");
+      const ctx = createInsertContext({ line: 0, col: 1 });
+      const { ctx: result } = pressKeys(["e"], ctx, buffer);
+      expect(buffer.getContent()).toBe("hello");
+      expect(result.cursor.col).toBe(2);
+    });
+
+    it("inserts multiple characters consecutively", () => {
+      const buffer = new TextBuffer("");
+      const ctx = createInsertContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(
+        ["h", "e", "l", "l", "o"],
+        ctx,
+        buffer,
+      );
+      expect(buffer.getContent()).toBe("hello");
+      expect(result.cursor.col).toBe(5);
+    });
+
+    it("inserts a character in the middle of a line", () => {
+      const buffer = new TextBuffer("helo");
+      const ctx = createInsertContext({ line: 0, col: 2 });
+      const { ctx: result } = pressKeys(["l"], ctx, buffer);
+      expect(buffer.getContent()).toBe("hello");
+      expect(result.cursor.col).toBe(3);
+    });
+
+    it("inserts a character at the end of a line", () => {
+      const buffer = new TextBuffer("hell");
+      const ctx = createInsertContext({ line: 0, col: 4 });
+      const { ctx: result } = pressKeys(["o"], ctx, buffer);
+      expect(buffer.getContent()).toBe("hello");
+      expect(result.cursor.col).toBe(5);
+    });
+
+    it("inserts a character on an empty line", () => {
+      const buffer = new TextBuffer("");
+      const ctx = createInsertContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["a"], ctx, buffer);
+      expect(buffer.getContent()).toBe("a");
+      expect(result.cursor.col).toBe(1);
+    });
+
+    it("can insert special characters (e.g. spaces)", () => {
+      const buffer = new TextBuffer("helloworld");
+      const ctx = createInsertContext({ line: 0, col: 5 });
+      const { ctx: result } = pressKeys([" "], ctx, buffer);
+      expect(buffer.getContent()).toBe("hello world");
+      expect(result.cursor.col).toBe(6);
+    });
+  });
+
+  // ---------------------------------------------------
+  // Backspace
+  // ---------------------------------------------------
+  describe("Backspace", () => {
+    it("deletes one character in the middle of a line", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 3 });
+      const { ctx: result } = pressKeys(["Backspace"], ctx, buffer);
+      expect(buffer.getContent()).toBe("helo");
+      expect(result.cursor.col).toBe(2);
+    });
+
+    it("joins with the previous line when pressing Backspace at the beginning of a line", () => {
+      const buffer = new TextBuffer("hello\nworld");
+      const ctx = createInsertContext({ line: 1, col: 0 });
+      const { ctx: result } = pressKeys(["Backspace"], ctx, buffer);
+      expect(buffer.getContent()).toBe("helloworld");
+      expect(result.cursor).toEqual({ line: 0, col: 5 });
+    });
+
+    it("does nothing when pressing Backspace at the beginning of the file (line 0, col 0)", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["Backspace"], ctx, buffer);
+      expect(buffer.getContent()).toBe("hello");
+      expect(result.cursor).toEqual({ line: 0, col: 0 });
+    });
+
+    it("deletes multiple characters with consecutive Backspaces", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 5 });
+      const { ctx: result } = pressKeys(
+        ["Backspace", "Backspace", "Backspace"],
+        ctx,
+        buffer,
+      );
+      expect(buffer.getContent()).toBe("he");
+      expect(result.cursor.col).toBe(2);
+    });
+
+    it("joins with the previous line when pressing Backspace at the beginning of an empty line", () => {
+      const buffer = new TextBuffer("hello\n");
+      const ctx = createInsertContext({ line: 1, col: 0 });
+      const { ctx: result } = pressKeys(["Backspace"], ctx, buffer);
+      expect(buffer.getContent()).toBe("hello");
+      expect(result.cursor).toEqual({ line: 0, col: 5 });
+    });
+  });
+
+  // ---------------------------------------------------
+  // Delete
+  // ---------------------------------------------------
+  describe("Delete", () => {
+    it("deletes one character in the middle of a line", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 2 });
+      const { ctx: result } = pressKeys(["Delete"], ctx, buffer);
+      expect(buffer.getContent()).toBe("helo");
+      expect(result.cursor.col).toBe(2);
+    });
+
+    it("joins with the next line when pressing Delete at the end of a line", () => {
+      const buffer = new TextBuffer("hello\nworld");
+      const ctx = createInsertContext({ line: 0, col: 5 });
+      const { ctx: result } = pressKeys(["Delete"], ctx, buffer);
+      expect(buffer.getContent()).toBe("helloworld");
+      expect(result.cursor).toEqual({ line: 0, col: 5 });
+    });
+
+    it("does nothing when pressing Delete at the end of the last line", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 5 });
+      const { ctx: result } = pressKeys(["Delete"], ctx, buffer);
+      expect(buffer.getContent()).toBe("hello");
+      expect(result.cursor.col).toBe(5);
+    });
+
+    it("joins with the next line when pressing Delete on an empty line", () => {
+      const buffer = new TextBuffer("\nhello");
+      const ctx = createInsertContext({ line: 0, col: 0 });
+      pressKeys(["Delete"], ctx, buffer);
+      expect(buffer.getContent()).toBe("hello");
+    });
+  });
+
+  // ---------------------------------------------------
+  // Enter (line split)
+  // ---------------------------------------------------
+  describe("Enter (line split)", () => {
+    it("splits the line when pressing Enter in the middle of a line", () => {
+      const buffer = new TextBuffer("helloworld");
+      const ctx = createInsertContext({ line: 0, col: 5 });
+      const { ctx: result } = pressKeys(["Enter"], ctx, buffer);
+      expect(buffer.getContent()).toBe("hello\nworld");
+      expect(result.cursor).toEqual({ line: 1, col: 0 });
+    });
+
+    it("inserts an empty line above when pressing Enter at the beginning of a line", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["Enter"], ctx, buffer);
+      expect(buffer.getContent()).toBe("\nhello");
+      expect(result.cursor).toEqual({ line: 1, col: 0 });
+    });
+
+    it("inserts an empty line below when pressing Enter at the end of a line", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 5 });
+      const { ctx: result } = pressKeys(["Enter"], ctx, buffer);
+      expect(buffer.getContent()).toBe("hello\n");
+      expect(result.cursor).toEqual({ line: 1, col: 0 });
+    });
+
+    it("inserts multiple lines with consecutive Enters", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 5 });
+      const { ctx: result } = pressKeys(
+        ["Enter", "Enter"],
+        ctx,
+        buffer,
+      );
+      expect(buffer.getContent()).toBe("hello\n\n");
+      expect(result.cursor).toEqual({ line: 2, col: 0 });
+    });
+  });
+
+  // ---------------------------------------------------
+  // Tab (indentation)
+  // ---------------------------------------------------
+  describe("Tab (indentation)", () => {
+    it("inserts two spaces with Tab", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["Tab"], ctx, buffer);
+      expect(buffer.getContent()).toBe("  hello");
+      expect(result.cursor.col).toBe(2);
+    });
+
+    it("inserts spaces when pressing Tab in the middle of a line", () => {
+      const buffer = new TextBuffer("helloworld");
+      const ctx = createInsertContext({ line: 0, col: 5 });
+      const { ctx: result } = pressKeys(["Tab"], ctx, buffer);
+      expect(buffer.getContent()).toBe("hello  world");
+      expect(result.cursor.col).toBe(7);
+    });
+  });
+
+  // ---------------------------------------------------
+  // Escape (return to normal mode)
+  // ---------------------------------------------------
+  describe("Escape (return to normal mode)", () => {
+    it("returns to normal mode with Escape", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 3 });
+      const { ctx: result } = pressKeys(["Escape"], ctx, buffer);
+      expect(result.mode).toBe("normal");
+    });
+
+    it("moves cursor one position left on Escape (Vim behavior)", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 3 });
+      const { ctx: result } = pressKeys(["Escape"], ctx, buffer);
+      expect(result.cursor.col).toBe(2);
+    });
+
+    it("keeps cursor at column 0 when pressing Escape at column 0", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["Escape"], ctx, buffer);
+      expect(result.cursor.col).toBe(0);
+    });
+
+    it("clears status message after Escape", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 3 });
+      const { ctx: result } = pressKeys(["Escape"], ctx, buffer);
+      expect(result.statusMessage).toBe("");
+    });
+  });
+
+  // ---------------------------------------------------
+  // Ctrl key (ignored in insert mode)
+  // ---------------------------------------------------
+  describe("Ctrl key (ignored in insert mode)", () => {
+    it("Ctrl+key is ignored", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 2 });
+      const result = processInsertMode("a", ctx, buffer, true);
+      expect(buffer.getContent()).toBe("hello");
+      expect(result.newCtx.cursor.col).toBe(2);
+    });
+  });
+
+  // ---------------------------------------------------
+  // Other special keys
+  // ---------------------------------------------------
+  describe("Other special keys", () => {
+    it("special keys like arrow keys are ignored", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 2 });
+      const { ctx: result } = pressKeys(["ArrowLeft"], ctx, buffer);
+      // ArrowLeft is ignored because its length > 1
+      expect(buffer.getContent()).toBe("hello");
+      expect(result.cursor.col).toBe(2);
+    });
+  });
+});
