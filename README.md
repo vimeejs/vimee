@@ -1,16 +1,12 @@
 <div align="center">
 
-<img src=".github/icon.svg" width="120" alt="vimee" />
+<img src=".github/vimee.svg" width="120" alt="vimee" />
 
 # vimee
 
 **A headless vim engine for the web**
 
 [![CI](https://github.com/vimeejs/vimee/workflows/CI/badge.svg)](https://github.com/vimeejs/vimee/actions/workflows/ci.yaml)
-[![npm @vimee/core](https://img.shields.io/npm/v/@vimee/core?label=%40vimee%2Fcore)](https://www.npmjs.com/package/@vimee/core)
-[![npm @vimee/react](https://img.shields.io/npm/v/@vimee/react?label=%40vimee%2Freact)](https://www.npmjs.com/package/@vimee/react)
-[![npm @vimee/plugin-textarea](https://img.shields.io/npm/v/@vimee/plugin-textarea?label=%40vimee%2Fplugin-textarea)](https://www.npmjs.com/package/@vimee/plugin-textarea)
-[![npm @vimee/shiki-editor](https://img.shields.io/npm/v/@vimee/shiki-editor?label=%40vimee%2Fshiki-editor)](https://www.npmjs.com/package/@vimee/shiki-editor)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 </div>
@@ -21,12 +17,12 @@ vimee is a **framework-agnostic, pure-function Vim engine** that you can plug in
 
 ## Packages
 
-| Package | Description | Version |
-|---------|-------------|---------|
-| [`@vimee/core`](./packages/core) | Headless vim engine with pure function API | [![npm](https://img.shields.io/npm/v/@vimee/core)](https://www.npmjs.com/package/@vimee/core) |
-| [`@vimee/react`](./packages/react) | React `useVim` hook | [![npm](https://img.shields.io/npm/v/@vimee/react)](https://www.npmjs.com/package/@vimee/react) |
-| [`@vimee/plugin-textarea`](./packages/plugin-textarea) | Attach vim to any textarea | [![npm](https://img.shields.io/npm/v/@vimee/plugin-textarea)](https://www.npmjs.com/package/@vimee/plugin-textarea) |
-| [`@vimee/shiki-editor`](./packages/shiki-editor) | Vim editor component with Shiki syntax highlighting | [![npm](https://img.shields.io/npm/v/@vimee/shiki-editor)](https://www.npmjs.com/package/@vimee/shiki-editor) |
+| Package                                                | Description                                         | Version                                                                                                             |
+| ------------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| [`@vimee/core`](./packages/core)                       | Headless vim engine with pure function API          | [![npm](https://img.shields.io/npm/v/@vimee/core)](https://www.npmjs.com/package/@vimee/core)                       |
+| [`@vimee/react`](./packages/react)                     | React `useVim` hook                                 | [![npm](https://img.shields.io/npm/v/@vimee/react)](https://www.npmjs.com/package/@vimee/react)                     |
+| [`@vimee/plugin-textarea`](./packages/plugin-textarea) | Attach vim to any textarea                          | [![npm](https://img.shields.io/npm/v/@vimee/plugin-textarea)](https://www.npmjs.com/package/@vimee/plugin-textarea) |
+| [`@vimee/shiki-editor`](./packages/shiki-editor)       | Vim editor component with Shiki syntax highlighting | [![npm](https://img.shields.io/npm/v/@vimee/shiki-editor)](https://www.npmjs.com/package/@vimee/shiki-editor)       |
 
 ## Quick Start
 
@@ -79,7 +75,9 @@ function Editor() {
     <div tabIndex={0} onKeyDown={handleKeyDown}>
       <div>Mode: {mode}</div>
       <pre>{content}</pre>
-      <div>Cursor: {cursor.line}:{cursor.col}</div>
+      <div>
+        Cursor: {cursor.line}:{cursor.col}
+      </div>
     </div>
   );
 }
@@ -92,7 +90,11 @@ npm install @vimee/core
 ```
 
 ```ts
-import { TextBuffer, createInitialContext, processKeystroke } from "@vimee/core";
+import {
+  TextBuffer,
+  createInitialContext,
+  processKeystroke,
+} from "@vimee/core";
 
 const buffer = new TextBuffer("Hello, world!");
 let ctx = createInitialContext({ line: 0, col: 0 });
