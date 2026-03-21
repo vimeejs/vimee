@@ -1,0 +1,57 @@
+{
+  "name": "@vimee/shiki-editor",
+  "version": "0.0.0",
+  "description": "A vim-powered code editor component with Shiki syntax highlighting",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "vim",
+    "editor",
+    "shiki",
+    "syntax-highlighting",
+    "code-editor",
+    "react"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/konojunya/vimee.git",
+    "directory": "packages/shiki-editor"
+  },
+  "peerDependencies": {
+    "@vimee/core": "workspace:*",
+    "@vimee/react": "workspace:*",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0",
+    "shiki": ">=1.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@vimee/core": "workspace:*",
+    "@vimee/react": "workspace:*",
+    "happy-dom": "^18.0.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "shiki": "^3.0.0"
+  }
+}

@@ -1,0 +1,173 @@
+/**
+ * @vimee/shiki-editor styles
+ *
+ * All classes use the `sv-` prefix
+ * to avoid conflicts with external CSS.
+ *
+ * CSS variables:
+ * --sv-line-height: Line height (default: 1.5)
+ * --sv-font-family: Font
+ * --sv-font-size: Font size
+ * --sv-cursor-color: Cursor color
+ * --sv-selection-bg: Selection background color
+ * --sv-gutter-color: Line number text color
+ * --sv-gutter-bg: Line number background color
+ * --sv-statusline-bg: Status line background color
+ * --sv-statusline-fg: Status line text color
+ */
+
+/* =====================
+   Editor container
+   ===================== */
+.sv-container {
+  position: relative;
+  overflow: hidden;
+  font-family: var(--sv-font-family, "Menlo", "Monaco", "Courier New", monospace);
+  font-size: var(--sv-font-size, 14px);
+  line-height: var(--sv-line-height, 1.5);
+  border-radius: 4px;
+  outline: none;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Focus state (can be enabled via --sv-focus-color) */
+.sv-container:focus {
+  outline: 2px solid var(--sv-focus-color, transparent);
+  outline-offset: -2px;
+}
+
+/* =====================
+   Code area
+   ===================== */
+.sv-code-area {
+  position: relative;
+  overflow: auto;
+  padding: 8px 0;
+  min-height: 100px;
+  flex: 1;
+  tab-size: var(--sv-tab-size, 4);
+  -moz-tab-size: var(--sv-tab-size, 4);
+}
+
+/* =====================
+   Line
+   ===================== */
+.sv-line {
+  display: flex;
+  white-space: pre;
+}
+
+/* Line number */
+.sv-line-number {
+  display: inline-block;
+  text-align: right;
+  padding-right: 1ch;
+  color: var(--sv-gutter-color, #858585);
+  background-color: var(--sv-gutter-bg, transparent);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* Line content */
+.sv-line-content {
+  flex: 1;
+}
+
+/* =====================
+   Token
+   ===================== */
+.sv-token {
+  /* Color received from Shiki is set via inline style */
+}
+
+/* Selected token */
+.sv-selected {
+  background-color: var(--sv-selection-bg, rgba(100, 150, 255, 0.3));
+}
+
+/* Search match highlight */
+.sv-search-match {
+  background-color: var(--sv-search-match-bg, rgba(255, 200, 50, 0.35));
+  border-radius: 2px;
+}
+
+/* =====================
+   Cursor
+   ===================== */
+.sv-cursor {
+  position: absolute;
+  top: calc(var(--cursor-line) * 1lh + 8px);
+  left: calc(var(--cursor-col) * 1ch);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Block cursor (normal mode) */
+.sv-cursor-block {
+  width: 1ch;
+  height: 1lh;
+  background-color: var(--sv-cursor-color, rgba(255, 255, 255, 0.6));
+  animation: sv-blink 1s step-start infinite;
+}
+
+/* Line cursor (insert mode) */
+.sv-cursor-line {
+  width: 2px;
+  height: 1lh;
+  background-color: var(--sv-cursor-color, rgba(255, 255, 255, 0.8));
+  animation: sv-blink 1s step-start infinite;
+}
+
+/* Cursor blink */
+@keyframes sv-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* =====================
+   Status line
+   ===================== */
+.sv-statusline {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 8px;
+  font-size: 12px;
+  background-color: var(--sv-statusline-bg, #252526);
+  color: var(--sv-statusline-fg, #cccccc);
+  user-select: none;
+}
+
+.sv-statusline-left {
+  display: flex;
+  gap: 8px;
+}
+
+.sv-statusline-right {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mode indicator */
+.sv-mode-indicator {
+  font-weight: bold;
+}
+
+.sv-mode-insert {
+  color: #98c379;
+}
+
+.sv-mode-visual,
+.sv-mode-visual-line,
+.sv-mode-visual-block {
+  color: #c678dd;
+}
+
+/* Command line input */
+.sv-command-input {
+  font-family: inherit;
+}
+
+.sv-command-cursor {
+  animation: sv-blink 1s step-start infinite;
+}
