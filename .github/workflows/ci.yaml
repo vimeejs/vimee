@@ -76,6 +76,29 @@ jobs:
         with:
           config: packages/react/.octocov.yml
 
+  test-plugin-textarea:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build dependencies
+        run: bun run --filter @vimee/core build
+
+      - name: Test with coverage
+        run: bun run --filter @vimee/plugin-textarea test:coverage
+        working-directory: .
+
+      - uses: k1LoW/octocov-action@v1
+        with:
+          config: packages/plugin-textarea/.octocov.yml
+
   test-shiki-editor:
     runs-on: ubuntu-latest
     steps:
