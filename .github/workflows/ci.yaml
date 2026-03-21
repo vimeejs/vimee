@@ -8,23 +8,20 @@ on:
 
 permissions:
   contents: read
-  actions: write # workspace-dist artifact（tar 1 本で packages/*/dist の階層を保持）
+  actions: read
   pull-requests: write
 
 jobs:
-  lint:
+  ci:
     runs-on: ubuntu-latest
     steps:
-      - &checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-      - &setup-bun
-        uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.2.17
 
-      - &cache
-        name: cache
+      - name: cache
         uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
@@ -32,20 +29,11 @@ jobs:
           restore-keys: |
             bun-${{ runner.os }}-
 
-      - &install
-        name: Install dependencies
+      - name: Install dependencies
         run: bun install --frozen-lockfile
 
       - name: Lint
         run: bun run lint
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - *checkout
-      - *setup-bun
-      - *cache
-      - *install
 
       - name: Build
         run: bun run build
@@ -53,53 +41,30 @@ jobs:
       - name: Type check
         run: bun run typecheck
 
-      - name: Pack workspace dist
-        run: |
-          find packages -maxdepth 2 -type d -name dist -print | LC_ALL=C sort > dist-list.txt
-          test -s dist-list.txt
-          tar czf workspace-dist.tar.gz -T dist-list.txt
-
-      - name: Upload workspace dist
-        uses: actions/upload-artifact@v4
-        with:
-          name: workspace-dist
-          path: workspace-dist.tar.gz
-
-  test-coverage:
-    name: test-coverage (${{ matrix.package }})
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - package: '@vimee/core'
-            octocov: packages/core/.octocov.yml
-          - package: '@vimee/react'
-            octocov: packages/react/.octocov.yml
-          - package: '@vimee/plugin-textarea'
-            octocov: packages/plugin-textarea/.octocov.yml
-          - package: '@vimee/shiki-editor'
-            octocov: packages/shiki-editor/.octocov.yml
-    steps:
-      - *checkout
-      - *setup-bun
-      - *cache
-      - *install
-
-      - name: Download workspace dist
-        uses: actions/download-artifact@v4
-        with:
-          name: workspace-dist
-          path: .
-
-      - name: Unpack workspace dist
-        run: tar xzf workspace-dist.tar.gz
-
-      - name: Test with coverage
-        run: bun run --filter ${{ matrix.package }} test:coverage
-        working-directory: .
+      - name: Test with coverage (@vimee/core)
+        run: bun run --filter @vimee/core test:coverage
 
       - uses: k1LoW/octocov-action@v1
         with:
-          config: ${{ matrix.octocov }}
+          config: packages/core/.octocov.yml
+
+      - name: Test with coverage (@vimee/react)
+        run: bun run --filter @vimee/react test:coverage
+
+      - uses: k1LoW/octocov-action@v1
+        with:
+          config: packages/react/.octocov.yml
+
+      - name: Test with coverage (@vimee/plugin-textarea)
+        run: bun run --filter @vimee/plugin-textarea test:coverage
+
+      - uses: k1LoW/octocov-action@v1
+        with:
+          config: packages/plugin-textarea/.octocov.yml
+
+      - name: Test with coverage (@vimee/shiki-editor)
+        run: bun run --filter @vimee/shiki-editor test:coverage
+
+      - uses: k1LoW/octocov-action@v1
+        with:
+          config: packages/shiki-editor/.octocov.yml
