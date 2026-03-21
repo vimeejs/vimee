@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: read
-  actions: read
+  actions: write # upload-artifact / download-artifact
   pull-requests: write
 
 jobs:
@@ -50,16 +50,18 @@ jobs:
       - name: Build
         run: bun run build
 
-  typecheck:
-    runs-on: ubuntu-latest
-    steps:
-      - *checkout
-      - *setup-bun
-      - *cache
-      - *install
-
       - name: Type check
         run: bun run typecheck
+
+      - name: Upload workspace dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-dist
+          path: |
+            packages/core/dist
+            packages/react/dist
+            packages/plugin-textarea/dist
+            packages/shiki-editor/dist
 
   test-coverage:
     name: test-coverage (${{ matrix.package }})
@@ -82,6 +84,12 @@ jobs:
       - *setup-bun
       - *cache
       - *install
+
+      - name: Download workspace dist
+        uses: actions/download-artifact@v4
+        with:
+          name: workspace-dist
+          path: .
 
       - name: Test with coverage
         run: bun run --filter ${{ matrix.package }} test:coverage
