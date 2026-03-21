@@ -1,6 +1,6 @@
 {
   "name": "@vimee/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A headless vim engine for the web",
   "type": "module",
   "main": "./dist/index.cjs",
