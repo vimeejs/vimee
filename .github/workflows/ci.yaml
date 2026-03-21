@@ -12,112 +12,92 @@ permissions:
   pull-requests: write
 
 jobs:
-  lint:
+  deps:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - &checkout
+        uses: actions/checkout@v6
 
-      - uses: oven-sh/setup-bun@v2
+      - &setup-bun
+        uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.17
+
+      - &cache
+        name: cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/bun
+          key: bun-${{ runner.os }}
+          restore-keys: |
+            bun-${{ runner.os }}-
 
       - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
+
+  lint:
+    needs: deps
+    runs-on: ubuntu-latest
+    steps:
+      - *checkout
+      - *setup-bun
+      - *cache
 
       - name: Lint
         run: bun run lint
 
+  build:
+    needs: deps
+    runs-on: ubuntu-latest
+    steps:
+      - *checkout
+      - *setup-bun
+      - *cache
+
       - name: Build
         run: bun run build
+
+  typecheck:
+    needs: deps
+    runs-on: ubuntu-latest
+    steps:
+      - *checkout
+      - *setup-bun
+      - *cache
 
       - name: Type check
         run: bun run typecheck
 
-  test-core:
+  test-coverage:
+    name: test-coverage (${{ matrix.package }})
+    needs:
+      - deps
+      - build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: '@vimee/core'
+            octocov: packages/core/.octocov.yml
+          - package: '@vimee/react'
+            octocov: packages/react/.octocov.yml
+          - package: '@vimee/plugin-textarea'
+            octocov: packages/plugin-textarea/.octocov.yml
+          - package: '@vimee/shiki-editor'
+            octocov: packages/shiki-editor/.octocov.yml
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - *checkout
+      - *setup-bun
+      - *cache
 
       - name: Test with coverage
-        run: bun run --filter @vimee/core test:coverage
+        run: bun run --filter ${{ matrix.package }} test:coverage
         working-directory: .
 
       - uses: k1LoW/octocov-action@v1
         with:
-          config: packages/core/.octocov.yml
-
-  test-react:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build dependencies
-        run: bun run --filter @vimee/core build
-
-      - name: Test with coverage
-        run: bun run --filter @vimee/react test:coverage
-        working-directory: .
-
-      - uses: k1LoW/octocov-action@v1
-        with:
-          config: packages/react/.octocov.yml
-
-  test-plugin-textarea:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build dependencies
-        run: bun run --filter @vimee/core build
-
-      - name: Test with coverage
-        run: bun run --filter @vimee/plugin-textarea test:coverage
-        working-directory: .
-
-      - uses: k1LoW/octocov-action@v1
-        with:
-          config: packages/plugin-textarea/.octocov.yml
-
-  test-shiki-editor:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build dependencies
-        run: bun run --filter @vimee/core build && bun run --filter @vimee/react build
-
-      - name: Test with coverage
-        run: bun run --filter @vimee/shiki-editor test:coverage
-        working-directory: .
-
-      - uses: k1LoW/octocov-action@v1
-        with:
-          config: packages/shiki-editor/.octocov.yml
+          config: ${{ matrix.octocov }}
