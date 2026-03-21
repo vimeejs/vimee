@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src=".github/icon.svg" width="120" alt="vimee" />
+
 # vimee
 
 **A headless vim engine for the web**

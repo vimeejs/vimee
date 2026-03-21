@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500">
+
+  <!-- gills left -->
+  <ellipse cx="122" cy="168" rx="11" ry="36" fill="#A78BFA" transform="rotate(-28,122,168)"/>
+  <ellipse cx="105" cy="145" rx="9"  ry="28" fill="#c4b5fd" transform="rotate(-45,105,145)"/>
+  <ellipse cx="140" cy="138" rx="9"  ry="26" fill="#c4b5fd" transform="rotate(-12,140,138)"/>
+
+  <!-- gills right -->
+  <ellipse cx="378" cy="168" rx="11" ry="36" fill="#A78BFA" transform="rotate(28,378,168)"/>
+  <ellipse cx="395" cy="145" rx="9"  ry="28" fill="#c4b5fd" transform="rotate(45,395,145)"/>
+  <ellipse cx="360" cy="138" rx="9"  ry="26" fill="#c4b5fd" transform="rotate(12,360,138)"/>
+
+  <!-- body -->
+  <rect x="148" y="110" width="204" height="210" rx="44" fill="#c0caf5"/>
+
+  <!-- belly highlight -->
+  <rect x="178" y="136" width="144" height="152" rx="30" fill="white" opacity="0.2"/>
+
+  <!-- eyes -->
+  <circle cx="210" cy="185" r="22" fill="#1a1b26"/>
+  <circle cx="290" cy="185" r="22" fill="#1a1b26"/>
+  <!-- eye shine -->
+  <circle cx="220" cy="176" r="8" fill="white" opacity="0.95"/>
+  <circle cx="300" cy="176" r="8" fill="white" opacity="0.95"/>
+  <circle cx="225" cy="172" r="4"  fill="white"/>
+  <circle cx="305" cy="172" r="4"  fill="white"/>
+
+
+  <!-- mouth -->
+  <text font-family="ui-monospace,monospace" font-size="44" font-weight="700" text-anchor="middle" x="250" y="266" fill="#1a1b26" opacity="0.4">~</text>
+
+  <!-- front legs -->
+  <rect x="150" y="282" width="34" height="40" rx="17" fill="#b4befe"/>
+  <ellipse cx="155" cy="328" rx="10" ry="8" fill="#a5b4fc"/>
+  <ellipse cx="168" cy="332" rx="9"  ry="7" fill="#a5b4fc"/>
+  <ellipse cx="180" cy="330" rx="8"  ry="6" fill="#a5b4fc"/>
+
+  <rect x="316" y="282" width="34" height="40" rx="17" fill="#b4befe"/>
+  <ellipse cx="320" cy="328" rx="10" ry="8" fill="#a5b4fc"/>
+  <ellipse cx="333" cy="332" rx="9"  ry="7" fill="#a5b4fc"/>
+  <ellipse cx="345" cy="330" rx="8"  ry="6" fill="#a5b4fc"/>
+
+  <!-- tail -->
+  <ellipse cx="250" cy="348" rx="52" ry="28" fill="#b4befe"/>
+  <ellipse cx="250" cy="368" rx="36" ry="18" fill="#a5b4fc"/>
+
+
+</svg>
