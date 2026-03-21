@@ -4,7 +4,7 @@
 
 **A headless vim engine for the web**
 
-[![CI](https://github.com/konojunya/vimee/actions/workflows/ci.yaml/badge.svg)](https://github.com/konojunya/vimee/actions/workflows/ci.yaml)
+[![CI](https://github.com/konojunya/vimee/workflows/CI/badge.svg)](https://github.com/konojunya/vimee/actions/workflows/ci.yaml)
 [![npm @vimee/core](https://img.shields.io/npm/v/@vimee/core?label=%40vimee%2Fcore)](https://www.npmjs.com/package/@vimee/core)
 [![npm @vimee/react](https://img.shields.io/npm/v/@vimee/react?label=%40vimee%2Freact)](https://www.npmjs.com/package/@vimee/react)
 [![npm @vimee/shiki-editor](https://img.shields.io/npm/v/@vimee/shiki-editor?label=%40vimee%2Fshiki-editor)](https://www.npmjs.com/package/@vimee/shiki-editor)
