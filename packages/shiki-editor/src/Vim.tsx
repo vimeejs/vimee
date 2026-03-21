@@ -1,5 +1,5 @@
 /**
- * VimEditor.tsx
+ * Vim.tsx
  *
  * Main React component for the @vimee/shiki-editor package.
  * Provides a syntax-highlighted code editor with Vim keybindings.
@@ -8,7 +8,7 @@
  *
  * @example
  * ```tsx
- * import { VimEditor } from '@vimee/shiki-editor'
+ * import { Vim } from '@vimee/shiki-editor'
  * import '@vimee/shiki-editor/styles.css'
  * import { createHighlighter } from 'shiki'
  *
@@ -17,7 +17,7 @@
  *   langs: ['typescript'],
  * })
  *
- * <VimEditor
+ * <Vim
  *   content={code}
  *   highlighter={highlighter}
  *   lang="typescript"
@@ -35,8 +35,8 @@ import { Line } from "./components/Line";
 import { Cursor } from "./components/Cursor";
 import { StatusLine } from "./components/StatusLine";
 
-/** Props for the VimEditor component */
-export interface VimEditorProps {
+/** Props for the Vim component */
+export interface VimProps {
   /** Initial content */
   content: string;
   /** Shiki Highlighter instance */
@@ -74,12 +74,12 @@ export interface VimEditorProps {
 }
 
 /**
- * VimEditor component.
+ * Vim component.
  *
  * Displays code using Shiki's highlighter
  * with Vim keybindings for editing.
  */
-export function VimEditor({
+export function Vim({
   content: initialContent,
   highlighter,
   lang,
@@ -97,7 +97,7 @@ export function VimEditor({
   indentStyle,
   indentWidth,
   showLineNumbers = true,
-}: VimEditorProps) {
+}: VimProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const codeAreaRef = useRef<HTMLDivElement>(null);
 

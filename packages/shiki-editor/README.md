@@ -18,7 +18,7 @@ npm install @vimee/core @vimee/react @vimee/shiki-editor shiki
 ## Quick Start
 
 ```tsx
-import { VimEditor } from "@vimee/shiki-editor";
+import { Vim } from "@vimee/shiki-editor";
 import "@vimee/shiki-editor/styles.css";
 import { createHighlighter } from "shiki";
 
@@ -30,7 +30,7 @@ const highlighter = await createHighlighter({
 
 function App() {
   return (
-    <VimEditor
+    <Vim
       content={`const greeting = "Hello, vim!";`}
       highlighter={highlighter}
       lang="typescript"
@@ -42,7 +42,7 @@ function App() {
 }
 ```
 
-## `<VimEditor />` Props
+## `<Vim />` Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -94,7 +94,7 @@ All sub-components are exported for building custom editor layouts:
 
 ```tsx
 import {
-  VimEditor,
+  Vim,
   Cursor,
   Line,
   StatusLine,

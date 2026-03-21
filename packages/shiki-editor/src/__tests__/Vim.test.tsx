@@ -3,14 +3,14 @@
  */
 
 /**
- * VimEditor.test.tsx
+ * Vim.test.tsx
  *
- * Tests for the VimEditor component and helper functions.
+ * Tests for the Vim component and helper functions.
  * Uses a mock Shiki highlighter to avoid loading real grammars.
  */
 
 import { describe, it, expect } from "vitest";
-import { computeSelectionInfo } from "../VimEditor";
+import { computeSelectionInfo } from "../Vim";
 import { splitTokenBySelection } from "../components/Line";
 import type { ThemedToken } from "shiki";
 

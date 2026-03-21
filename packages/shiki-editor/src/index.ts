@@ -5,7 +5,7 @@
  *
  * @example
  * ```tsx
- * import { VimEditor } from '@vimee/shiki-editor'
+ * import { Vim } from '@vimee/shiki-editor'
  * import '@vimee/shiki-editor/styles.css'
  * import { createHighlighter } from 'shiki'
  *
@@ -14,7 +14,7 @@
  *   langs: ['typescript'],
  * })
  *
- * <VimEditor
+ * <Vim
  *   content={code}
  *   highlighter={highlighter}
  *   lang="typescript"
@@ -24,11 +24,11 @@
  */
 
 // Main component
-export { VimEditor } from "./VimEditor";
-export type { VimEditorProps } from "./VimEditor";
+export { Vim } from "./Vim";
+export type { VimProps } from "./Vim";
 
 // Helper exports for custom implementations
-export { computeSelectionInfo } from "./VimEditor";
+export { computeSelectionInfo } from "./Vim";
 
 // Hooks
 export { useShikiTokens } from "./hooks/useShikiTokens";
