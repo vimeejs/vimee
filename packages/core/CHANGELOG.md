@@ -1,5 +1,13 @@
 # @vimee/core
 
+## 0.1.1
+
+### Patch Changes
+
+- [`0528e08`](https://github.com/vimeejs/vimee/commit/0528e08fe68721abe80ca57640e4402dc44320a5) Thanks [@konojunya](https://github.com/konojunya)! - ### Bug Fixes
+
+  - fix: update repo URLs to vimeejs/vimee and add missing metadata
+
 ## 0.1.0
 
 ### Minor Changes

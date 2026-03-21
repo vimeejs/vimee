@@ -1,6 +1,6 @@
 {
   "name": "@vimee/shiki-editor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A vim-powered code editor component with Shiki syntax highlighting",
   "type": "module",
   "main": "./dist/index.cjs",
