@@ -67,3 +67,23 @@ jobs:
       - uses: k1LoW/octocov-action@v1
         with:
           config: packages/react/.octocov.yml
+
+  test-shiki-editor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Test with coverage
+        run: bun run --filter @vimee/shiki-editor test:coverage
+        working-directory: .
+
+      - uses: k1LoW/octocov-action@v1
+        with:
+          config: packages/shiki-editor/.octocov.yml

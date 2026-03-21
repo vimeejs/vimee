@@ -7,6 +7,7 @@
 [![CI](https://github.com/konojunya/vimee/actions/workflows/ci.yaml/badge.svg)](https://github.com/konojunya/vimee/actions/workflows/ci.yaml)
 [![npm @vimee/core](https://img.shields.io/npm/v/@vimee/core?label=%40vimee%2Fcore)](https://www.npmjs.com/package/@vimee/core)
 [![npm @vimee/react](https://img.shields.io/npm/v/@vimee/react?label=%40vimee%2Freact)](https://www.npmjs.com/package/@vimee/react)
+[![npm @vimee/shiki-editor](https://img.shields.io/npm/v/@vimee/shiki-editor?label=%40vimee%2Fshiki-editor)](https://www.npmjs.com/package/@vimee/shiki-editor)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 </div>
@@ -21,6 +22,7 @@ vimee is a **framework-agnostic, pure-function Vim engine** that you can plug in
 |---------|-------------|---------|
 | [`@vimee/core`](./packages/core) | Headless vim engine with pure function API | [![npm](https://img.shields.io/npm/v/@vimee/core)](https://www.npmjs.com/package/@vimee/core) |
 | [`@vimee/react`](./packages/react) | React `useVim` hook | [![npm](https://img.shields.io/npm/v/@vimee/react)](https://www.npmjs.com/package/@vimee/react) |
+| [`@vimee/shiki-editor`](./packages/shiki-editor) | Vim editor component with Shiki syntax highlighting | [![npm](https://img.shields.io/npm/v/@vimee/shiki-editor)](https://www.npmjs.com/package/@vimee/shiki-editor) |
 
 ## Quick Start
 
@@ -123,8 +125,9 @@ bun run changeset:gen major    # force major bump
 
 ```
 packages/
-├── core/       # @vimee/core — headless vim engine
-└── react/      # @vimee/react — React useVim hook
+├── core/          # @vimee/core — headless vim engine
+├── react/         # @vimee/react — React useVim hook
+└── shiki-editor/  # @vimee/shiki-editor — editor component with Shiki
 ```
 
 Built with [Bun](https://bun.sh) workspaces, [tsup](https://tsup.egoist.dev/) for bundling, and [Vitest](https://vitest.dev/) for testing.
