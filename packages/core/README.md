@@ -5,7 +5,7 @@
 [![npm](https://img.shields.io/npm/v/@vimee/core)](https://www.npmjs.com/package/@vimee/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Zero dependencies. Framework agnostic. Fully tested with 729 tests and 97%+ line coverage.
+Zero dependencies. Framework agnostic. Thoroughly tested.
 
 ## Install
 

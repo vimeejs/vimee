@@ -105,7 +105,7 @@ bun install
 # Build all packages
 bun run build
 
-# Run all tests (775 tests)
+# Run all tests
 bun run test
 
 # Type check
