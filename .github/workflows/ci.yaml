@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: read
-  actions: write # upload-artifact / download-artifact
+  actions: write # workspace-dist artifact（tar 1 本で packages/*/dist の階層を保持）
   pull-requests: write
 
 jobs:
@@ -53,15 +53,17 @@ jobs:
       - name: Type check
         run: bun run typecheck
 
+      - name: Pack workspace dist
+        run: |
+          find packages -maxdepth 2 -type d -name dist -print | LC_ALL=C sort > dist-list.txt
+          test -s dist-list.txt
+          tar czf workspace-dist.tar.gz -T dist-list.txt
+
       - name: Upload workspace dist
         uses: actions/upload-artifact@v4
         with:
           name: workspace-dist
-          path: |
-            packages/core/dist
-            packages/react/dist
-            packages/plugin-textarea/dist
-            packages/shiki-editor/dist
+          path: workspace-dist.tar.gz
 
   test-coverage:
     name: test-coverage (${{ matrix.package }})
@@ -90,6 +92,9 @@ jobs:
         with:
           name: workspace-dist
           path: .
+
+      - name: Unpack workspace dist
+        run: tar xzf workspace-dist.tar.gz
 
       - name: Test with coverage
         run: bun run --filter ${{ matrix.package }} test:coverage
