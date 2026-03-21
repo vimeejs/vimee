@@ -1,5 +1,11 @@
 # @vimee/shiki-editor
 
+## 0.1.2
+
+### Patch Changes
+
+- Fix peerDependencies using workspace:\* which caused install failures for npm consumers
+
 ## 0.1.1
 
 ### Patch Changes
