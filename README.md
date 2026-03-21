@@ -1,2 +1,134 @@
+<div align="center">
+
 # vimee
-A headless vim engine for the web
+
+**A headless vim engine for the web**
+
+[![CI](https://github.com/konojunya/vimee/actions/workflows/ci.yaml/badge.svg)](https://github.com/konojunya/vimee/actions/workflows/ci.yaml)
+[![npm @vimee/core](https://img.shields.io/npm/v/@vimee/core?label=%40vimee%2Fcore)](https://www.npmjs.com/package/@vimee/core)
+[![npm @vimee/react](https://img.shields.io/npm/v/@vimee/react?label=%40vimee%2Freact)](https://www.npmjs.com/package/@vimee/react)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+</div>
+
+---
+
+vimee is a **framework-agnostic, pure-function Vim engine** that you can plug into any editor UI. The core engine has **zero runtime dependencies** — it takes a keystroke and returns state transitions. Framework bindings (React, etc.) are thin wrappers that turn those transitions into reactive state.
+
+## Packages
+
+| Package | Description | Version |
+|---------|-------------|---------|
+| [`@vimee/core`](./packages/core) | Headless vim engine with pure function API | [![npm](https://img.shields.io/npm/v/@vimee/core)](https://www.npmjs.com/package/@vimee/core) |
+| [`@vimee/react`](./packages/react) | React `useVim` hook | [![npm](https://img.shields.io/npm/v/@vimee/react)](https://www.npmjs.com/package/@vimee/react) |
+
+## Quick Start
+
+### With React
+
+```bash
+npm install @vimee/core @vimee/react
+```
+
+```tsx
+import { useVim } from "@vimee/react";
+
+function Editor() {
+  const { content, cursor, mode, handleKeyDown } = useVim({
+    content: "Hello, vim!",
+    onChange: (c) => console.log("Changed:", c),
+  });
+
+  return (
+    <div tabIndex={0} onKeyDown={handleKeyDown}>
+      <div>Mode: {mode}</div>
+      <pre>{content}</pre>
+      <div>Cursor: {cursor.line}:{cursor.col}</div>
+    </div>
+  );
+}
+```
+
+### Core engine only
+
+```bash
+npm install @vimee/core
+```
+
+```ts
+import { TextBuffer, createInitialContext, processKeystroke } from "@vimee/core";
+
+const buffer = new TextBuffer("Hello, world!");
+let ctx = createInitialContext({ line: 0, col: 0 });
+
+// Type "dd" to delete a line
+const r1 = processKeystroke("d", ctx, buffer);
+ctx = r1.newCtx;
+const r2 = processKeystroke("d", ctx, buffer);
+ctx = r2.newCtx;
+
+console.log(buffer.getContent()); // ""
+```
+
+## Architecture
+
+```
+processKeystroke(key, ctx, buffer, ctrlKey?, readOnly?)
+  → { newCtx: VimContext, actions: VimAction[] }
+```
+
+The engine is a **pure function** — no side effects, no DOM, no framework dependency. All state transitions are explicit and testable. The `VimAction[]` array tells the UI layer what happened (cursor moved, content changed, mode switched, etc.).
+
+## Supported Vim Features
+
+- **Modes**: Normal, Insert, Visual, Visual-Line, Visual-Block, Command-Line
+- **Motions**: `h` `j` `k` `l` `w` `W` `b` `B` `e` `E` `0` `$` `^` `gg` `G` `f` `F` `t` `T` `;` `,` `H` `M` `L` `{` `}`
+- **Operators**: `d` `y` `c` `>` `<` with motions and text objects
+- **Text Objects**: `iw` `aw` `i"` `a"` `i'` `a'` `i(` `a(` `i[` `a[` `i{` `a{` `i<` `a<` `` i` `` `` a` ``
+- **Search**: `/pattern` `?pattern` `n` `N` `*` `#`
+- **Command-Line**: `:w` `:q` `:wq` `:{number}` `:set` `:s/pattern/replace/flags`
+- **Editing**: `x` `X` `r` `s` `S` `J` `o` `O` `~` `.` `u` `Ctrl-R`
+- **Registers**: `"a`–`"z` named registers, unnamed register
+- **Macros**: `q{a-z}` record, `@{a-z}` playback, `@@` repeat last
+- **Marks**: `m{a-z}` set mark, `'{a-z}` jump to mark
+- **Counts**: `3dd`, `5j`, `2dw`, etc.
+- **Visual Block**: `Ctrl-V`, block `I`/`A` insert
+- **Scroll**: `Ctrl-U` `Ctrl-D` `Ctrl-B` `Ctrl-F`
+- **Indent**: `>>` `<<` with configurable style/width
+
+## Development
+
+```bash
+# Install
+bun install
+
+# Build all packages
+bun run build
+
+# Run all tests (775 tests)
+bun run test
+
+# Type check
+bun run typecheck
+
+# Lint
+bun run lint
+
+# Generate a changeset
+bun run changeset:gen          # auto-detect from commits
+bun run changeset:gen major    # force major bump
+```
+
+## Monorepo Structure
+
+```
+packages/
+├── core/       # @vimee/core — headless vim engine
+└── react/      # @vimee/react — React useVim hook
+```
+
+Built with [Bun](https://bun.sh) workspaces, [tsup](https://tsup.egoist.dev/) for bundling, and [Vitest](https://vitest.dev/) for testing.
+
+## License
+
+MIT
