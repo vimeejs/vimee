@@ -4,12 +4,12 @@
   "type": "module",
   "workspaces": ["packages/*"],
   "scripts": {
-    "build": "bun run --filter '*' build",
+    "build": "bun run --filter @vimee/core build && bun run --filter @vimee/react build && bun run --filter @vimee/shiki-editor build",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "bun run --filter '*' typecheck",
-    "lint": "oxlint packages/*/src",
-    "fmt": "oxfmt --write packages/*/src",
+    "lint": "bunx oxlint packages/*/src",
+    "fmt": "bunx oxfmt --write packages/*/src",
     "changeset": "changeset",
     "changeset:gen": "bash scripts/gen-changeset.sh",
     "release": "changeset publish"

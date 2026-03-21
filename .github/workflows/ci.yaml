@@ -60,6 +60,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Build dependencies
+        run: bun run --filter @vimee/core build
+
       - name: Test with coverage
         run: bun run --filter @vimee/react test:coverage
         working-directory: .
@@ -79,6 +82,9 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Build dependencies
+        run: bun run --filter @vimee/core build && bun run --filter @vimee/react build
 
       - name: Test with coverage
         run: bun run --filter @vimee/shiki-editor test:coverage
