@@ -1,4 +1,4 @@
-repository: konojunya/vimee/packages/core
+repository: vimeejs/vimee/packages/core
 coverage:
   paths:
     - coverage/lcov.info

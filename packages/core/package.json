@@ -1,6 +1,6 @@
 {
   "name": "@vimee/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A headless vim engine for the web",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -13,7 +13,9 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
@@ -32,7 +34,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/konojunya/vimee.git",
+    "url": "git+https://github.com/vimeejs/vimee.git",
     "directory": "packages/core"
   }
 }

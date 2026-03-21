@@ -6,7 +6,7 @@
 
 **A headless vim engine for the web**
 
-[![CI](https://github.com/konojunya/vimee/workflows/CI/badge.svg)](https://github.com/konojunya/vimee/actions/workflows/ci.yaml)
+[![CI](https://github.com/vimeejs/vimee/workflows/CI/badge.svg)](https://github.com/vimeejs/vimee/actions/workflows/ci.yaml)
 [![npm @vimee/core](https://img.shields.io/npm/v/@vimee/core?label=%40vimee%2Fcore)](https://www.npmjs.com/package/@vimee/core)
 [![npm @vimee/react](https://img.shields.io/npm/v/@vimee/react?label=%40vimee%2Freact)](https://www.npmjs.com/package/@vimee/react)
 [![npm @vimee/plugin-textarea](https://img.shields.io/npm/v/@vimee/plugin-textarea?label=%40vimee%2Fplugin-textarea)](https://www.npmjs.com/package/@vimee/plugin-textarea)

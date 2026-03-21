@@ -19,17 +19,25 @@ else
   RANGE_DISPLAY="$LATEST_TAG"
 fi
 
-# Detect which packages have changed
-if [ -z "$RANGE" ]; then
-  # No tags yet — consider all tracked files as changed
-  CHANGED_CORE=$(git ls-files -- packages/core/ | head -1)
-  CHANGED_REACT=$(git ls-files -- packages/react/ | head -1)
-else
-  CHANGED_CORE=$(git diff --name-only "$RANGE" -- packages/core/ 2>/dev/null | head -1)
-  CHANGED_REACT=$(git diff --name-only "$RANGE" -- packages/react/ 2>/dev/null | head -1)
-fi
+# Detect which packages have changed (dynamically scan packages/*)
+CHANGED_NAMES=""
+for pkg_dir in packages/*/; do
+  pkg_name=$(node -e "console.log(require('./${pkg_dir}package.json').name)" 2>/dev/null || continue)
+  if [ -z "$RANGE" ]; then
+    changed=$(git ls-files -- "$pkg_dir" | head -1)
+  else
+    changed=$(git diff --name-only "$RANGE" -- "$pkg_dir" 2>/dev/null | head -1)
+  fi
+  if [ -n "$changed" ]; then
+    if [ -n "$CHANGED_NAMES" ]; then
+      CHANGED_NAMES="${CHANGED_NAMES}"$'\n'"${pkg_name}"
+    else
+      CHANGED_NAMES="${pkg_name}"
+    fi
+  fi
+done
 
-if [ -z "$CHANGED_CORE" ] && [ -z "$CHANGED_REACT" ]; then
+if [ -z "$CHANGED_NAMES" ]; then
   echo "No package changes detected since ${RANGE_DISPLAY}."
   exit 0
 fi
@@ -57,8 +65,9 @@ fi
 
 # Build frontmatter with only changed packages
 FRONTMATTER="---"
-[ -n "$CHANGED_CORE" ]  && FRONTMATTER="${FRONTMATTER}"$'\n'"\"@vimee/core\": ${BUMP}"
-[ -n "$CHANGED_REACT" ] && FRONTMATTER="${FRONTMATTER}"$'\n'"\"@vimee/react\": ${BUMP}"
+while IFS= read -r pkg_name; do
+  FRONTMATTER="${FRONTMATTER}"$'\n'"\"${pkg_name}\": ${BUMP}"
+done <<< "$CHANGED_NAMES"
 FRONTMATTER="${FRONTMATTER}"$'\n'"---"
 
 # Build summary grouped by conventional commit type
@@ -86,7 +95,8 @@ printf '%s\n%s' "$FRONTMATTER" "$BODY" > "$CHANGESET_FILE"
 echo "Created ${CHANGESET_FILE} (${BUMP})"
 echo ""
 echo "Changed packages:"
-[ -n "$CHANGED_CORE" ]  && echo "  - @vimee/core"
-[ -n "$CHANGED_REACT" ] && echo "  - @vimee/react"
+while IFS= read -r pkg_name; do
+  echo "  - ${pkg_name}"
+done <<< "$CHANGED_NAMES"
 echo ""
 cat "$CHANGESET_FILE"

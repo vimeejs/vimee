@@ -1,6 +1,6 @@
 {
   "name": "@vimee/react",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "React hooks for the vimee headless vim engine",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -16,6 +16,19 @@
   "files": [
     "dist"
   ],
+  "keywords": [
+    "vim",
+    "react",
+    "hooks",
+    "editor",
+    "headless"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vimeejs/vimee.git",
+    "directory": "packages/react"
+  },
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",

@@ -1,6 +1,6 @@
 {
   "name": "@vimee/shiki-editor",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A vim-powered code editor component with Shiki syntax highlighting",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -35,7 +35,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/konojunya/vimee.git",
+    "url": "git+https://github.com/vimeejs/vimee.git",
     "directory": "packages/shiki-editor"
   },
   "peerDependencies": {

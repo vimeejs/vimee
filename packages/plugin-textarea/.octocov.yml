@@ -1,4 +1,4 @@
-repository: konojunya/vimee/packages/plugin-textarea
+repository: vimeejs/vimee/packages/plugin-textarea
 coverage:
   paths:
     - coverage/lcov.info

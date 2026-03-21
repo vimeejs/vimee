@@ -1,4 +1,4 @@
-repository: konojunya/vimee/packages/react
+repository: vimeejs/vimee/packages/react
 coverage:
   paths:
     - coverage/lcov.info

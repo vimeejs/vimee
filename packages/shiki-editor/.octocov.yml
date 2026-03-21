@@ -1,4 +1,4 @@
-repository: konojunya/vimee/packages/shiki-editor
+repository: vimeejs/vimee/packages/shiki-editor
 coverage:
   paths:
     - coverage/lcov.info
