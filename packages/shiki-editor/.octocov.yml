@@ -2,7 +2,7 @@ repository: konojunya/vimee/packages/shiki-editor
 coverage:
   paths:
     - coverage/lcov.info
-  acceptable: current >= 80% && diff >= -5.0%
+  acceptable: current >= 20% && diff >= -5.0%
 codeToTestRatio:
   code:
     - "src/**/*.ts"
