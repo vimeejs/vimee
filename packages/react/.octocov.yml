@@ -2,7 +2,7 @@ repository: konojunya/vimee/packages/react
 coverage:
   paths:
     - coverage/lcov.info
-  acceptable: current >= 80%
+  acceptable: current >= 80% && diff >= -5.0%
 codeToTestRatio:
   code:
     - "src/**/*.ts"
@@ -14,11 +14,15 @@ codeToTestRatio:
     - "src/**/*.test.ts"
     - "src/**/*.test.tsx"
 testExecutionTime:
-  acceptable: current < 1min
-comment:
-  enable: true
+  acceptable: current < 1min && diff < 1min
+report:
+  if: is_default_branch
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}
+diff:
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}
 summary:
   enable: true
-report:
-  datastores:
-    - artifact://default
+comment:
+  if: is_pull_request
