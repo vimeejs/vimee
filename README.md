@@ -28,7 +28,37 @@ vimee is a **framework-agnostic, pure-function Vim engine** that you can plug in
 
 ## Quick Start
 
-### With React
+### With Shiki Editor (recommended)
+
+```bash
+npm install @vimee/core @vimee/react @vimee/shiki-editor shiki
+```
+
+```tsx
+import { Vim } from "@vimee/shiki-editor";
+import "@vimee/shiki-editor/styles.css";
+import { createHighlighter } from "shiki";
+
+const highlighter = await createHighlighter({
+  themes: ["vitesse-dark"],
+  langs: ["typescript"],
+});
+
+function App() {
+  return (
+    <Vim
+      content={`const greeting = "Hello, vim!";`}
+      highlighter={highlighter}
+      lang="typescript"
+      theme="vitesse-dark"
+      onChange={(c) => console.log("Changed:", c)}
+      onSave={(c) => console.log("Saved:", c)}
+    />
+  );
+}
+```
+
+### With React (custom UI)
 
 ```bash
 npm install @vimee/core @vimee/react
