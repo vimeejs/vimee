@@ -2,9 +2,7 @@ repository: konojunya/vimee/packages/core
 coverage:
   paths:
     - coverage/lcov.info
-  acceptable:
-    current: ">= 80%"
-    diff: ">= -5.0%"
+  acceptable: current >= 80%
 codeToTestRatio:
   code:
     - "src/**/*.ts"
@@ -13,9 +11,7 @@ codeToTestRatio:
   test:
     - "src/**/*.test.ts"
 testExecutionTime:
-  acceptable:
-    current: "< 1min"
-    diff: "< 30sec"
+  acceptable: current < 1min
 comment:
   enable: true
 summary:

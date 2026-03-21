@@ -8,12 +8,11 @@
  * @vitest-environment happy-dom
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { useVim } from "../useVim";
-import type { UseVimReturn } from "../useVim";
 
 // =====================
 // Custom renderHook implementation
@@ -385,7 +384,7 @@ describe("useVim", () => {
 
       expect(onAction).toHaveBeenCalled();
       const actionTypes = onAction.mock.calls.map(
-        ([action]: [any]) => action.type,
+        ([action]: any[]) => action.type,
       );
       expect(actionTypes).toContain("content-change");
       unmount();
