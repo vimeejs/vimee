@@ -37,7 +37,7 @@
     "directory": "packages/plugin-textarea"
   },
   "peerDependencies": {
-    "@vimee/core": "workspace:*"
+    "@vimee/core": ">=0.1.0"
   },
   "devDependencies": {
     "@vimee/core": "workspace:*",
