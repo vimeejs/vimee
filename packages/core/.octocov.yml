@@ -1,0 +1,25 @@
+repository: konojunya/vimee/packages/core
+coverage:
+  paths:
+    - coverage/lcov.info
+  acceptable:
+    current: ">= 80%"
+    diff: ">= -5.0%"
+codeToTestRatio:
+  code:
+    - "src/**/*.ts"
+    - "!src/**/*.test.ts"
+    - "!src/index.ts"
+  test:
+    - "src/**/*.test.ts"
+testExecutionTime:
+  acceptable:
+    current: "< 1min"
+    diff: "< 30sec"
+comment:
+  enable: true
+summary:
+  enable: true
+report:
+  datastores:
+    - artifact://default

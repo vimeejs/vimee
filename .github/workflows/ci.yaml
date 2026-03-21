@@ -7,9 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  ci:
+  lint:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v6
 
@@ -26,8 +25,45 @@ jobs:
       - name: Type check
         run: bun run typecheck
 
-      - name: Test
-        run: bun run test
-
       - name: Build
         run: bun run build
+
+  test-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Test with coverage
+        run: bun run --filter @vimee/core test:coverage
+        working-directory: .
+
+      - uses: k1LoW/octocov-action@v1
+        with:
+          config: packages/core/.octocov.yml
+
+  test-react:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Test with coverage
+        run: bun run --filter @vimee/react test:coverage
+        working-directory: .
+
+      - uses: k1LoW/octocov-action@v1
+        with:
+          config: packages/react/.octocov.yml

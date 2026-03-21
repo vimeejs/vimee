@@ -6,13 +6,14 @@ on:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      id-token: write
 
     steps:
       - uses: actions/checkout@v6
@@ -31,9 +32,6 @@ jobs:
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
-
-      - name: Install latest npm
-        run: npm install -g npm@latest
 
       - name: Create Release PR or Publish
         id: changesets
