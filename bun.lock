@@ -35,8 +35,8 @@
       "version": "0.2.0",
       "devDependencies": {
         "@testing-library/react": "^16.0.0",
-        "@types/react": "^19.0.0",
-        "@types/react-dom": "^19.0.0",
+        "@types/react": "19.2.14",
+        "@types/react-dom": "19.2.3",
         "@vimee/core": "workspace:*",
         "happy-dom": "^20.0.0",
         "react": "^19.0.0",
@@ -51,7 +51,7 @@
       "name": "@vimee/shiki-editor",
       "version": "0.2.0",
       "devDependencies": {
-        "@types/react": "^19.0.0",
+        "@types/react": "19.2.14",
         "@vimee/core": "workspace:*",
         "@vimee/react": "workspace:*",
         "happy-dom": "^20.0.0",
