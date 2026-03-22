@@ -7,6 +7,7 @@
 **A headless vim engine for the web**
 
 [![CI](https://github.com/vimeejs/vimee/workflows/CI/badge.svg)](https://github.com/vimeejs/vimee/actions/workflows/ci.yaml)
+[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/vimeejs/vimee?utm_source=badge)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 </div>
