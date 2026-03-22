@@ -320,6 +320,39 @@ describe("Command-line mode", () => {
   });
 
   // ---------------------------------------------------
+  // Unknown command (E492)
+  // ---------------------------------------------------
+  describe("Unknown command (E492)", () => {
+    it("shows E492 error for unknown command", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
+      const { ctx: result, allActions } = pressKeys(
+        [..."aaa", "Enter"],
+        ctx,
+        buffer,
+      );
+      expect(result.mode).toBe("normal");
+      expect(result.statusMessage).toBe("E492: Not an editor command: aaa");
+      expect(result.statusError).toBe(true);
+      expect(allActions).toContainEqual({
+        type: "status-message",
+        message: "E492: Not an editor command: aaa",
+      });
+    });
+
+    it("clears error status on next command-line entry", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":", {
+        statusError: true,
+        statusMessage: "E492: Not an editor command: foo",
+      });
+      const { ctx: result } = pressKeys(["Escape"], ctx, buffer);
+      expect(result.statusError).toBe(false);
+      expect(result.statusMessage).toBe("");
+    });
+  });
+
+  // ---------------------------------------------------
   // Integration test: search from normal mode and return
   // ---------------------------------------------------
   describe("Integration tests", () => {

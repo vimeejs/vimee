@@ -63,6 +63,7 @@ function exitCommandLine(ctx: VimContext): KeystrokeResult {
       commandBuffer: "",
       commandType: null,
       statusMessage: "",
+      statusError: false,
     },
     actions: [{ type: "mode-change", mode: "normal" }],
   };
@@ -136,6 +137,7 @@ function executeExCommand(
             commandType: null,
             cursor: newCursor,
             statusMessage: "",
+            statusError: false,
           },
           actions: [
             { type: "mode-change", mode: "normal" },
@@ -143,7 +145,22 @@ function executeExCommand(
           ],
         };
       }
-      break;
+
+      // Unknown command
+      return {
+        newCtx: {
+          ...ctx,
+          mode: "normal",
+          commandBuffer: "",
+          commandType: null,
+          statusMessage: `E492: Not an editor command: ${cmd.trim()}`,
+          statusError: true,
+        },
+        actions: [
+          { type: "mode-change", mode: "normal" },
+          { type: "status-message", message: `E492: Not an editor command: ${cmd.trim()}` },
+        ],
+      };
     }
   }
 

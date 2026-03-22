@@ -68,6 +68,8 @@ export interface VimContext {
   /** Text object modifier: "i" (inner) or "a" (around) */
   textObjectModifier: "i" | "a" | null;
   statusMessage: string;
+  /** Whether the status message is an error */
+  statusError: boolean;
   indentStyle: "space" | "tab";
   indentWidth: number;
   /** Key sequence of the last completed change (for . repeat) */

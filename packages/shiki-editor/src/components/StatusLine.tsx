@@ -21,6 +21,8 @@ export interface StatusLineProps {
   cursor: CursorPosition;
   /** Status message (mode display or error messages) */
   statusMessage: string;
+  /** Whether the status message is an error */
+  statusError: boolean;
   /** Command line input (input after : or /) */
   commandLine: string;
   /** Total number of lines */
@@ -34,6 +36,7 @@ export function StatusLine({
   mode,
   cursor,
   statusMessage,
+  statusError,
   commandLine,
   totalLines,
 }: StatusLineProps) {
@@ -57,7 +60,7 @@ export function StatusLine({
     <div className="sv-statusline">
       <span className="sv-statusline-left">
         {statusMessage && (
-          <span className={`sv-mode-indicator sv-mode-${mode}`}>
+          <span className={statusError ? "sv-status-error" : `sv-mode-indicator sv-mode-${mode}`}>
             {statusMessage}
           </span>
         )}

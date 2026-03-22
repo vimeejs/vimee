@@ -313,6 +313,7 @@ export function Vim({
         mode={engine.mode}
         cursor={engine.cursor}
         statusMessage={engine.statusMessage}
+        statusError={engine.statusError}
         commandLine={engine.commandLine}
         totalLines={totalLines}
       />

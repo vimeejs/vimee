@@ -61,6 +61,7 @@ export function createInitialContext(
     lastMacro: null,
     blockInsert: null,
     statusMessage: "",
+    statusError: false,
     indentStyle: opts?.indentStyle ?? "space",
     indentWidth: opts?.indentWidth ?? 2,
     viewportTopLine: 0,

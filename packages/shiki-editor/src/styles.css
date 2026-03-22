@@ -164,6 +164,13 @@
   color: #c678dd;
 }
 
+/* Error message */
+.sv-status-error {
+  color: #ffffff;
+  background-color: #e06c75;
+  width: fit-content;
+}
+
 /* Command line input */
 .sv-command-input {
   font-family: inherit;

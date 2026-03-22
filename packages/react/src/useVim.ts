@@ -57,6 +57,8 @@ export interface UseVimReturn {
   mode: VimMode;
   /** Status bar message */
   statusMessage: string;
+  /** Whether the status message is an error */
+  statusError: boolean;
   /** Selection anchor for visual mode (null when not in visual) */
   visualAnchor: CursorPosition | null;
   /** Command-line display string (e.g. ":wq", "/pattern") */
@@ -139,6 +141,7 @@ export function useVim(options: UseVimOptions): UseVimReturn {
   );
   const [mode, setMode] = useState<VimMode>("normal");
   const [statusMessage, setStatusMessage] = useState("");
+  const [statusError, setStatusError] = useState(false);
   const [visualAnchor, setVisualAnchor] = useState<CursorPosition | null>(null);
   const [commandLine, setCommandLine] = useState("");
   const [vimOptions, setVimOptions] = useState<Record<string, boolean>>({});
@@ -198,6 +201,7 @@ export function useVim(options: UseVimOptions): UseVimReturn {
       setCursor(newCtx.cursor);
       setMode(newCtx.mode);
       setStatusMessage(newCtx.statusMessage);
+      setStatusError(newCtx.statusError);
       setVisualAnchor(newCtx.visualAnchor);
       setCommandLine(
         newCtx.commandType
@@ -285,6 +289,7 @@ export function useVim(options: UseVimOptions): UseVimReturn {
     cursor,
     mode,
     statusMessage,
+    statusError,
     visualAnchor,
     commandLine,
     options: vimOptions,
