@@ -20,6 +20,8 @@ import {
   motionTChar,
   motionTCharBack,
   motionMatchBracket,
+  motionParagraphForward,
+  motionParagraphBackward,
 } from "../motions";
 
 // Helper: create a TextBuffer from an array of lines
@@ -768,6 +770,84 @@ describe("motionMatchBracket: matching bracket motion (%)", () => {
     const b = buf(["([{hello}])"]);
     const result = motionMatchBracket(cur(0, 2), b, 0);
     expect(result.cursor).toEqual(cur(0, 8));
+  });
+});
+
+// ---------- Paragraph movement ({ / }) ----------
+
+describe("motionParagraphForward (})", () => {
+  it("moves to the next blank line from a non-blank line", () => {
+    const b = buf(["a", "b", "", "c", "d"]);
+    const result = motionParagraphForward(cur(0, 0), b, 1);
+    expect(result.cursor).toEqual(cur(2, 0));
+  });
+
+  it("moves past blank lines to the next paragraph boundary", () => {
+    const b = buf(["a", "b", "", "c", "d", "", "e"]);
+    const result = motionParagraphForward(cur(2, 0), b, 1);
+    expect(result.cursor).toEqual(cur(5, 0));
+  });
+
+  it("moves to EOF when no more blank lines", () => {
+    const b = buf(["a", "b", "", "c", "d"]);
+    const result = motionParagraphForward(cur(2, 0), b, 1);
+    expect(result.cursor).toEqual(cur(4, 0));
+  });
+
+  it("supports count", () => {
+    const b = buf(["a", "", "b", "", "c"]);
+    const result = motionParagraphForward(cur(0, 0), b, 2);
+    expect(result.cursor).toEqual(cur(3, 0));
+  });
+
+  it("stays at last line when already at EOF", () => {
+    const b = buf(["a", "b"]);
+    const result = motionParagraphForward(cur(1, 0), b, 1);
+    expect(result.cursor).toEqual(cur(1, 0));
+  });
+
+  it("returns linewise range", () => {
+    const b = buf(["a", "", "b"]);
+    const result = motionParagraphForward(cur(0, 0), b, 1);
+    expect(result.range.linewise).toBe(true);
+  });
+});
+
+describe("motionParagraphBackward ({)", () => {
+  it("moves to the previous blank line from a non-blank line", () => {
+    const b = buf(["a", "b", "", "c", "d"]);
+    const result = motionParagraphBackward(cur(4, 0), b, 1);
+    expect(result.cursor).toEqual(cur(2, 0));
+  });
+
+  it("moves past blank lines to the previous paragraph boundary", () => {
+    const b = buf(["a", "b", "", "c", "d", "", "e"]);
+    const result = motionParagraphBackward(cur(5, 0), b, 1);
+    expect(result.cursor).toEqual(cur(2, 0));
+  });
+
+  it("moves to BOF when no more blank lines", () => {
+    const b = buf(["a", "b", "", "c"]);
+    const result = motionParagraphBackward(cur(2, 0), b, 1);
+    expect(result.cursor).toEqual(cur(0, 0));
+  });
+
+  it("supports count", () => {
+    const b = buf(["a", "", "b", "", "c"]);
+    const result = motionParagraphBackward(cur(4, 0), b, 2);
+    expect(result.cursor).toEqual(cur(1, 0));
+  });
+
+  it("stays at first line when already at BOF", () => {
+    const b = buf(["a", "b"]);
+    const result = motionParagraphBackward(cur(0, 0), b, 1);
+    expect(result.cursor).toEqual(cur(0, 0));
+  });
+
+  it("returns linewise range", () => {
+    const b = buf(["a", "", "b"]);
+    const result = motionParagraphBackward(cur(2, 0), b, 1);
+    expect(result.range.linewise).toBe(true);
   });
 });
 

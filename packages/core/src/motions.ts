@@ -663,6 +663,67 @@ export function motionTCharBack(
 }
 
 /**
+ * } : Move forward to the next blank line (paragraph boundary)
+ */
+export function motionParagraphForward(
+  cursor: CursorPosition,
+  buffer: TextBuffer,
+  count: number,
+): MotionResult {
+  let line = cursor.line;
+  const lastLine = buffer.getLineCount() - 1;
+
+  for (let i = 0; i < count; i++) {
+    if (line >= lastLine) break;
+    // If on blank, skip blank lines first
+    while (line < lastLine && buffer.getLine(line).trim() === "") line++;
+    // Skip non-blank lines to reach the next blank line or EOF
+    while (line < lastLine && buffer.getLine(line).trim() !== "") line++;
+  }
+
+  const newCursor = { line, col: 0 };
+  return {
+    cursor: newCursor,
+    range: {
+      start: cursor,
+      end: newCursor,
+      linewise: true,
+      inclusive: false,
+    },
+  };
+}
+
+/**
+ * { : Move backward to the previous blank line (paragraph boundary)
+ */
+export function motionParagraphBackward(
+  cursor: CursorPosition,
+  buffer: TextBuffer,
+  count: number,
+): MotionResult {
+  let line = cursor.line;
+
+  for (let i = 0; i < count; i++) {
+    if (line <= 0) break;
+    // If on blank, skip blank lines first
+    while (line > 0 && buffer.getLine(line).trim() === "") line--;
+    // Skip non-blank lines to reach the previous blank line or BOF
+    while (line > 0 && buffer.getLine(line).trim() !== "") line--;
+  }
+
+  const newCursor = { line, col: 0 };
+  return {
+    cursor: newCursor,
+    range: {
+      start: newCursor,
+      end: cursor,
+      linewise: true,
+      inclusive: false,
+    },
+  };
+}
+
+/**
  * Match bracket motion (%)
  */
 export function motionMatchBracket(

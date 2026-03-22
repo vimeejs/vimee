@@ -27,6 +27,8 @@ import {
   motionDollar,
   motionG,
   motionMatchBracket,
+  motionParagraphForward,
+  motionParagraphBackward,
 } from "./motions";
 
 /**
@@ -117,6 +119,13 @@ export function resolveMotion(
         ctx?.viewportTopLine ?? 0,
         ctx?.viewportHeight ?? 50,
       );
+
+    // --- Paragraph movement ---
+    case "}":
+      return motionParagraphForward(cursor, buffer, count);
+
+    case "{":
+      return motionParagraphBackward(cursor, buffer, count);
 
     // --- Bracket matching ---
     case "%":
