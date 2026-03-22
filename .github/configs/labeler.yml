@@ -1,0 +1,45 @@
+C-core:
+  - changed-files:
+      - any-glob-to-any-file: packages/core/src/**
+
+C-react:
+  - changed-files:
+      - any-glob-to-any-file: packages/react/src/**
+
+C-plugin-textarea:
+  - changed-files:
+      - any-glob-to-any-file: packages/plugin-textarea/src/**
+
+C-shiki-editor:
+  - changed-files:
+      - any-glob-to-any-file: packages/shiki-editor/src/**
+
+C-testkit:
+  - changed-files:
+      - any-glob-to-any-file: packages/testkit/src/**
+
+A-test:
+  - changed-files:
+      - any-glob-to-any-file: packages/*/src/__tests__/**
+
+A-bench:
+  - changed-files:
+      - any-glob-to-any-file: packages/*/src/benchmarks/**
+
+A-ci:
+  - changed-files:
+      - any-glob-to-any-file: .github/workflows/**
+
+A-docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - "!CHANGELOG.md"
+          - "!packages/*/CHANGELOG.md"
+
+A-deps:
+  - changed-files:
+      - any-glob-to-any-file:
+          - package.json
+          - bun.lock
+          - renovate.json
