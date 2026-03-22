@@ -170,5 +170,9 @@
 }
 
 .sv-command-cursor {
-  animation: sv-blink 1s step-start infinite;
+  display: inline-block;
+  width: 1ch;
+  height: 1lh;
+  background-color: var(--sv-cursor-color, rgba(255, 255, 255, 0.6));
+  vertical-align: text-bottom;
 }

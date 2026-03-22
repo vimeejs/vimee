@@ -41,8 +41,10 @@ export function StatusLine({
     return (
       <div className="sv-statusline">
         <span className="sv-statusline-left">
-          <span className="sv-command-input">{commandLine}</span>
-          <span className="sv-command-cursor">▋</span>
+          <span className="sv-command-input">
+            {commandLine}
+            <span className="sv-command-cursor" />
+          </span>
         </span>
         <span className="sv-statusline-right">
           {formatCursorPosition(cursor, totalLines)}

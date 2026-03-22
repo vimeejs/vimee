@@ -64,8 +64,8 @@ export function Cursor({
       style={{
         ["--cursor-col" as string]: visualCol + gutterOffset,
         ["--cursor-line" as string]: position.line,
-        animation: blinking ? undefined : "none",
-        opacity: blinking ? undefined : 1,
+        animation: blinking && mode !== "command-line" ? undefined : "none",
+        opacity: mode === "command-line" ? 0 : blinking ? undefined : 1,
       }}
       aria-hidden="true"
     />
