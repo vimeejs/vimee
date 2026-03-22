@@ -7,12 +7,13 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { vim } from "@vimee/testkit";
 import type { VimContext, CursorPosition } from "../types";
 import { processKeystroke, createInitialContext } from "../vim-state";
 import { TextBuffer } from "../buffer";
 
 // =====================
-// Helper functions
+// Helper functions (kept for tests that need raw context overrides)
 // =====================
 
 /** Create a VimContext for testing */
@@ -49,47 +50,41 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Count prefix", () => {
     it("moves 3 lines down with 3j", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3\nline4\nline5");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["3", "j"], ctx, buffer);
-      expect(result.cursor).toEqual({ line: 3, col: 0 });
+      const v = vim("line1\nline2\nline3\nline4\nline5");
+      v.type("3j");
+      expect(v.cursor()).toEqual({ line: 3, col: 0 });
     });
 
     it("moves 5 lines up with 5k (clamped when not enough lines)", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createTestContext({ line: 2, col: 0 });
-      const { ctx: result } = pressKeys(["5", "k"], ctx, buffer);
-      expect(result.cursor.line).toBe(0);
+      const v = vim("line1\nline2\nline3", { cursor: [2, 0] });
+      v.type("5k");
+      expect(v.cursor().line).toBe(0);
     });
 
     it("moves 2 columns right with 2l", () => {
-      const buffer = new TextBuffer("abcdef");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["2", "l"], ctx, buffer);
-      expect(result.cursor.col).toBe(2);
+      const v = vim("abcdef");
+      v.type("2l");
+      expect(v.cursor().col).toBe(2);
     });
 
     it("moves 5 words forward with 5w", () => {
-      const buffer = new TextBuffer("one two three four five six seven");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["5", "w"], ctx, buffer);
+      const v = vim("one two three four five six seven");
+      v.type("5w");
       // 5w: one->two->three->four->five->six start
-      expect(result.cursor.col).toBe(24);
+      expect(v.cursor().col).toBe(24);
     });
 
     it("interprets count 0 as move to beginning of line (when no count entered)", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 5 });
-      const { ctx: result } = pressKeys(["0"], ctx, buffer);
-      expect(result.cursor.col).toBe(0);
+      const v = vim("hello world", { cursor: [0, 5] });
+      v.type("0");
+      expect(v.cursor().col).toBe(0);
     });
 
     it("correctly processes a two-digit count like 10j", () => {
       const lines = Array.from({ length: 20 }, (_, i) => `line${i}`).join("\n");
-      const buffer = new TextBuffer(lines);
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["1", "0", "j"], ctx, buffer);
-      expect(result.cursor.line).toBe(10);
+      const v = vim(lines);
+      v.type("10j");
+      expect(v.cursor().line).toBe(10);
     });
   });
 
@@ -98,56 +93,49 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Operator + motion", () => {
     it("deletes one word with dw", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["d", "w"], ctx, buffer);
-      expect(buffer.getContent()).toBe("world");
-      expect(result.cursor.col).toBe(0);
+      const v = vim("hello world");
+      v.type("dw");
+      expect(v.content()).toBe("world");
+      expect(v.cursor().col).toBe(0);
     });
 
     it("deletes to end of line with d$", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 5 });
-      const { ctx: result } = pressKeys(["d", "$"], ctx, buffer);
-      expect(buffer.getContent()).toBe("hello");
-      expect(result.cursor.col).toBe(4);
+      const v = vim("hello world", { cursor: [0, 5] });
+      v.type("d$");
+      expect(v.content()).toBe("hello");
+      expect(v.cursor().col).toBe(4);
     });
 
     it("deletes to beginning of line with d0", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 5 });
-      pressKeys(["d", "0"], ctx, buffer);
-      expect(buffer.getContent()).toBe(" world");
+      const v = vim("hello world", { cursor: [0, 5] });
+      v.type("d0");
+      expect(v.content()).toBe(" world");
     });
 
     it("deletes from cursor line to end of file with dG", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3\nline4");
-      const ctx = createTestContext({ line: 1, col: 0 });
-      pressKeys(["d", "G"], ctx, buffer);
-      expect(buffer.getContent()).toBe("line1");
+      const v = vim("line1\nline2\nline3\nline4", { cursor: [1, 0] });
+      v.type("dG");
+      expect(v.content()).toBe("line1");
     });
 
     it("deletes from cursor line to beginning of file with dgg", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3\nline4");
-      const ctx = createTestContext({ line: 2, col: 0 });
-      pressKeys(["d", "g", "g"], ctx, buffer);
-      expect(buffer.getContent()).toBe("line4");
+      const v = vim("line1\nline2\nline3\nline4", { cursor: [2, 0] });
+      v.type("dgg");
+      expect(v.content()).toBe("line4");
     });
 
     it("yanks one word with yw (buffer unchanged)", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["y", "w"], ctx, buffer);
-      expect(buffer.getContent()).toBe("hello world");
-      expect(result.register).toBe("hello ");
+      const v = vim("hello world");
+      v.type("yw");
+      expect(v.content()).toBe("hello world");
+      expect(v.register('"')).toBe("hello ");
     });
 
     it("changes one word and enters insert mode with cw", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["c", "w"], ctx, buffer);
-      expect(buffer.getContent()).toBe("world");
-      expect(result.mode).toBe("insert");
+      const v = vim("hello world");
+      v.type("cw");
+      expect(v.content()).toBe("world");
+      expect(v.mode()).toBe("insert");
     });
   });
 
@@ -156,30 +144,27 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Double operators (dd, yy, cc)", () => {
     it("deletes the current line with dd", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createTestContext({ line: 1, col: 0 });
-      const { ctx: result } = pressKeys(["d", "d"], ctx, buffer);
-      expect(buffer.getContent()).toBe("line1\nline3");
-      expect(result.register).toBe("line2\n");
-      expect(result.cursor.line).toBe(1);
+      const v = vim("line1\nline2\nline3", { cursor: [1, 0] });
+      v.type("dd");
+      expect(v.content()).toBe("line1\nline3");
+      expect(v.register('"')).toBe("line2\n");
+      expect(v.cursor().line).toBe(1);
     });
 
     it("yanks the current line with yy (buffer unchanged)", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createTestContext({ line: 1, col: 0 });
-      const { ctx: result } = pressKeys(["y", "y"], ctx, buffer);
-      expect(buffer.getContent()).toBe("line1\nline2\nline3");
-      expect(result.register).toBe("line2\n");
+      const v = vim("line1\nline2\nline3", { cursor: [1, 0] });
+      v.type("yy");
+      expect(v.content()).toBe("line1\nline2\nline3");
+      expect(v.register('"')).toBe("line2\n");
     });
 
     it("clears the current line and enters insert mode with cc", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createTestContext({ line: 1, col: 0 });
-      const { ctx: result } = pressKeys(["c", "c"], ctx, buffer);
-      expect(result.mode).toBe("insert");
-      expect(result.register).toBe("line2\n");
+      const v = vim("line1\nline2\nline3", { cursor: [1, 0] });
+      v.type("cc");
+      expect(v.mode()).toBe("insert");
+      expect(v.register('"')).toBe("line2\n");
       // cc deletes the line and inserts an empty line
-      expect(buffer.getLine(1)).toBe("");
+      expect(v.line(1)).toBe("");
     });
   });
 
@@ -188,76 +173,67 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Count + operator", () => {
     it("deletes 3 lines with 3dd", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3\nline4\nline5");
-      const ctx = createTestContext({ line: 1, col: 0 });
-      pressKeys(["3", "d", "d"], ctx, buffer);
-      expect(buffer.getContent()).toBe("line1\nline5");
+      const v = vim("line1\nline2\nline3\nline4\nline5", { cursor: [1, 0] });
+      v.type("3dd");
+      expect(v.content()).toBe("line1\nline5");
     });
 
     it("yanks 2 lines with 2yy", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3\nline4");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["2", "y", "y"], ctx, buffer);
-      expect(result.register).toBe("line1\nline2\n");
-      expect(buffer.getContent()).toBe("line1\nline2\nline3\nline4");
+      const v = vim("line1\nline2\nline3\nline4");
+      v.type("2yy");
+      expect(v.register('"')).toBe("line1\nline2\n");
+      expect(v.content()).toBe("line1\nline2\nline3\nline4");
     });
 
     it("clamps 2dd near the last line", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createTestContext({ line: 2, col: 0 });
-      pressKeys(["2", "d", "d"], ctx, buffer);
+      const v = vim("line1\nline2\nline3", { cursor: [2, 0] });
+      v.type("2dd");
       // Only 1 line from line 2, so only line3 is deleted
-      expect(buffer.getContent()).toBe("line1\nline2");
+      expect(v.content()).toBe("line1\nline2");
     });
 
     it("yanks 10 lines with 10yy", () => {
       const lines = Array.from({ length: 20 }, (_, i) => `line${i}`).join("\n");
-      const buffer = new TextBuffer(lines);
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["1", "0", "y", "y"], ctx, buffer);
+      const v = vim(lines);
+      v.type("10yy");
       const expected = Array.from({ length: 10 }, (_, i) => `line${i}`).join("\n") + "\n";
-      expect(result.register).toBe(expected);
-      expect(buffer.getContent()).toBe(lines);
+      expect(v.register('"')).toBe(expected);
+      expect(v.content()).toBe(lines);
     });
 
     it("deletes 10 lines with 10dd", () => {
       const lines = Array.from({ length: 20 }, (_, i) => `line${i}`).join("\n");
-      const buffer = new TextBuffer(lines);
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["1", "0", "d", "d"], ctx, buffer);
+      const v = vim(lines);
+      v.type("10dd");
       const expected = Array.from({ length: 10 }, (_, i) => `line${i + 10}`).join("\n");
-      expect(buffer.getContent()).toBe(expected);
+      expect(v.content()).toBe(expected);
     });
 
     it("moves to line 52 with 52G", () => {
       const lines = Array.from({ length: 100 }, (_, i) => `line${i}`).join("\n");
-      const buffer = new TextBuffer(lines);
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["5", "2", "G"], ctx, buffer);
-      expect(result.cursor.line).toBe(51);
+      const v = vim(lines);
+      v.type("52G");
+      expect(v.cursor().line).toBe(51);
     });
 
     it("moves to line 110 with 110G (clamped to last line)", () => {
       const lines = Array.from({ length: 100 }, (_, i) => `line${i}`).join("\n");
-      const buffer = new TextBuffer(lines);
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["1", "1", "0", "G"], ctx, buffer);
-      expect(result.cursor.line).toBe(99);
+      const v = vim(lines);
+      v.type("110G");
+      expect(v.cursor().line).toBe(99);
     });
 
     it("moves to line 10 with 10gg", () => {
       const lines = Array.from({ length: 20 }, (_, i) => `line${i}`).join("\n");
-      const buffer = new TextBuffer(lines);
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["1", "0", "g", "g"], ctx, buffer);
-      expect(result.cursor.line).toBe(9);
+      const v = vim(lines);
+      v.type("10gg");
+      expect(v.cursor().line).toBe(9);
     });
 
     it("deletes 2 words with 2dw", () => {
-      const buffer = new TextBuffer("one two three four");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["2", "d", "w"], ctx, buffer);
-      expect(buffer.getContent()).toBe("three four");
+      const v = vim("one two three four");
+      v.type("2dw");
+      expect(v.content()).toBe("three four");
     });
   });
 
@@ -266,34 +242,30 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("x command (character deletion)", () => {
     it("deletes the character under the cursor with x", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["x"], ctx, buffer);
-      expect(buffer.getContent()).toBe("ello");
-      expect(result.register).toBe("h");
+      const v = vim("hello");
+      v.type("x");
+      expect(v.content()).toBe("ello");
+      expect(v.register('"')).toBe("h");
     });
 
     it("adjusts cursor when pressing x at end of line", () => {
-      const buffer = new TextBuffer("abc");
-      const ctx = createTestContext({ line: 0, col: 2 });
-      const { ctx: result } = pressKeys(["x"], ctx, buffer);
-      expect(buffer.getContent()).toBe("ab");
-      expect(result.cursor.col).toBe(1);
+      const v = vim("abc", { cursor: [0, 2] });
+      v.type("x");
+      expect(v.content()).toBe("ab");
+      expect(v.cursor().col).toBe(1);
     });
 
     it("does nothing when pressing x on an empty line", () => {
-      const buffer = new TextBuffer("");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["x"], ctx, buffer);
-      expect(buffer.getContent()).toBe("");
-      expect(result.cursor.col).toBe(0);
+      const v = vim("");
+      v.type("x");
+      expect(v.content()).toBe("");
+      expect(v.cursor().col).toBe(0);
     });
 
     it("deletes 3 characters with 3x", () => {
-      const buffer = new TextBuffer("abcdef");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["3", "x"], ctx, buffer);
-      expect(buffer.getContent()).toBe("def");
+      const v = vim("abcdef");
+      v.type("3x");
+      expect(v.content()).toBe("def");
     });
   });
 
@@ -368,49 +340,43 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("~ command (toggle case)", () => {
     it("toggles lowercase to uppercase and advances cursor", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["~"], ctx, buffer);
-      expect(buffer.getContent()).toBe("Hello");
-      expect(result.cursor.col).toBe(1);
+      const v = vim("hello");
+      v.type("~");
+      expect(v.content()).toBe("Hello");
+      expect(v.cursor().col).toBe(1);
     });
 
     it("toggles uppercase to lowercase", () => {
-      const buffer = new TextBuffer("HELLO");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["~"], ctx, buffer);
-      expect(buffer.getContent()).toBe("hELLO");
-      expect(result.cursor.col).toBe(1);
+      const v = vim("HELLO");
+      v.type("~");
+      expect(v.content()).toBe("hELLO");
+      expect(v.cursor().col).toBe(1);
     });
 
     it("toggles 3 characters with 3~", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["3", "~"], ctx, buffer);
-      expect(buffer.getContent()).toBe("HELlo");
-      expect(result.cursor.col).toBe(3);
+      const v = vim("hello");
+      v.type("3~");
+      expect(v.content()).toBe("HELlo");
+      expect(v.cursor().col).toBe(3);
     });
 
     it("leaves non-alpha characters unchanged and advances", () => {
-      const buffer = new TextBuffer("a1b");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["3", "~"], ctx, buffer);
-      expect(buffer.getContent()).toBe("A1B");
+      const v = vim("a1b");
+      v.type("3~");
+      expect(v.content()).toBe("A1B");
     });
 
     it("clamps cursor at end of line", () => {
-      const buffer = new TextBuffer("ab");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["5", "~"], ctx, buffer);
-      expect(buffer.getContent()).toBe("AB");
-      expect(result.cursor.col).toBe(1);
+      const v = vim("ab");
+      v.type("5~");
+      expect(v.content()).toBe("AB");
+      expect(v.cursor().col).toBe(1);
     });
 
     it("does nothing on an empty line", () => {
-      const buffer = new TextBuffer("");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["~"], ctx, buffer);
-      expect(buffer.getContent()).toBe("");
+      const v = vim("");
+      v.type("~");
+      expect(v.content()).toBe("");
     });
   });
 
@@ -419,35 +385,31 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("D command (delete to end of line)", () => {
     it("deletes from cursor to end of line with D", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 5 });
-      const { ctx: result } = pressKeys(["D"], ctx, buffer);
-      expect(buffer.getContent()).toBe("hello");
-      expect(result.register).toBe(" world");
-      expect(result.cursor.col).toBe(4);
+      const v = vim("hello world", { cursor: [0, 5] });
+      v.type("D");
+      expect(v.content()).toBe("hello");
+      expect(v.register('"')).toBe(" world");
+      expect(v.cursor().col).toBe(4);
     });
 
     it("deletes entire line content with D at column 0", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["D"], ctx, buffer);
-      expect(buffer.getContent()).toBe("");
-      expect(result.register).toBe("hello world");
+      const v = vim("hello world");
+      v.type("D");
+      expect(v.content()).toBe("");
+      expect(v.register('"')).toBe("hello world");
     });
 
     it("deletes last character with D at end of line", () => {
-      const buffer = new TextBuffer("abc");
-      const ctx = createTestContext({ line: 0, col: 2 });
-      const { ctx: result } = pressKeys(["D"], ctx, buffer);
-      expect(buffer.getContent()).toBe("ab");
-      expect(result.register).toBe("c");
+      const v = vim("abc", { cursor: [0, 2] });
+      v.type("D");
+      expect(v.content()).toBe("ab");
+      expect(v.register('"')).toBe("c");
     });
 
     it("does not affect other lines with D", () => {
-      const buffer = new TextBuffer("hello world\nsecond line");
-      const ctx = createTestContext({ line: 0, col: 5 });
-      pressKeys(["D"], ctx, buffer);
-      expect(buffer.getContent()).toBe("hello\nsecond line");
+      const v = vim("hello world\nsecond line", { cursor: [0, 5] });
+      v.type("D");
+      expect(v.content()).toBe("hello\nsecond line");
     });
   });
 
@@ -456,21 +418,19 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("C command (change to end of line)", () => {
     it("deletes from cursor to end of line and enters insert mode with C", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 5 });
-      const { ctx: result } = pressKeys(["C"], ctx, buffer);
-      expect(buffer.getContent()).toBe("hello");
-      expect(result.mode).toBe("insert");
-      expect(result.register).toBe(" world");
-      expect(result.cursor.col).toBe(5);
+      const v = vim("hello world", { cursor: [0, 5] });
+      v.type("C");
+      expect(v.content()).toBe("hello");
+      expect(v.mode()).toBe("insert");
+      expect(v.register('"')).toBe(" world");
+      expect(v.cursor().col).toBe(5);
     });
 
     it("changes entire line content with C at column 0", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["C"], ctx, buffer);
-      expect(buffer.getContent()).toBe("");
-      expect(result.mode).toBe("insert");
+      const v = vim("hello world");
+      v.type("C");
+      expect(v.content()).toBe("");
+      expect(v.mode()).toBe("insert");
     });
   });
 
@@ -479,23 +439,21 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("u command (undo)", () => {
     it("undoes the previous change with u", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
+      const v = vim("hello world");
       // First delete the line with dd
-      const { ctx: afterDelete } = pressKeys(["d", "d"], ctx, buffer);
-      expect(buffer.getContent()).toBe("");
+      v.type("dd");
+      expect(v.content()).toBe("");
       // undo
-      const { ctx: afterUndo } = pressKeys(["u"], afterDelete, buffer);
-      expect(buffer.getContent()).toBe("hello world");
-      expect(afterUndo.cursor).toEqual({ line: 0, col: 0 });
+      v.type("u");
+      expect(v.content()).toBe("hello world");
+      expect(v.cursor()).toEqual({ line: 0, col: 0 });
     });
 
     it("displays a message when the undo stack is empty", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result, allActions } = pressKeys(["u"], ctx, buffer);
-      expect(result.statusMessage).toBe("Already at oldest change");
-      expect(allActions).toContainEqual({
+      const v = vim("hello");
+      v.type("u");
+      expect(v.statusMessage()).toBe("Already at oldest change");
+      expect(v.allActions()).toContainEqual({
         type: "status-message",
         message: "Already at oldest change",
       });
@@ -507,71 +465,63 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Transition to insert mode", () => {
     it("enters insert mode with i (cursor stays in place)", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 2 });
-      const { ctx: result } = pressKeys(["i"], ctx, buffer);
-      expect(result.mode).toBe("insert");
-      expect(result.cursor.col).toBe(2);
+      const v = vim("hello", { cursor: [0, 2] });
+      v.type("i");
+      expect(v.mode()).toBe("insert");
+      expect(v.cursor().col).toBe(2);
     });
 
     it("moves cursor one position right and enters insert mode with a", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 2 });
-      const { ctx: result } = pressKeys(["a"], ctx, buffer);
-      expect(result.mode).toBe("insert");
-      expect(result.cursor.col).toBe(3);
+      const v = vim("hello", { cursor: [0, 2] });
+      v.type("a");
+      expect(v.mode()).toBe("insert");
+      expect(v.cursor().col).toBe(3);
     });
 
     it("moves to the first non-whitespace character and enters insert mode with I", () => {
-      const buffer = new TextBuffer("  hello");
-      const ctx = createTestContext({ line: 0, col: 5 });
-      const { ctx: result } = pressKeys(["I"], ctx, buffer);
-      expect(result.mode).toBe("insert");
-      expect(result.cursor.col).toBe(2);
+      const v = vim("  hello", { cursor: [0, 5] });
+      v.type("I");
+      expect(v.mode()).toBe("insert");
+      expect(v.cursor().col).toBe(2);
     });
 
     it("moves to end of line and enters insert mode with A", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["A"], ctx, buffer);
-      expect(result.mode).toBe("insert");
-      expect(result.cursor.col).toBe(5);
+      const v = vim("hello");
+      v.type("A");
+      expect(v.mode()).toBe("insert");
+      expect(v.cursor().col).toBe(5);
     });
 
     it("inserts a blank line below and enters insert mode with o", () => {
-      const buffer = new TextBuffer("line1\nline2");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["o"], ctx, buffer);
-      expect(result.mode).toBe("insert");
-      expect(result.cursor).toEqual({ line: 1, col: 0 });
-      expect(buffer.getContent()).toBe("line1\n\nline2");
+      const v = vim("line1\nline2");
+      v.type("o");
+      expect(v.mode()).toBe("insert");
+      expect(v.cursor()).toEqual({ line: 1, col: 0 });
+      expect(v.content()).toBe("line1\n\nline2");
     });
 
     it("inserts a blank line above and enters insert mode with O", () => {
-      const buffer = new TextBuffer("line1\nline2");
-      const ctx = createTestContext({ line: 1, col: 0 });
-      const { ctx: result } = pressKeys(["O"], ctx, buffer);
-      expect(result.mode).toBe("insert");
-      expect(result.cursor).toEqual({ line: 1, col: 0 });
-      expect(buffer.getContent()).toBe("line1\n\nline2");
+      const v = vim("line1\nline2", { cursor: [1, 0] });
+      v.type("O");
+      expect(v.mode()).toBe("insert");
+      expect(v.cursor()).toEqual({ line: 1, col: 0 });
+      expect(v.content()).toBe("line1\n\nline2");
     });
 
     it("o preserves indentation from current line", () => {
-      const buffer = new TextBuffer("  indented");
-      const ctx = createTestContext({ line: 0, col: 2 });
-      const { ctx: result } = pressKeys(["o"], ctx, buffer);
-      expect(result.mode).toBe("insert");
-      expect(result.cursor).toEqual({ line: 1, col: 2 });
-      expect(buffer.getLine(1)).toBe("  ");
+      const v = vim("  indented", { cursor: [0, 2] });
+      v.type("o");
+      expect(v.mode()).toBe("insert");
+      expect(v.cursor()).toEqual({ line: 1, col: 2 });
+      expect(v.line(1)).toBe("  ");
     });
 
     it("O preserves indentation from current line", () => {
-      const buffer = new TextBuffer("  indented");
-      const ctx = createTestContext({ line: 0, col: 2 });
-      const { ctx: result } = pressKeys(["O"], ctx, buffer);
-      expect(result.mode).toBe("insert");
-      expect(result.cursor).toEqual({ line: 0, col: 2 });
-      expect(buffer.getLine(0)).toBe("  ");
+      const v = vim("  indented", { cursor: [0, 2] });
+      v.type("O");
+      expect(v.mode()).toBe("insert");
+      expect(v.cursor()).toEqual({ line: 0, col: 2 });
+      expect(v.line(0)).toBe("  ");
     });
   });
 
@@ -580,19 +530,17 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Transition to visual mode", () => {
     it("enters visual mode with v", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 2 });
-      const { ctx: result } = pressKeys(["v"], ctx, buffer);
-      expect(result.mode).toBe("visual");
-      expect(result.visualAnchor).toEqual({ line: 0, col: 2 });
+      const v = vim("hello", { cursor: [0, 2] });
+      v.type("v");
+      expect(v.mode()).toBe("visual");
+      expect(v.raw().ctx.visualAnchor).toEqual({ line: 0, col: 2 });
     });
 
     it("enters visual-line mode with V", () => {
-      const buffer = new TextBuffer("hello\nworld");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["V"], ctx, buffer);
-      expect(result.mode).toBe("visual-line");
-      expect(result.visualAnchor).toEqual({ line: 0, col: 0 });
+      const v = vim("hello\nworld");
+      v.type("V");
+      expect(v.mode()).toBe("visual-line");
+      expect(v.raw().ctx.visualAnchor).toEqual({ line: 0, col: 0 });
     });
   });
 
@@ -601,25 +549,22 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("J command (join lines)", () => {
     it("joins the current line with the next line using a space with J", () => {
-      const buffer = new TextBuffer("hello\nworld");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["J"], ctx, buffer);
-      expect(buffer.getContent()).toBe("hello world");
-      expect(result.cursor.col).toBe(5);
+      const v = vim("hello\nworld");
+      v.type("J");
+      expect(v.content()).toBe("hello world");
+      expect(v.cursor().col).toBe(5);
     });
 
     it("strips leading whitespace from the next line when joining with J", () => {
-      const buffer = new TextBuffer("hello\n  world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["J"], ctx, buffer);
-      expect(buffer.getContent()).toBe("hello world");
+      const v = vim("hello\n  world");
+      v.type("J");
+      expect(v.content()).toBe("hello world");
     });
 
     it("does nothing when pressing J on the last line", () => {
-      const buffer = new TextBuffer("hello\nworld");
-      const ctx = createTestContext({ line: 1, col: 0 });
-      pressKeys(["J"], ctx, buffer);
-      expect(buffer.getContent()).toBe("hello\nworld");
+      const v = vim("hello\nworld", { cursor: [1, 0] });
+      v.type("J");
+      expect(v.content()).toBe("hello\nworld");
     });
   });
 
@@ -628,31 +573,27 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("g prefix commands", () => {
     it("moves to the beginning of the file with gg", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createTestContext({ line: 2, col: 3 });
-      const { ctx: result } = pressKeys(["g", "g"], ctx, buffer);
-      expect(result.cursor.line).toBe(0);
+      const v = vim("line1\nline2\nline3", { cursor: [2, 3] });
+      v.type("gg");
+      expect(v.cursor().line).toBe(0);
     });
 
     it("moves to line 3 with 3gg", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3\nline4");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["3", "g", "g"], ctx, buffer);
-      expect(result.cursor.line).toBe(2);
+      const v = vim("line1\nline2\nline3\nline4");
+      v.type("3gg");
+      expect(v.cursor().line).toBe(2);
     });
 
     it("moves to the end of the file with G", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["G"], ctx, buffer);
-      expect(result.cursor.line).toBe(2);
+      const v = vim("line1\nline2\nline3");
+      v.type("G");
+      expect(v.cursor().line).toBe(2);
     });
 
     it("resets on unknown g command", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["g", "x"], ctx, buffer);
-      expect(result.phase).toBe("idle");
+      const v = vim("hello");
+      v.type("gx");
+      expect(v.raw().ctx.phase).toBe("idle");
     });
   });
 
@@ -661,31 +602,27 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("f / F / t / T commands (in-line character search)", () => {
     it("moves cursor to the position of 'o' with fo", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["f", "o"], ctx, buffer);
-      expect(result.cursor.col).toBe(4);
+      const v = vim("hello world");
+      v.type("fo");
+      expect(v.cursor().col).toBe(4);
     });
 
     it("searches backward for 'o' with Fo", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 7 });
-      const { ctx: result } = pressKeys(["F", "o"], ctx, buffer);
-      expect(result.cursor.col).toBe(4);
+      const v = vim("hello world", { cursor: [0, 7] });
+      v.type("Fo");
+      expect(v.cursor().col).toBe(4);
     });
 
     it("moves to just before 'o' with to", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["t", "o"], ctx, buffer);
-      expect(result.cursor.col).toBe(3);
+      const v = vim("hello world");
+      v.type("to");
+      expect(v.cursor().col).toBe(3);
     });
 
     it("moves to just after 'o' backward with To", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 7 });
-      const { ctx: result } = pressKeys(["T", "o"], ctx, buffer);
-      expect(result.cursor.col).toBe(5);
+      const v = vim("hello world", { cursor: [0, 7] });
+      v.type("To");
+      expect(v.cursor().col).toBe(5);
     });
   });
 
@@ -694,25 +631,23 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("; / , commands (repeat last char search)", () => {
     it("repeats fo with ;", () => {
-      const buffer = new TextBuffer("one.two.three.four");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterF } = pressKeys(["f", "."], ctx, buffer);
-      expect(afterF.cursor.col).toBe(3);
-      const { ctx: afterSemicolon } = pressKeys([";"], afterF, buffer);
-      expect(afterSemicolon.cursor.col).toBe(7);
-      const { ctx: afterSemicolon2 } = pressKeys([";"], afterSemicolon, buffer);
-      expect(afterSemicolon2.cursor.col).toBe(13);
+      const v = vim("one.two.three.four");
+      v.type("f.");
+      expect(v.cursor().col).toBe(3);
+      v.type(";");
+      expect(v.cursor().col).toBe(7);
+      v.type(";");
+      expect(v.cursor().col).toBe(13);
     });
 
     it("reverses direction with ,", () => {
-      const buffer = new TextBuffer("one.two.three.four");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterF } = pressKeys(["f", "."], ctx, buffer);
-      expect(afterF.cursor.col).toBe(3);
-      const { ctx: afterSemicolon } = pressKeys([";"], afterF, buffer);
-      expect(afterSemicolon.cursor.col).toBe(7);
-      const { ctx: afterComma } = pressKeys([","], afterSemicolon, buffer);
-      expect(afterComma.cursor.col).toBe(3);
+      const v = vim("one.two.three.four");
+      v.type("f.");
+      expect(v.cursor().col).toBe(3);
+      v.type(";");
+      expect(v.cursor().col).toBe(7);
+      v.type(",");
+      expect(v.cursor().col).toBe(3);
     });
 
     it("repeats Fo with ;", () => {
@@ -725,64 +660,58 @@ describe("Normal mode", () => {
     });
 
     it("repeats to with ; and , for t", () => {
-      const buffer = new TextBuffer("a.b.c.d");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterT } = pressKeys(["t", "."], ctx, buffer);
-      expect(afterT.cursor.col).toBe(0); // t stops before '.'... but col 0 means didn't move from col 0, actually t. from col 0 on "a.b.c.d" should go to col 0 (before the '.' at col 1)
+      const v = vim("a.b.c.d");
+      v.type("t.");
+      expect(v.cursor().col).toBe(0); // t stops before '.'... but col 0 means didn't move from col 0, actually t. from col 0 on "a.b.c.d" should go to col 0 (before the '.' at col 1)
     });
 
     it("does nothing with ; when no previous f/F/t/T", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys([";"], ctx, buffer);
-      expect(result.cursor.col).toBe(0);
+      const v = vim("hello world");
+      v.type(";");
+      expect(v.cursor().col).toBe(0);
     });
 
     it("does nothing with , when no previous f/F/t/T", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys([","], ctx, buffer);
-      expect(result.cursor.col).toBe(0);
+      const v = vim("hello world");
+      v.type(",");
+      expect(v.cursor().col).toBe(0);
     });
 
     it("repeats t with ; (exercises resolveCharSearchRepeat case t)", () => {
       // Use t to set lastCharSearch, then ; to repeat it
       // "hello world" - 'o' at col 4 and col 7
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterT } = pressKeys(["t", "o"], ctx, buffer);
+      const v = vim("hello world");
+      v.type("to");
       // t finds 'o' at col 4, stops at col 3
-      expect(afterT.cursor.col).toBe(3);
-      expect(afterT.lastCharSearch).toEqual({ command: "t", char: "o" });
+      expect(v.cursor().col).toBe(3);
+      expect(v.raw().ctx.lastCharSearch).toEqual({ command: "t", char: "o" });
       // ; repeats t/o: from col 3, fChar starts at 4, finds 'o' at 4, t stops at 3 (no movement)
       // Since cursor doesn't move, the repeat is a no-op but the code path IS exercised
-      const { ctx: afterSemicolon } = pressKeys([";"], afterT, buffer);
+      v.type(";");
       // Cursor stays at 3 (stuck because next 'o' is at col 4, t goes to 3)
-      expect(afterSemicolon.cursor.col).toBe(3);
+      expect(v.cursor().col).toBe(3);
     });
 
     it("repeats T with ; (exercises resolveCharSearchRepeat case T)", () => {
       // Use T to set lastCharSearch, then ; to repeat it
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 10 });
-      const { ctx: afterT } = pressKeys(["T", "o"], ctx, buffer);
+      const v = vim("hello world", { cursor: [0, 10] });
+      v.type("To");
       // T searches backward: 'o' at col 7, T stops at col 8
-      expect(afterT.cursor.col).toBe(8);
-      expect(afterT.lastCharSearch).toEqual({ command: "T", char: "o" });
+      expect(v.cursor().col).toBe(8);
+      expect(v.raw().ctx.lastCharSearch).toEqual({ command: "T", char: "o" });
       // ; repeats T/o: from col 8, FCharBack starts at 7, finds 'o' at 7, T goes to 8 (no movement)
-      const { ctx: afterSemicolon } = pressKeys([";"], afterT, buffer);
+      v.type(";");
       // Cursor stays at 8 (same stuck behavior as t)
-      expect(afterSemicolon.cursor.col).toBe(8);
+      expect(v.cursor().col).toBe(8);
     });
 
     it("works with operator: d; deletes to next match (inclusive)", () => {
-      const buffer = new TextBuffer("one.two.three");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterF } = pressKeys(["f", "."], ctx, buffer);
-      expect(afterF.cursor.col).toBe(3);
+      const v = vim("one.two.three");
+      v.type("f.");
+      expect(v.cursor().col).toBe(3);
       // d; from '.' (col 3) deletes inclusive to next '.' (col 7)
-      pressKeys(["d", ";"], afterF, buffer);
-      expect(buffer.getContent()).toBe("onethree");
+      v.type("d;");
+      expect(v.content()).toBe("onethree");
     });
   });
 
@@ -791,55 +720,48 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("* / # commands (search word under cursor)", () => {
     it("* searches forward for the word under cursor", () => {
-      const buffer = new TextBuffer("foo bar foo baz foo");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["*"], ctx, buffer);
-      expect(result.cursor.col).toBe(8);
-      expect(result.lastSearch).toContain("foo");
+      const v = vim("foo bar foo baz foo");
+      v.type("*");
+      expect(v.cursor().col).toBe(8);
+      expect(v.raw().ctx.lastSearch).toContain("foo");
     });
 
     it("* wraps around to the beginning across lines", () => {
-      const buffer = new TextBuffer("bar foo\nbaz\nfoo end");
-      const ctx = createTestContext({ line: 2, col: 0 }); // on the last 'foo'
-      const { ctx: result } = pressKeys(["*"], ctx, buffer);
-      expect(result.cursor).toEqual({ line: 0, col: 4 });
+      const v = vim("bar foo\nbaz\nfoo end", { cursor: [2, 0] }); // on the last 'foo'
+      v.type("*");
+      expect(v.cursor()).toEqual({ line: 0, col: 4 });
     });
 
     it("# searches backward for the word under cursor", () => {
-      const buffer = new TextBuffer("foo bar foo baz foo");
-      const ctx = createTestContext({ line: 0, col: 8 }); // on the middle 'foo'
-      const { ctx: result } = pressKeys(["#"], ctx, buffer);
-      expect(result.cursor.col).toBe(0);
+      const v = vim("foo bar foo baz foo", { cursor: [0, 8] }); // on the middle 'foo'
+      v.type("#");
+      expect(v.cursor().col).toBe(0);
     });
 
     it("* works across multiple lines", () => {
-      const buffer = new TextBuffer("hello world\ngoodbye world\nhello again");
-      const ctx = createTestContext({ line: 0, col: 0 }); // on 'hello'
-      const { ctx: result } = pressKeys(["*"], ctx, buffer);
-      expect(result.cursor).toEqual({ line: 2, col: 0 });
+      const v = vim("hello world\ngoodbye world\nhello again");
+      v.type("*");
+      expect(v.cursor()).toEqual({ line: 2, col: 0 });
     });
 
     it("* then n repeats the search", () => {
-      const buffer = new TextBuffer("foo bar foo baz foo");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterStar } = pressKeys(["*"], ctx, buffer);
-      expect(afterStar.cursor.col).toBe(8);
-      const { ctx: afterN } = pressKeys(["n"], afterStar, buffer);
-      expect(afterN.cursor.col).toBe(16);
+      const v = vim("foo bar foo baz foo");
+      v.type("*");
+      expect(v.cursor().col).toBe(8);
+      v.type("n");
+      expect(v.cursor().col).toBe(16);
     });
 
     it("does nothing when cursor is not on a word character", () => {
-      const buffer = new TextBuffer("foo . bar");
-      const ctx = createTestContext({ line: 0, col: 4 }); // on '.'
-      const { ctx: result } = pressKeys(["*"], ctx, buffer);
-      expect(result.cursor.col).toBe(4);
+      const v = vim("foo . bar", { cursor: [0, 4] }); // on '.'
+      v.type("*");
+      expect(v.cursor().col).toBe(4);
     });
 
     it("does nothing on an empty line", () => {
-      const buffer = new TextBuffer("");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["*"], ctx, buffer);
-      expect(result.cursor.col).toBe(0);
+      const v = vim("");
+      v.type("*");
+      expect(v.cursor().col).toBe(0);
     });
   });
 
@@ -848,17 +770,15 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("r command (single character replacement)", () => {
     it("replaces the character under the cursor with 'x' using rx", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["r", "x"], ctx, buffer);
-      expect(buffer.getContent()).toBe("xello");
+      const v = vim("hello");
+      v.type("rx");
+      expect(v.content()).toBe("xello");
     });
 
     it("does nothing when pressing r on an empty line", () => {
-      const buffer = new TextBuffer("");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["r", "x"], ctx, buffer);
-      expect(buffer.getContent()).toBe("");
+      const v = vim("");
+      v.type("rx");
+      expect(v.content()).toBe("");
     });
   });
 
@@ -909,29 +829,26 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Command-line / search transition", () => {
     it("enters command-line mode with :", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys([":"], ctx, buffer);
-      expect(result.mode).toBe("command-line");
-      expect(result.commandType).toBe(":");
+      const v = vim("hello");
+      v.type(":");
+      expect(v.mode()).toBe("command-line");
+      expect(v.raw().ctx.commandType).toBe(":");
     });
 
     it("enters forward search mode with /", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["/"], ctx, buffer);
-      expect(result.mode).toBe("command-line");
-      expect(result.commandType).toBe("/");
-      expect(result.searchDirection).toBe("forward");
+      const v = vim("hello");
+      v.type("/");
+      expect(v.mode()).toBe("command-line");
+      expect(v.raw().ctx.commandType).toBe("/");
+      expect(v.raw().ctx.searchDirection).toBe("forward");
     });
 
     it("enters backward search mode with ?", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["?"], ctx, buffer);
-      expect(result.mode).toBe("command-line");
-      expect(result.commandType).toBe("?");
-      expect(result.searchDirection).toBe("backward");
+      const v = vim("hello");
+      v.type("?");
+      expect(v.mode()).toBe("command-line");
+      expect(v.raw().ctx.commandType).toBe("?");
+      expect(v.raw().ctx.searchDirection).toBe("backward");
     });
   });
 
@@ -963,18 +880,16 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Operator pending", () => {
     it("cancels operator on invalid key", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["d", "z"], ctx, buffer);
-      expect(result.phase).toBe("idle");
-      expect(result.operator).toBeNull();
+      const v = vim("hello");
+      v.type("dz");
+      expect(v.raw().ctx.phase).toBe("idle");
+      expect(v.raw().ctx.operator).toBeNull();
     });
 
     it("operator + character search motion works with dfa", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["d", "f", "o"], ctx, buffer);
-      expect(buffer.getContent()).toBe(" world");
+      const v = vim("hello world");
+      v.type("dfo");
+      expect(v.content()).toBe(" world");
     });
   });
 
@@ -983,71 +898,63 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe(">> / << commands (indent / dedent)", () => {
     it(">> indents the current line", () => {
-      const buffer = new TextBuffer("hello\nworld");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys([">", ">"], ctx, buffer);
-      expect(buffer.getLine(0)).toBe("  hello");
-      expect(buffer.getLine(1)).toBe("world");
+      const v = vim("hello\nworld");
+      v.type(">>");
+      expect(v.line(0)).toBe("  hello");
+      expect(v.line(1)).toBe("world");
     });
 
     it("<< dedents the current line", () => {
-      const buffer = new TextBuffer("  hello\nworld");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["<", "<"], ctx, buffer);
-      expect(buffer.getLine(0)).toBe("hello");
+      const v = vim("  hello\nworld");
+      v.type("<<");
+      expect(v.line(0)).toBe("hello");
     });
 
     it("3>> indents 3 lines", () => {
-      const buffer = new TextBuffer("aaa\nbbb\nccc\nddd");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["3", ">", ">"], ctx, buffer);
-      expect(buffer.getLine(0)).toBe("  aaa");
-      expect(buffer.getLine(1)).toBe("  bbb");
-      expect(buffer.getLine(2)).toBe("  ccc");
-      expect(buffer.getLine(3)).toBe("ddd");
-      expect(result.statusMessage).toBe("3 lines >ed 1 time");
+      const v = vim("aaa\nbbb\nccc\nddd");
+      v.type("3>>");
+      expect(v.line(0)).toBe("  aaa");
+      expect(v.line(1)).toBe("  bbb");
+      expect(v.line(2)).toBe("  ccc");
+      expect(v.line(3)).toBe("ddd");
+      expect(v.statusMessage()).toBe("3 lines >ed 1 time");
     });
 
     it("3<< dedents 3 lines", () => {
-      const buffer = new TextBuffer("  aaa\n  bbb\n  ccc\nddd");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["3", "<", "<"], ctx, buffer);
-      expect(buffer.getLine(0)).toBe("aaa");
-      expect(buffer.getLine(1)).toBe("bbb");
-      expect(buffer.getLine(2)).toBe("ccc");
-      expect(buffer.getLine(3)).toBe("ddd");
+      const v = vim("  aaa\n  bbb\n  ccc\nddd");
+      v.type("3<<");
+      expect(v.line(0)).toBe("aaa");
+      expect(v.line(1)).toBe("bbb");
+      expect(v.line(2)).toBe("ccc");
+      expect(v.line(3)).toBe("ddd");
     });
 
     it(">j indents current line and next line", () => {
-      const buffer = new TextBuffer("aaa\nbbb\nccc");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys([">", "j"], ctx, buffer);
-      expect(buffer.getLine(0)).toBe("  aaa");
-      expect(buffer.getLine(1)).toBe("  bbb");
-      expect(buffer.getLine(2)).toBe("ccc");
+      const v = vim("aaa\nbbb\nccc");
+      v.type(">j");
+      expect(v.line(0)).toBe("  aaa");
+      expect(v.line(1)).toBe("  bbb");
+      expect(v.line(2)).toBe("ccc");
     });
 
     it("<< does nothing when line has no indent", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["<", "<"], ctx, buffer);
-      expect(buffer.getLine(0)).toBe("hello");
+      const v = vim("hello");
+      v.type("<<");
+      expect(v.line(0)).toBe("hello");
     });
 
     it("<< removes partial indent (less than indent width)", () => {
-      const buffer = new TextBuffer(" hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["<", "<"], ctx, buffer);
-      expect(buffer.getLine(0)).toBe("hello");
+      const v = vim(" hello");
+      v.type("<<");
+      expect(v.line(0)).toBe("hello");
     });
 
     it(">> can be undone", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterIndent } = pressKeys([">", ">"], ctx, buffer);
-      expect(buffer.getLine(0)).toBe("  hello");
-      pressKeys(["u"], afterIndent, buffer);
-      expect(buffer.getLine(0)).toBe("hello");
+      const v = vim("hello");
+      v.type(">>");
+      expect(v.line(0)).toBe("  hello");
+      v.type("u");
+      expect(v.line(0)).toBe("hello");
     });
 
     it(">G indents from cursor to end of file", () => {
@@ -1065,28 +972,25 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe('Named registers ("x)', () => {
     it('"ayy stores in register a, "ap pastes from it', () => {
-      const buffer = new TextBuffer("hello\nworld\nfoo");
-      const ctx = createTestContext({ line: 0, col: 0 });
+      const v = vim("hello\nworld\nfoo");
       // "ayy -> yank line into register a
-      const { ctx: afterYank } = pressKeys(['"', "a", "y", "y"], ctx, buffer);
-      expect(afterYank.registers.a).toBe("hello\n");
-      expect(afterYank.register).toBe("hello\n"); // also in unnamed
+      v.type('"ayy');
+      expect(v.raw().ctx.registers.a).toBe("hello\n");
+      expect(v.register('"')).toBe("hello\n"); // also in unnamed
       // yy on line 1 -> overwrites unnamed register
-      const { ctx: afterYy } = pressKeys(["j", "y", "y"], afterYank, buffer);
-      expect(afterYy.register).toBe("world\n");
+      v.type("jyy");
+      expect(v.register('"')).toBe("world\n");
       // "ap -> paste from register a (not the unnamed)
-      const { ctx: moved } = pressKeys(["j"], afterYy, buffer);
-      pressKeys(['"', "a", "p"], moved, buffer);
-      expect(buffer.getContent()).toBe("hello\nworld\nfoo\nhello");
+      v.type('j"ap');
+      expect(v.content()).toBe("hello\nworld\nfoo\nhello");
     });
 
     it('"bdd stores deleted line in register b', () => {
-      const buffer = new TextBuffer("aaa\nbbb\nccc");
-      const ctx = createTestContext({ line: 1, col: 0 });
-      const { ctx: afterDd } = pressKeys(['"', "b", "d", "d"], ctx, buffer);
-      expect(buffer.getContent()).toBe("aaa\nccc");
-      expect(afterDd.registers.b).toBe("bbb\n");
-      expect(afterDd.register).toBe("bbb\n");
+      const v = vim("aaa\nbbb\nccc", { cursor: [1, 0] });
+      v.type('"bdd');
+      expect(v.content()).toBe("aaa\nccc");
+      expect(v.raw().ctx.registers.b).toBe("bbb\n");
+      expect(v.register('"')).toBe("bbb\n");
     });
 
     it('"bp pastes from register b', () => {
@@ -1117,11 +1021,10 @@ describe("Normal mode", () => {
     });
 
     it("invalid register name resets state", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(['"', "1"], ctx, buffer);
-      expect(result.phase).toBe("idle");
-      expect(result.selectedRegister).toBeNull();
+      const v = vim("hello");
+      v.type('"1');
+      expect(v.raw().ctx.phase).toBe("idle");
+      expect(v.raw().ctx.selectedRegister).toBeNull();
     });
   });
 
@@ -1130,86 +1033,74 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe(". command (dot repeat)", () => {
     it("repeats dd", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3\nline4");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterDd } = pressKeys(["d", "d"], ctx, buffer);
-      expect(buffer.getContent()).toBe("line2\nline3\nline4");
-      const { ctx: afterDot } = pressKeys(["."], afterDd, buffer);
-      expect(buffer.getContent()).toBe("line3\nline4");
-      expect(afterDot.mode).toBe("normal");
+      const v = vim("line1\nline2\nline3\nline4");
+      v.type("dd");
+      expect(v.content()).toBe("line2\nline3\nline4");
+      v.type(".");
+      expect(v.content()).toBe("line3\nline4");
+      expect(v.mode()).toBe("normal");
     });
 
     it("repeats x", () => {
-      const buffer = new TextBuffer("abcdef");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterX } = pressKeys(["x"], ctx, buffer);
-      expect(buffer.getContent()).toBe("bcdef");
-      const { ctx: afterDot } = pressKeys(["."], afterX, buffer);
-      expect(buffer.getContent()).toBe("cdef");
+      const v = vim("abcdef");
+      v.type("x");
+      expect(v.content()).toBe("bcdef");
+      v.type(".");
+      expect(v.content()).toBe("cdef");
     });
 
     it("repeats ciw + typed text", () => {
-      const buffer = new TextBuffer("foo bar baz");
-      const ctx = createTestContext({ line: 0, col: 0 });
+      const v = vim("foo bar baz");
       // ciw replaces 'foo' with 'hello'
-      const { ctx: afterChange } = pressKeys(
-        ["c", "i", "w", "h", "e", "l", "l", "o", "Escape"],
-        ctx,
-        buffer,
-      );
-      expect(buffer.getContent()).toBe("hello bar baz");
+      v.type("ciw", "hello");
+      expect(v.content()).toBe("hello bar baz");
       // Move to 'bar' and repeat
-      const { ctx: onBar } = pressKeys(["w"], afterChange, buffer);
-      const { ctx: afterDot } = pressKeys(["."], onBar, buffer);
-      expect(buffer.getContent()).toBe("hello hello baz");
-      expect(afterDot.mode).toBe("normal");
+      v.type("w");
+      v.type(".");
+      expect(v.content()).toBe("hello hello baz");
+      expect(v.mode()).toBe("normal");
     });
 
     it("repeats dw", () => {
-      const buffer = new TextBuffer("one two three four");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterDw } = pressKeys(["d", "w"], ctx, buffer);
-      expect(buffer.getContent()).toBe("two three four");
-      const { ctx: afterDot } = pressKeys(["."], afterDw, buffer);
-      expect(buffer.getContent()).toBe("three four");
+      const v = vim("one two three four");
+      v.type("dw");
+      expect(v.content()).toBe("two three four");
+      v.type(".");
+      expect(v.content()).toBe("three four");
     });
 
     it("repeats r{char}", () => {
-      const buffer = new TextBuffer("aaa");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterR } = pressKeys(["r", "x"], ctx, buffer);
-      expect(buffer.getContent()).toBe("xaa");
-      const { ctx: afterMove } = pressKeys(["l"], afterR, buffer);
-      pressKeys(["."], afterMove, buffer);
-      expect(buffer.getContent()).toBe("xxa");
+      const v = vim("aaa");
+      v.type("rx");
+      expect(v.content()).toBe("xaa");
+      v.type("l");
+      v.type(".");
+      expect(v.content()).toBe("xxa");
     });
 
     it("repeats ~ (toggle case)", () => {
-      const buffer = new TextBuffer("abcdef");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterTilde } = pressKeys(["~"], ctx, buffer);
-      expect(buffer.getContent()).toBe("Abcdef");
-      pressKeys(["."], afterTilde, buffer);
-      expect(buffer.getContent()).toBe("ABcdef");
+      const v = vim("abcdef");
+      v.type("~");
+      expect(v.content()).toBe("Abcdef");
+      v.type(".");
+      expect(v.content()).toBe("ABcdef");
     });
 
     it("repeats insert session (ihi<Esc>)", () => {
-      const buffer = new TextBuffer("ab");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterInsert } = pressKeys(["i", "X", "Escape"], ctx, buffer);
-      expect(buffer.getContent()).toBe("Xab");
+      const v = vim("ab");
+      v.type("i", "X");
+      expect(v.content()).toBe("Xab");
       // Move right and repeat -> inserts X before cursor
-      const { ctx: moved } = pressKeys(["l", "l"], afterInsert, buffer);
-      expect(moved.cursor.col).toBe(2);
-      pressKeys(["."], moved, buffer);
-      expect(buffer.getContent()).toBe("XaXb");
+      v.type("ll");
+      expect(v.cursor().col).toBe(2);
+      v.type(".");
+      expect(v.content()).toBe("XaXb");
     });
 
     it("does nothing when no previous change", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["."], ctx, buffer);
-      expect(buffer.getContent()).toBe("hello");
+      const v = vim("hello");
+      v.type(".");
+      expect(v.content()).toBe("hello");
     });
   });
 
@@ -1224,98 +1115,92 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Marks (m, `, ')", () => {
     it("ma sets mark a at current position, `a jumps to it", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3\nline4\nline5");
-      const ctx = createTestContext({ line: 1, col: 3 });
+      const v = vim("line1\nline2\nline3\nline4\nline5", { cursor: [1, 3] });
       // Set mark a
-      const { ctx: afterMark } = pressKeys(["m", "a"], ctx, buffer);
-      expect(afterMark.marks.a).toEqual({ line: 1, col: 3 });
+      v.type("ma");
+      expect(v.raw().ctx.marks.a).toEqual({ line: 1, col: 3 });
       // Move away
-      const { ctx: moved } = pressKeys(["G"], afterMark, buffer);
-      expect(moved.cursor.line).toBe(4);
+      v.type("G");
+      expect(v.cursor().line).toBe(4);
       // Jump back to mark a
-      const { ctx: jumped } = pressKeys(["`", "a"], moved, buffer);
-      expect(jumped.cursor).toEqual({ line: 1, col: 3 });
+      v.type("`a");
+      expect(v.cursor()).toEqual({ line: 1, col: 3 });
     });
 
     it("'a also jumps to mark a", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createTestContext({ line: 2, col: 0 });
-      const { ctx: afterMark } = pressKeys(["m", "b"], ctx, buffer);
-      const { ctx: moved } = pressKeys(["g", "g"], afterMark, buffer);
-      const { ctx: jumped } = pressKeys(["'", "b"], moved, buffer);
-      expect(jumped.cursor.line).toBe(2);
+      const v = vim("line1\nline2\nline3", { cursor: [2, 0] });
+      v.type("mb");
+      v.type("gg");
+      v.type("'b");
+      expect(v.cursor().line).toBe(2);
     });
 
     it("multiple marks work independently", () => {
-      const buffer = new TextBuffer("aaa\nbbb\nccc\nddd");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: a1 } = pressKeys(["m", "a"], ctx, buffer);
-      const { ctx: a2 } = pressKeys(["j", "j", "m", "b"], a1, buffer);
-      expect(a2.marks.a).toEqual({ line: 0, col: 0 });
-      expect(a2.marks.b).toEqual({ line: 2, col: 0 });
+      const v = vim("aaa\nbbb\nccc\nddd");
+      v.type("ma");
+      v.type("jj");
+      v.type("mb");
+      expect(v.raw().ctx.marks.a).toEqual({ line: 0, col: 0 });
+      expect(v.raw().ctx.marks.b).toEqual({ line: 2, col: 0 });
       // Jump to a
-      const { ctx: ja } = pressKeys(["`", "a"], a2, buffer);
-      expect(ja.cursor.line).toBe(0);
+      v.type("`a");
+      expect(v.cursor().line).toBe(0);
       // Jump to b
-      const { ctx: jb } = pressKeys(["`", "b"], ja, buffer);
-      expect(jb.cursor.line).toBe(2);
+      v.type("`b");
+      expect(v.cursor().line).toBe(2);
     });
 
     it("shows error when mark is not set", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["`", "z"], ctx, buffer);
-      expect(result.statusMessage).toBe("Mark 'z' not set");
+      const v = vim("hello");
+      v.type("`z");
+      expect(v.statusMessage()).toBe("Mark 'z' not set");
     });
 
     it("clamps to buffer bounds if lines were deleted", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createTestContext({ line: 2, col: 0 });
-      const { ctx: afterMark } = pressKeys(["m", "a"], ctx, buffer);
+      const v = vim("line1\nline2\nline3", { cursor: [2, 0] });
+      v.type("ma");
       // Delete last line
-      const { ctx: afterDd } = pressKeys(["d", "d"], afterMark, buffer);
-      expect(buffer.getLineCount()).toBe(2);
+      v.type("dd");
+      expect(v.raw().buffer.getLineCount()).toBe(2);
       // Jump to mark a (line 2 no longer exists, clamp to line 1)
-      const { ctx: jumped } = pressKeys(["`", "a"], afterDd, buffer);
-      expect(jumped.cursor.line).toBe(1);
+      v.type("`a");
+      expect(v.cursor().line).toBe(1);
     });
   });
 
   describe("Macro recording & playback", () => {
     it("qa starts recording, q stops, @a replays", () => {
-      const buffer = new TextBuffer("aaa\nbbb\nccc");
-      const ctx = createTestContext({ line: 0, col: 0 });
+      const v = vim("aaa\nbbb\nccc");
       // qa -> start recording into a
-      const { ctx: recording } = pressKeys(["q", "a"], ctx, buffer);
-      expect(recording.macroRecording).toBe("a");
-      expect(recording.statusMessage).toBe("recording @a");
+      v.type("qa");
+      expect(v.raw().ctx.macroRecording).toBe("a");
+      expect(v.statusMessage()).toBe("recording @a");
       // dd -> delete line (recorded)
-      const { ctx: afterDd } = pressKeys(["d", "d"], recording, buffer);
-      expect(buffer.getContent()).toBe("bbb\nccc");
-      expect(afterDd.statusMessage).toBe("recording @a");
+      v.type("dd");
+      expect(v.content()).toBe("bbb\nccc");
+      expect(v.statusMessage()).toBe("recording @a");
       // q -> stop recording
-      const { ctx: stopped } = pressKeys(["q"], afterDd, buffer);
-      expect(stopped.macroRecording).toBeNull();
-      expect(stopped.statusMessage).toBe("");
-      expect(stopped.macros.a).toEqual(["d", "d"]);
+      v.type("q");
+      expect(v.raw().ctx.macroRecording).toBeNull();
+      expect(v.statusMessage()).toBe("");
+      expect(v.raw().ctx.macros.a).toEqual(["d", "d"]);
       // @a -> replay (deletes another line)
-      pressKeys(["@", "a"], stopped, buffer);
-      expect(buffer.getContent()).toBe("ccc");
+      v.type("@a");
+      expect(v.content()).toBe("ccc");
     });
 
     it("@@ replays the last executed macro", () => {
-      const buffer = new TextBuffer("aaa\nbbb\nccc\nddd");
-      const ctx = createTestContext({ line: 0, col: 0 });
+      const v = vim("aaa\nbbb\nccc\nddd");
       // Record macro: dd
-      const { ctx: afterRecord } = pressKeys(["q", "a", "d", "d", "q"], ctx, buffer);
-      expect(buffer.getContent()).toBe("bbb\nccc\nddd");
+      v.type("qaddq");
+      expect(v.content()).toBe("bbb\nccc\nddd");
       // @a -> replay
-      const { ctx: afterAt } = pressKeys(["@", "a"], afterRecord, buffer);
-      expect(buffer.getContent()).toBe("ccc\nddd");
-      expect(afterAt.lastMacro).toBe("a");
+      v.type("@a");
+      expect(v.content()).toBe("ccc\nddd");
+      expect(v.raw().ctx.lastMacro).toBe("a");
       // @@ -> replay last
-      pressKeys(["@", "@"], afterAt, buffer);
-      expect(buffer.getContent()).toBe("ddd");
+      v.type("@@");
+      expect(v.content()).toBe("ddd");
     });
 
     it("macro with insert mode: qaihello<Esc>q then @a", () => {
@@ -1331,17 +1216,15 @@ describe("Normal mode", () => {
     });
 
     it("@a does nothing when macro is empty/unrecorded", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["@", "a"], ctx, buffer);
-      expect(buffer.getContent()).toBe("hello");
+      const v = vim("hello");
+      v.type("@a");
+      expect(v.content()).toBe("hello");
     });
 
     it("@@ does nothing when no macro was executed before", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      pressKeys(["@", "@"], ctx, buffer);
-      expect(buffer.getContent()).toBe("hello");
+      const v = vim("hello");
+      v.type("@@");
+      expect(v.content()).toBe("hello");
     });
   });
 
@@ -1577,51 +1460,47 @@ describe("Normal mode", () => {
   describe("Large buffer count operations", () => {
     const makeLargeBuffer = (n: number) => {
       const lines = Array.from({ length: n }, (_, i) => `line ${i + 1}: content here`).join("\n");
-      return new TextBuffer(lines);
+      return lines;
     };
 
     it("52G moves to line 52 in a 200-line buffer", () => {
-      const buffer = makeLargeBuffer(200);
+      const buffer = new TextBuffer(makeLargeBuffer(200));
       const ctx = createTestContext({ line: 0, col: 0 });
       const { ctx: result } = pressKeys(["5", "2", "Shift", "G"], ctx, buffer);
       expect(result.cursor.line).toBe(51);
     });
 
     it("110G clamps to last line in a 100-line buffer", () => {
-      const buffer = makeLargeBuffer(100);
+      const buffer = new TextBuffer(makeLargeBuffer(100));
       const ctx = createTestContext({ line: 0, col: 0 });
       const { ctx: result } = pressKeys(["1", "1", "0", "Shift", "G"], ctx, buffer);
       expect(result.cursor.line).toBe(99);
     });
 
     it("15dd deletes 15 lines", () => {
-      const buffer = makeLargeBuffer(50);
-      const ctx = createTestContext({ line: 10, col: 0 });
-      pressKeys(["1", "5", "d", "d"], ctx, buffer);
-      expect(buffer.getLineCount()).toBe(35);
+      const v = vim(makeLargeBuffer(50), { cursor: [10, 0] });
+      v.type("15dd");
+      expect(v.raw().buffer.getLineCount()).toBe(35);
     });
 
     it("20yy yanks 20 lines without modifying buffer", () => {
-      const buffer = makeLargeBuffer(50);
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["2", "0", "y", "y"], ctx, buffer);
-      expect(buffer.getLineCount()).toBe(50);
-      const yankedLines = result.register.split("\n").length - 1; // trailing \n
+      const v = vim(makeLargeBuffer(50));
+      v.type("20yy");
+      expect(v.raw().buffer.getLineCount()).toBe(50);
+      const yankedLines = v.register('"').split("\n").length - 1; // trailing \n
       expect(yankedLines).toBe(20);
     });
 
     it("30gg moves to line 30", () => {
-      const buffer = makeLargeBuffer(100);
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["3", "0", "g", "g"], ctx, buffer);
-      expect(result.cursor.line).toBe(29);
+      const v = vim(makeLargeBuffer(100));
+      v.type("30gg");
+      expect(v.cursor().line).toBe(29);
     });
 
     it("50j moves 50 lines down", () => {
-      const buffer = makeLargeBuffer(200);
-      const ctx = createTestContext({ line: 10, col: 0 });
-      const { ctx: result } = pressKeys(["5", "0", "j"], ctx, buffer);
-      expect(result.cursor.line).toBe(60);
+      const v = vim(makeLargeBuffer(200), { cursor: [10, 0] });
+      v.type("50j");
+      expect(v.cursor().line).toBe(60);
     });
   });
 
@@ -1629,78 +1508,71 @@ describe("Normal mode", () => {
   // Status messages
   // ---------------------------------------------------
   describe("Status messages", () => {
-    const makeLargeBuffer = (n: number) => {
+    const makeLargeText = (n: number) => {
       const lines = Array.from({ length: n }, (_, i) => `line${i + 1}`).join("\n");
-      return new TextBuffer(lines);
+      return lines;
     };
 
     it("shows 'N lines yanked' for 5yy", () => {
-      const buffer = makeLargeBuffer(20);
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["5", "y", "y"], ctx, buffer);
-      expect(result.statusMessage).toBe("5 lines yanked");
+      const v = vim(makeLargeText(20));
+      v.type("5yy");
+      expect(v.statusMessage()).toBe("5 lines yanked");
     });
 
     it("shows 'N fewer lines' for 3dd", () => {
-      const buffer = makeLargeBuffer(20);
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["3", "d", "d"], ctx, buffer);
-      expect(result.statusMessage).toBe("3 fewer lines");
+      const v = vim(makeLargeText(20));
+      v.type("3dd");
+      expect(v.statusMessage()).toBe("3 fewer lines");
     });
 
     it("does not show status message for 1dd (single line)", () => {
-      const buffer = makeLargeBuffer(20);
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["d", "d"], ctx, buffer);
-      expect(result.statusMessage).toBe("");
+      const v = vim(makeLargeText(20));
+      v.type("dd");
+      expect(v.statusMessage()).toBe("");
     });
 
     it("does not show status message for 1yy (single line)", () => {
-      const buffer = makeLargeBuffer(20);
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["y", "y"], ctx, buffer);
-      expect(result.statusMessage).toBe("");
+      const v = vim(makeLargeText(20));
+      v.type("yy");
+      expect(v.statusMessage()).toBe("");
     });
 
     it("shows 'N more lines' for paste of multi-line yank", () => {
-      const buffer = makeLargeBuffer(20);
-      const ctx = createTestContext({ line: 0, col: 0 });
+      const v = vim(makeLargeText(20));
       // Yank 5 lines, then paste
-      const { ctx: afterYank } = pressKeys(["5", "y", "y"], ctx, buffer);
-      const { ctx: afterPaste } = pressKeys(["p"], afterYank, buffer);
-      expect(afterPaste.statusMessage).toBe("5 more lines");
+      v.type("5yy");
+      v.type("p");
+      expect(v.statusMessage()).toBe("5 more lines");
     });
 
     it("shows 'N fewer lines' on undo of multi-line paste", () => {
-      const buffer = makeLargeBuffer(20);
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterYank } = pressKeys(["5", "y", "y"], ctx, buffer);
-      const { ctx: afterPaste } = pressKeys(["p"], afterYank, buffer);
-      expect(buffer.getLineCount()).toBe(25);
-      const { ctx: afterUndo } = pressKeys(["u"], afterPaste, buffer);
-      expect(buffer.getLineCount()).toBe(20);
-      expect(afterUndo.statusMessage).toBe("5 fewer lines");
+      const v = vim(makeLargeText(20));
+      v.type("5yy");
+      v.type("p");
+      expect(v.raw().buffer.getLineCount()).toBe(25);
+      v.type("u");
+      expect(v.raw().buffer.getLineCount()).toBe(20);
+      expect(v.statusMessage()).toBe("5 fewer lines");
     });
 
     it("shows 'N more lines' on undo of multi-line delete", () => {
-      const buffer = makeLargeBuffer(20);
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterDd } = pressKeys(["5", "d", "d"], ctx, buffer);
-      expect(buffer.getLineCount()).toBe(15);
-      const { ctx: afterUndo } = pressKeys(["u"], afterDd, buffer);
-      expect(buffer.getLineCount()).toBe(20);
-      expect(afterUndo.statusMessage).toBe("5 more lines");
+      const v = vim(makeLargeText(20));
+      v.type("5dd");
+      expect(v.raw().buffer.getLineCount()).toBe(15);
+      v.type("u");
+      expect(v.raw().buffer.getLineCount()).toBe(20);
+      expect(v.statusMessage()).toBe("5 more lines");
     });
 
     it("shows 'N fewer lines' for dG from middle of file", () => {
-      const buffer = makeLargeBuffer(20);
+      const buffer = new TextBuffer(makeLargeText(20));
       const ctx = createTestContext({ line: 5, col: 0 });
       const { ctx: result } = pressKeys(["d", "Shift", "G"], ctx, buffer);
       expect(result.statusMessage).toBe("15 fewer lines");
     });
 
     it("shows 'N lines yanked' for yG from middle of file", () => {
-      const buffer = makeLargeBuffer(20);
+      const buffer = new TextBuffer(makeLargeText(20));
       const ctx = createTestContext({ line: 5, col: 0 });
       const { ctx: result } = pressKeys(["y", "Shift", "G"], ctx, buffer);
       expect(result.statusMessage).toBe("15 lines yanked");
@@ -1711,13 +1583,13 @@ describe("Normal mode", () => {
   // H / M / L (screen-relative motions)
   // ---------------------------------------------------
   describe("H / M / L (screen-relative motions)", () => {
-    const makeLargeBuffer = (n: number) => {
+    const makeLargeText = (n: number) => {
       const lines = Array.from({ length: n }, (_, i) => `  line ${i + 1}`).join("\n");
-      return new TextBuffer(lines);
+      return lines;
     };
 
     it("H moves to the top of the viewport", () => {
-      const buffer = makeLargeBuffer(100);
+      const buffer = new TextBuffer(makeLargeText(100));
       // Simulate viewport: top=10, height=30
       const ctx = createTestContext(
         { line: 25, col: 0 },
@@ -1729,7 +1601,7 @@ describe("Normal mode", () => {
     });
 
     it("3H moves to the 3rd line from top of viewport", () => {
-      const buffer = makeLargeBuffer(100);
+      const buffer = new TextBuffer(makeLargeText(100));
       const ctx = createTestContext(
         { line: 25, col: 0 },
         { viewportTopLine: 10, viewportHeight: 30 },
@@ -1739,7 +1611,7 @@ describe("Normal mode", () => {
     });
 
     it("M moves to the middle of the viewport", () => {
-      const buffer = makeLargeBuffer(100);
+      const buffer = new TextBuffer(makeLargeText(100));
       const ctx = createTestContext(
         { line: 0, col: 0 },
         { viewportTopLine: 10, viewportHeight: 30 },
@@ -1749,7 +1621,7 @@ describe("Normal mode", () => {
     });
 
     it("L moves to the bottom of the viewport", () => {
-      const buffer = makeLargeBuffer(100);
+      const buffer = new TextBuffer(makeLargeText(100));
       const ctx = createTestContext(
         { line: 0, col: 0 },
         { viewportTopLine: 10, viewportHeight: 30 },
@@ -1759,7 +1631,7 @@ describe("Normal mode", () => {
     });
 
     it("3L moves to the 3rd line from bottom of viewport", () => {
-      const buffer = makeLargeBuffer(100);
+      const buffer = new TextBuffer(makeLargeText(100));
       const ctx = createTestContext(
         { line: 0, col: 0 },
         { viewportTopLine: 10, viewportHeight: 30 },
@@ -1769,7 +1641,7 @@ describe("Normal mode", () => {
     });
 
     it("H is clamped when viewport extends beyond buffer", () => {
-      const buffer = makeLargeBuffer(20);
+      const buffer = new TextBuffer(makeLargeText(20));
       const ctx = createTestContext(
         { line: 15, col: 0 },
         { viewportTopLine: 15, viewportHeight: 30 },
@@ -1779,7 +1651,7 @@ describe("Normal mode", () => {
     });
 
     it("dH deletes from cursor to top of viewport", () => {
-      const buffer = makeLargeBuffer(100);
+      const buffer = new TextBuffer(makeLargeText(100));
       const ctx = createTestContext(
         { line: 20, col: 0 },
         { viewportTopLine: 10, viewportHeight: 30 },
@@ -1796,13 +1668,12 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("withRegisterInfo (named register + status message)", () => {
     it('"a3dd shows status message with register info', () => {
-      const buffer = new TextBuffer("line1\nline2\nline3\nline4\nline5");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(['"', "a", "3", "d", "d"], ctx, buffer);
-      expect(buffer.getContent()).toBe("line4\nline5");
-      expect(result.registers.a).toBe("line1\nline2\nline3\n");
+      const v = vim("line1\nline2\nline3\nline4\nline5");
+      v.type('"a3dd');
+      expect(v.content()).toBe("line4\nline5");
+      expect(v.raw().ctx.registers.a).toBe("line1\nline2\nline3\n");
       // statusMessage should include register info
-      expect(result.statusMessage).toContain('"a');
+      expect(v.statusMessage()).toContain('"a');
     });
   });
 
@@ -1811,13 +1682,12 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("handleTextObjectPending with invalid text object", () => {
     it("resets when resolveTextObject returns null (e.g., diQ)", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
+      const v = vim("hello world");
       // d -> operator-pending, i -> text-object-pending, Q -> invalid text object
-      const { ctx: result } = pressKeys(["d", "i", "Q"], ctx, buffer);
-      expect(result.phase).toBe("idle");
-      expect(result.operator).toBeNull();
-      expect(buffer.getContent()).toBe("hello world"); // no change
+      v.type("diQ");
+      expect(v.raw().ctx.phase).toBe("idle");
+      expect(v.raw().ctx.operator).toBeNull();
+      expect(v.content()).toBe("hello world"); // no change
     });
   });
 
@@ -1849,29 +1719,26 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Count input during operator-pending", () => {
     it("d2w deletes 2 words via count during operator-pending", () => {
-      const buffer = new TextBuffer("one two three four");
-      const ctx = createTestContext({ line: 0, col: 0 });
+      const v = vim("one two three four");
       // d -> operator-pending, 2 -> count accumulation, w -> motion with count=2
-      const { ctx: result } = pressKeys(["d", "2", "w"], ctx, buffer);
-      expect(buffer.getContent()).toBe("three four");
-      expect(result.phase).toBe("idle");
-      expect(result.operator).toBeNull();
+      v.type("d2w");
+      expect(v.content()).toBe("three four");
+      expect(v.raw().ctx.phase).toBe("idle");
+      expect(v.raw().ctx.operator).toBeNull();
     });
 
     it("c3w changes 3 words and enters insert mode", () => {
-      const buffer = new TextBuffer("one two three four five");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["c", "3", "w"], ctx, buffer);
-      expect(buffer.getContent()).toBe("four five");
-      expect(result.mode).toBe("insert");
+      const v = vim("one two three four five");
+      v.type("c3w");
+      expect(v.content()).toBe("four five");
+      expect(v.mode()).toBe("insert");
     });
 
     it("y2w yanks 2 words without changing buffer", () => {
-      const buffer = new TextBuffer("one two three four");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["y", "2", "w"], ctx, buffer);
-      expect(buffer.getContent()).toBe("one two three four");
-      expect(result.register).toBe("one two ");
+      const v = vim("one two three four");
+      v.type("y2w");
+      expect(v.content()).toBe("one two three four");
+      expect(v.register('"')).toBe("one two ");
     });
   });
 
@@ -1880,21 +1747,19 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Invalid key during operator-pending cancels operator", () => {
     it("dQ cancels operator (Q is not a motion)", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["d", "Q"], ctx, buffer);
-      expect(result.phase).toBe("idle");
-      expect(result.operator).toBeNull();
-      expect(buffer.getContent()).toBe("hello world"); // no change
+      const v = vim("hello world");
+      v.type("dQ");
+      expect(v.raw().ctx.phase).toBe("idle");
+      expect(v.raw().ctx.operator).toBeNull();
+      expect(v.content()).toBe("hello world"); // no change
     });
 
     it("yZ cancels operator (Z is not a motion)", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["y", "Z"], ctx, buffer);
-      expect(result.phase).toBe("idle");
-      expect(result.operator).toBeNull();
-      expect(result.register).toBe(""); // nothing yanked
+      const v = vim("hello world");
+      v.type("yZ");
+      expect(v.raw().ctx.phase).toBe("idle");
+      expect(v.raw().ctx.operator).toBeNull();
+      expect(v.register('"')).toBe(""); // nothing yanked
     });
   });
 
@@ -1904,17 +1769,15 @@ describe("Normal mode", () => {
   describe("Pattern not found during * / # word search", () => {
     it("* shows 'Pattern not found' when word has no other occurrence", () => {
       // Single line, single occurrence: search wraps but doesn't find another match
-      const buffer = new TextBuffer("uniqueword");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["*"], ctx, buffer);
-      expect(result.statusMessage).toContain("Pattern not found");
+      const v = vim("uniqueword");
+      v.type("*");
+      expect(v.statusMessage()).toContain("Pattern not found");
     });
 
     it("# shows 'Pattern not found' when word has no other occurrence", () => {
-      const buffer = new TextBuffer("uniqueword");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["#"], ctx, buffer);
-      expect(result.statusMessage).toContain("Pattern not found");
+      const v = vim("uniqueword");
+      v.type("#");
+      expect(v.statusMessage()).toContain("Pattern not found");
     });
   });
 
@@ -1923,27 +1786,24 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Invalid mark key", () => {
     it("m1 resets (1 is not a valid mark key)", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["m", "1"], ctx, buffer);
-      expect(result.phase).toBe("idle");
+      const v = vim("hello world");
+      v.type("m1");
+      expect(v.raw().ctx.phase).toBe("idle");
       // No mark should be set
-      expect(result.marks["1"]).toBeUndefined();
+      expect(v.raw().ctx.marks["1"]).toBeUndefined();
     });
 
     it("mM resets (uppercase M is not a valid mark key)", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["m", "M"], ctx, buffer);
-      expect(result.phase).toBe("idle");
-      expect(result.marks["M"]).toBeUndefined();
+      const v = vim("hello world");
+      v.type("mM");
+      expect(v.raw().ctx.phase).toBe("idle");
+      expect(v.raw().ctx.marks["M"]).toBeUndefined();
     });
 
     it("m! resets (special character is not a valid mark key)", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["m", "!"], ctx, buffer);
-      expect(result.phase).toBe("idle");
+      const v = vim("hello world");
+      v.type("m!");
+      expect(v.raw().ctx.phase).toBe("idle");
     });
   });
 
@@ -1952,26 +1812,23 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Invalid jump mark key", () => {
     it("`1 resets (1 is not a valid jump mark key)", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["`", "1"], ctx, buffer);
-      expect(result.phase).toBe("idle");
+      const v = vim("hello world");
+      v.type("`1");
+      expect(v.raw().ctx.phase).toBe("idle");
       // Cursor should not change
-      expect(result.cursor).toEqual({ line: 0, col: 0 });
+      expect(v.cursor()).toEqual({ line: 0, col: 0 });
     });
 
     it("`M resets (uppercase M is not a valid jump mark key)", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["`", "M"], ctx, buffer);
-      expect(result.phase).toBe("idle");
+      const v = vim("hello world");
+      v.type("`M");
+      expect(v.raw().ctx.phase).toBe("idle");
     });
 
     it("'1 resets (1 is not a valid jump mark key via ')", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["'", "1"], ctx, buffer);
-      expect(result.phase).toBe("idle");
+      const v = vim("hello world");
+      v.type("'1");
+      expect(v.raw().ctx.phase).toBe("idle");
     });
   });
 
@@ -1980,30 +1837,27 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Operator + char search repeat that does not move", () => {
     it("d; does nothing when ; repeat finds no match", () => {
-      const buffer = new TextBuffer("abcdef");
-      const ctx = createTestContext({ line: 0, col: 5 }); // cursor at 'f' (end)
-      // First, do fa to set lastCharSearch (finds 'a' but we're already past it going forward)
-      // Use Fa to go backward to 'a', then go to end, then d; forward should not move
-      const { ctx: afterFa } = pressKeys(["f", "z"], ctx, buffer);
+      const v = vim("abcdef", { cursor: [0, 5] }); // cursor at 'f' (end)
+      // First, do fz to set lastCharSearch (finds no z in line)
+      v.type("fz");
       // fz didn't move (no z in line), but set lastCharSearch to f/z
-      expect(afterFa.lastCharSearch).toEqual({ command: "f", char: "z" });
+      expect(v.raw().ctx.lastCharSearch).toEqual({ command: "f", char: "z" });
       // Now d; should try to repeat fz, find nothing, and cancel
-      const { ctx: result } = pressKeys(["d", ";"], afterFa, buffer);
-      expect(result.phase).toBe("idle");
-      expect(result.operator).toBeNull();
-      expect(buffer.getContent()).toBe("abcdef"); // no change
+      v.type("d;");
+      expect(v.raw().ctx.phase).toBe("idle");
+      expect(v.raw().ctx.operator).toBeNull();
+      expect(v.content()).toBe("abcdef"); // no change
     });
 
     it("d, does nothing when , repeat finds no match", () => {
-      const buffer = new TextBuffer("abcdef");
-      const ctx = createTestContext({ line: 0, col: 0 }); // cursor at 'a'
+      const v = vim("abcdef"); // cursor at 'a'
       // Fz backward search for 'z' - doesn't move but sets lastCharSearch
-      const { ctx: afterFz } = pressKeys(["F", "z"], ctx, buffer);
-      expect(afterFz.lastCharSearch).toEqual({ command: "F", char: "z" });
+      v.type("Fz");
+      expect(v.raw().ctx.lastCharSearch).toEqual({ command: "F", char: "z" });
       // d, reverses to forward fz, no match → cancel
-      const { ctx: result } = pressKeys(["d", ","], afterFz, buffer);
-      expect(result.phase).toBe("idle");
-      expect(buffer.getContent()).toBe("abcdef");
+      v.type("d,");
+      expect(v.raw().ctx.phase).toBe("idle");
+      expect(v.content()).toBe("abcdef");
     });
   });
 
@@ -2014,12 +1868,11 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("Paste from unset named register", () => {
     it('"ap does nothing when register a has never been set', () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createTestContext({ line: 0, col: 0 });
+      const v = vim("hello");
       // "ap → select register a, then paste. Register a is undefined → getRegisterText returns ""
-      const { ctx: result } = pressKeys(['"', "a", "p"], ctx, buffer);
-      expect(buffer.getContent()).toBe("hello"); // no change
-      expect(result.cursor).toEqual({ line: 0, col: 0 });
+      v.type('"ap');
+      expect(v.content()).toBe("hello"); // no change
+      expect(v.cursor()).toEqual({ line: 0, col: 0 });
     });
   });
 
@@ -2029,12 +1882,13 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("ciw enters insert mode via text object", () => {
     it("ciw changes inner word and enters insert mode", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result, allActions } = pressKeys(["c", "i", "w"], ctx, buffer);
-      expect(result.mode).toBe("insert");
-      expect(result.statusMessage).toBe("-- INSERT --");
-      expect(allActions.some((a) => a.type === "mode-change" && a.mode === "insert")).toBe(true);
+      const v = vim("hello world");
+      v.type("ciw");
+      expect(v.mode()).toBe("insert");
+      expect(v.statusMessage()).toBe("-- INSERT --");
+      expect(v.allActions().some((a) => a.type === "mode-change" && a.mode === "insert")).toBe(
+        true,
+      );
     });
   });
 
@@ -2044,12 +1898,13 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("cgg enters insert mode", () => {
     it("cgg changes from cursor to beginning of file and enters insert mode", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createTestContext({ line: 2, col: 0 });
-      const { ctx: result, allActions } = pressKeys(["c", "g", "g"], ctx, buffer);
-      expect(result.mode).toBe("insert");
+      const v = vim("line1\nline2\nline3", { cursor: [2, 0] });
+      v.type("cgg");
+      expect(v.mode()).toBe("insert");
       // mode-change action is emitted because opResult.newMode (insert) !== ctx.mode (normal)
-      expect(allActions.some((a) => a.type === "mode-change" && a.mode === "insert")).toBe(true);
+      expect(v.allActions().some((a) => a.type === "mode-change" && a.mode === "insert")).toBe(
+        true,
+      );
     });
   });
 
@@ -2059,11 +1914,10 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("I on an all-whitespace line", () => {
     it("I moves to column 0 on an all-whitespace line", () => {
-      const buffer = new TextBuffer("   ");
-      const ctx = createTestContext({ line: 0, col: 2 });
-      const { ctx: result } = pressKeys(["I"], ctx, buffer);
-      expect(result.mode).toBe("insert");
-      expect(result.cursor.col).toBe(0);
+      const v = vim("   ", { cursor: [0, 2] });
+      v.type("I");
+      expect(v.mode()).toBe("insert");
+      expect(v.cursor().col).toBe(0);
     });
   });
 
@@ -2105,12 +1959,11 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("o on an empty line exercises getLeadingWhitespace", () => {
     it("o on an empty line opens a new line with no indent", () => {
-      const buffer = new TextBuffer("");
-      const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["o"], ctx, buffer);
-      expect(result.mode).toBe("insert");
-      expect(result.cursor).toEqual({ line: 1, col: 0 });
-      expect(buffer.getContent()).toBe("\n");
+      const v = vim("");
+      v.type("o");
+      expect(v.mode()).toBe("insert");
+      expect(v.cursor()).toEqual({ line: 1, col: 0 });
+      expect(v.content()).toBe("\n");
     });
   });
 });
