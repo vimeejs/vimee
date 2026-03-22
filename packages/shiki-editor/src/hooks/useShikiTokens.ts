@@ -9,7 +9,7 @@
  */
 
 import { useMemo } from "react";
-import type { HighlighterCore, ThemedToken } from "shiki";
+import type { HighlighterGeneric, ThemedToken } from "shiki/types";
 
 /** Token sequence and theme colors */
 export interface ShikiTokenResult {
@@ -30,11 +30,11 @@ export interface ShikiTokenResult {
  * @param theme - Color theme
  * @param extraOptions - Additional options passed to codeToTokens
  */
-export function useShikiTokens(
-  highlighter: HighlighterCore,
+export function useShikiTokens<L extends string, T extends string>(
+  highlighter: HighlighterGeneric<L, T>,
   content: string,
-  lang: string,
-  theme: string,
+  lang: L,
+  theme: T,
   extraOptions?: Record<string, unknown>,
 ): ShikiTokenResult {
   return useMemo(() => {

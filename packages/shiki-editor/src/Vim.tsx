@@ -27,7 +27,7 @@
  */
 
 import { useRef, useCallback, useMemo, useEffect } from "react";
-import type { HighlighterCore } from "shiki";
+import type { HighlighterGeneric } from "shiki/types";
 import type { VimMode, VimAction, CursorPosition } from "@vimee/core";
 import { useVim } from "@vimee/react";
 import { useShikiTokens } from "./hooks/useShikiTokens";
@@ -36,15 +36,15 @@ import { Cursor } from "./components/Cursor";
 import { StatusLine } from "./components/StatusLine";
 
 /** Props for the Vim component */
-export interface VimProps {
+export interface VimProps<L extends string = string, T extends string = string> {
   /** Initial content */
   content: string;
   /** Shiki Highlighter instance */
-  highlighter: HighlighterCore;
+  highlighter: HighlighterGeneric<L, T>;
   /** Programming language for syntax highlighting */
-  lang: string;
+  lang: L;
   /** Color theme name */
-  theme: string;
+  theme: T;
   /** Additional options passed to Shiki's codeToTokens */
   shikiOptions?: Record<string, unknown>;
   /** Initial cursor position ("line:col" format, 1-based) */
@@ -79,7 +79,7 @@ export interface VimProps {
  * Displays code using Shiki's highlighter
  * with Vim keybindings for editing.
  */
-export function Vim({
+export function Vim<L extends string, T extends string>({
   content: initialContent,
   highlighter,
   lang,
@@ -97,7 +97,7 @@ export function Vim({
   indentStyle,
   indentWidth,
   showLineNumbers = true,
-}: VimProps) {
+}: VimProps<L, T>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const codeAreaRef = useRef<HTMLDivElement>(null);
 
