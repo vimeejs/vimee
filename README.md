@@ -23,6 +23,7 @@ vimee is a **framework-agnostic, pure-function Vim engine** that you can plug in
 | [`@vimee/react`](./packages/react)                     | React `useVim` hook                                 | [![npm](https://img.shields.io/npm/v/@vimee/react)](https://www.npmjs.com/package/@vimee/react)                     |
 | [`@vimee/plugin-textarea`](./packages/plugin-textarea) | Attach vim to any textarea                          | [![npm](https://img.shields.io/npm/v/@vimee/plugin-textarea)](https://www.npmjs.com/package/@vimee/plugin-textarea) |
 | [`@vimee/shiki-editor`](./packages/shiki-editor)       | Vim editor component with Shiki syntax highlighting | [![npm](https://img.shields.io/npm/v/@vimee/shiki-editor)](https://www.npmjs.com/package/@vimee/shiki-editor)       |
+| [`@vimee/testkit`](./packages/testkit)                 | Test utilities for Vim operations                   | [![npm](https://img.shields.io/npm/v/@vimee/testkit)](https://www.npmjs.com/package/@vimee/testkit)                 |
 
 ## Quick Start
 
@@ -185,7 +186,8 @@ packages/
 ├── core/              # @vimee/core — headless vim engine
 ├── react/             # @vimee/react — React useVim hook
 ├── plugin-textarea/   # @vimee/plugin-textarea — vim for any textarea
-└── shiki-editor/      # @vimee/shiki-editor — editor component with Shiki
+├── shiki-editor/      # @vimee/shiki-editor — editor component with Shiki
+└── testkit/           # @vimee/testkit — test utilities for Vim operations
 playground/            # Live demo app (git submodule)
 ```
 

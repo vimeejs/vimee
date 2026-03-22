@@ -156,6 +156,7 @@ Full state of the vim engine. Key fields:
 | `macroRecording` | `string \| null` | Register being recorded into |
 | `macros` | `Record<string, string[]>` | Recorded macro sequences |
 | `statusMessage` | `string` | Status bar text |
+| `statusError` | `boolean` | Whether the status message is an error |
 | `indentStyle` | `"space" \| "tab"` | Indent character |
 | `indentWidth` | `number` | Spaces per indent level |
 
