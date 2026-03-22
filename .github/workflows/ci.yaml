@@ -77,11 +77,3 @@ jobs:
       - uses: k1LoW/octocov-action@v1
         with:
           config: packages/testkit/.octocov.yml
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          files: packages/core/coverage/lcov.info,packages/react/coverage/lcov.info,packages/plugin-textarea/coverage/lcov.info,packages/shiki-editor/coverage/lcov.info,packages/testkit/coverage/lcov.info
-          flags: core,react,plugin-textarea,shiki-editor,testkit
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
