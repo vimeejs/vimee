@@ -25,7 +25,7 @@
         "happy-dom": "^18.0.1",
       },
       "peerDependencies": {
-        "@vimee/core": "workspace:*",
+        "@vimee/core": ">=0.1.0",
       },
     },
     "packages/react": {
@@ -73,6 +73,7 @@
         "@cloudflare/vite-plugin": "^1.30.0",
         "@fontsource-variable/geist": "^5.2.8",
         "@vimee/core": "^0.1.1",
+        "@vimee/plugin-textarea": "^0.1.2",
         "@vimee/react": "^0.1.2",
         "@vimee/shiki-editor": "^0.1.2",
         "class-variance-authority": "^0.7.1",

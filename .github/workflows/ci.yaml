@@ -70,3 +70,10 @@ jobs:
       - uses: k1LoW/octocov-action@v1
         with:
           config: packages/shiki-editor/.octocov.yml
+
+      - name: Test with coverage (@vimee/testkit)
+        run: bun run --filter @vimee/testkit test:coverage
+
+      - uses: k1LoW/octocov-action@v1
+        with:
+          config: packages/testkit/.octocov.yml
