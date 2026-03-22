@@ -53,15 +53,19 @@ function createInsertContext(
 }
 
 /** Process multiple keys in sequence and return the final state */
+type KeyInput = string | { key: string; ctrlKey: boolean };
+
 function pressKeys(
-  keys: string[],
+  keys: KeyInput[],
   ctx: VimContext,
   buffer: TextBuffer,
 ): { ctx: VimContext; allActions: VimAction[] } {
   let current = ctx;
   const allActions: VimAction[] = [];
-  for (const key of keys) {
-    const result = processInsertMode(key, current, buffer, false);
+  for (const input of keys) {
+    const key = typeof input === "string" ? input : input.key;
+    const ctrlKey = typeof input === "string" ? false : input.ctrlKey;
+    const result = processInsertMode(key, current, buffer, ctrlKey);
     current = result.newCtx;
     allActions.push(...result.actions);
   }
@@ -269,6 +273,59 @@ describe("Insert mode", () => {
       const { ctx: result } = pressKeys(["Enter"], ctx, buffer);
       expect(buffer.getContent()).toBe("    foo\n    bar");
       expect(result.cursor).toEqual({ line: 1, col: 4 });
+    });
+  });
+
+  // ---------------------------------------------------
+  // Ctrl-W (delete word backward)
+  // ---------------------------------------------------
+  describe("Ctrl-W (delete word backward)", () => {
+    it("deletes the word before the cursor", () => {
+      const buffer = new TextBuffer("hello world");
+      const ctx = createInsertContext({ line: 0, col: 11 });
+      const { ctx: result } = pressKeys(
+        [{ key: "w", ctrlKey: true }],
+        ctx,
+        buffer,
+      );
+      expect(buffer.getContent()).toBe("hello ");
+      expect(result.cursor).toEqual({ line: 0, col: 6 });
+    });
+
+    it("deletes word and trailing whitespace", () => {
+      const buffer = new TextBuffer("foo   bar");
+      const ctx = createInsertContext({ line: 0, col: 6 });
+      const { ctx: result } = pressKeys(
+        [{ key: "w", ctrlKey: true }],
+        ctx,
+        buffer,
+      );
+      expect(buffer.getContent()).toBe("bar");
+      expect(result.cursor).toEqual({ line: 0, col: 0 });
+    });
+
+    it("does nothing at the beginning of a line", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(
+        [{ key: "w", ctrlKey: true }],
+        ctx,
+        buffer,
+      );
+      expect(buffer.getContent()).toBe("hello");
+      expect(result.cursor).toEqual({ line: 0, col: 0 });
+    });
+
+    it("deletes punctuation as a separate word class", () => {
+      const buffer = new TextBuffer("foo...bar");
+      const ctx = createInsertContext({ line: 0, col: 6 });
+      const { ctx: result } = pressKeys(
+        [{ key: "w", ctrlKey: true }],
+        ctx,
+        buffer,
+      );
+      expect(buffer.getContent()).toBe("foobar");
+      expect(result.cursor).toEqual({ line: 0, col: 3 });
     });
   });
 

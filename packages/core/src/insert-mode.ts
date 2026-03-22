@@ -32,8 +32,9 @@ export function processInsertMode(
 
   // --- Ctrl key combinations ---
   if (ctrlKey) {
-    // In insert mode, Ctrl key combinations are generally ignored
-    // TODO: Ctrl-W (delete word), Ctrl-U (delete to beginning of line), etc.
+    if (key === "w") {
+      return handleCtrlW(ctx, buffer);
+    }
     return { newCtx: ctx, actions: [] };
   }
 
@@ -235,6 +236,43 @@ function handleTab(
     line: ctx.cursor.line,
     col: ctx.cursor.col + indent.length,
   };
+
+  return {
+    newCtx: { ...ctx, cursor: newCursor },
+    actions: [
+      { type: "content-change", content: buffer.getContent() },
+      { type: "cursor-move", position: newCursor },
+    ],
+  };
+}
+
+/**
+ * Ctrl-W: Delete the word before the cursor.
+ */
+function handleCtrlW(
+  ctx: VimContext,
+  buffer: TextBuffer,
+): KeystrokeResult {
+  if (ctx.cursor.col === 0) {
+    return { newCtx: ctx, actions: [] };
+  }
+
+  const line = buffer.getLine(ctx.cursor.line);
+  let col = ctx.cursor.col;
+
+  // Skip whitespace backward
+  while (col > 0 && (line[col - 1] === " " || line[col - 1] === "\t")) col--;
+  // Skip word characters backward
+  if (col > 0 && /\w/.test(line[col - 1])) {
+    while (col > 0 && /\w/.test(line[col - 1])) col--;
+  } else if (col > 0) {
+    // Skip non-word, non-whitespace characters backward
+    while (col > 0 && !/\w/.test(line[col - 1]) && line[col - 1] !== " " && line[col - 1] !== "\t") col--;
+  }
+
+  const newLine = line.slice(0, col) + line.slice(ctx.cursor.col);
+  buffer.setLine(ctx.cursor.line, newLine);
+  const newCursor = { line: ctx.cursor.line, col };
 
   return {
     newCtx: { ...ctx, cursor: newCursor },
