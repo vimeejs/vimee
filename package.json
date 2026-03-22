@@ -4,7 +4,7 @@
   "type": "module",
   "workspaces": ["packages/*", "playground"],
   "scripts": {
-    "build": "bun run --filter @vimee/core build && bun run --filter @vimee/react build && bun run --filter @vimee/plugin-textarea build && bun run --filter @vimee/shiki-editor build && bun run --filter @vimee/testkit build",
+    "build": "turbo run build --filter='@vimee/*'",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "bun run --filter '*' typecheck",
@@ -20,8 +20,9 @@
     "@typescript/native-preview": "^7.0.0-dev.20260321.1",
     "@vitest/coverage-v8": "^4.1.0",
     "tsup": "^8.0.0",
+    "turbo": "^2.8.20",
     "typescript": "^5.7.0",
     "vitest": "^4.1.0"
   },
-  "packageManager": "bun"
+  "packageManager": "bun@1.2.17"
 }
