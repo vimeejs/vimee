@@ -631,10 +631,11 @@ function tryInsertEntry(
     }
 
     case "o": {
-      // Insert a blank line below the current line and enter insert
+      // Insert a new line below with same indentation and enter insert
       buffer.saveUndoPoint(ctx.cursor);
-      buffer.insertLine(ctx.cursor.line + 1, "");
-      const newCursor = { line: ctx.cursor.line + 1, col: 0 };
+      const indent = getLeadingWhitespace(buffer.getLine(ctx.cursor.line));
+      buffer.insertLine(ctx.cursor.line + 1, indent);
+      const newCursor = { line: ctx.cursor.line + 1, col: indent.length };
       return {
         newCtx: {
           ...resetContext(ctx),
@@ -651,10 +652,11 @@ function tryInsertEntry(
     }
 
     case "O": {
-      // Insert a blank line above the current line and enter insert
+      // Insert a new line above with same indentation and enter insert
       buffer.saveUndoPoint(ctx.cursor);
-      buffer.insertLine(ctx.cursor.line, "");
-      const newCursor = { line: ctx.cursor.line, col: 0 };
+      const indent = getLeadingWhitespace(buffer.getLine(ctx.cursor.line));
+      buffer.insertLine(ctx.cursor.line, indent);
+      const newCursor = { line: ctx.cursor.line, col: indent.length };
       return {
         newCtx: {
           ...resetContext(ctx),
@@ -1229,6 +1231,11 @@ function handleJumpMarkPending(
   }
 
   return { newCtx: resetContext(ctx), actions: [] };
+}
+
+function getLeadingWhitespace(line: string): string {
+  const match = line.match(/^(\s*)/);
+  return match ? match[1] : "";
 }
 
 function handleJoinLines(

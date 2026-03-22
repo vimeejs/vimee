@@ -572,6 +572,24 @@ describe("Normal mode", () => {
       expect(result.cursor).toEqual({ line: 1, col: 0 });
       expect(buffer.getContent()).toBe("line1\n\nline2");
     });
+
+    it("o preserves indentation from current line", () => {
+      const buffer = new TextBuffer("  indented");
+      const ctx = createTestContext({ line: 0, col: 2 });
+      const { ctx: result } = pressKeys(["o"], ctx, buffer);
+      expect(result.mode).toBe("insert");
+      expect(result.cursor).toEqual({ line: 1, col: 2 });
+      expect(buffer.getLine(1)).toBe("  ");
+    });
+
+    it("O preserves indentation from current line", () => {
+      const buffer = new TextBuffer("  indented");
+      const ctx = createTestContext({ line: 0, col: 2 });
+      const { ctx: result } = pressKeys(["O"], ctx, buffer);
+      expect(result.mode).toBe("insert");
+      expect(result.cursor).toEqual({ line: 0, col: 2 });
+      expect(buffer.getLine(0)).toBe("  ");
+    });
   });
 
   // ---------------------------------------------------

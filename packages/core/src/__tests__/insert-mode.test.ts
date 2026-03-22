@@ -254,6 +254,22 @@ describe("Insert mode", () => {
       expect(buffer.getContent()).toBe("hello\n\n");
       expect(result.cursor).toEqual({ line: 2, col: 0 });
     });
+
+    it("preserves indentation on Enter", () => {
+      const buffer = new TextBuffer("  hello");
+      const ctx = createInsertContext({ line: 0, col: 7 });
+      const { ctx: result } = pressKeys(["Enter"], ctx, buffer);
+      expect(buffer.getContent()).toBe("  hello\n  ");
+      expect(result.cursor).toEqual({ line: 1, col: 2 });
+    });
+
+    it("preserves indentation when splitting in the middle", () => {
+      const buffer = new TextBuffer("    foobar");
+      const ctx = createInsertContext({ line: 0, col: 7 });
+      const { ctx: result } = pressKeys(["Enter"], ctx, buffer);
+      expect(buffer.getContent()).toBe("    foo\n    bar");
+      expect(result.cursor).toEqual({ line: 1, col: 4 });
+    });
   });
 
   // ---------------------------------------------------

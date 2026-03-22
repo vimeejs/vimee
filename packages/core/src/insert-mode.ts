@@ -198,13 +198,19 @@ function handleDelete(
 
 /**
  * Enter: Split the line at the current cursor position.
+ * Preserves the indentation of the current line.
  */
 function handleEnter(
   ctx: VimContext,
   buffer: TextBuffer,
 ): KeystrokeResult {
+  const indent = getLineIndent(buffer.getLine(ctx.cursor.line));
   buffer.splitLine(ctx.cursor.line, ctx.cursor.col);
-  const newCursor = { line: ctx.cursor.line + 1, col: 0 };
+  if (indent) {
+    const newLine = ctx.cursor.line + 1;
+    buffer.setLine(newLine, indent + buffer.getLine(newLine));
+  }
+  const newCursor = { line: ctx.cursor.line + 1, col: indent.length };
 
   return {
     newCtx: { ...ctx, cursor: newCursor },
@@ -237,6 +243,14 @@ function handleTab(
       { type: "cursor-move", position: newCursor },
     ],
   };
+}
+
+/**
+ * Extract the leading whitespace from a line.
+ */
+function getLineIndent(line: string): string {
+  const match = line.match(/^(\s*)/);
+  return match ? match[1] : "";
 }
 
 /**
