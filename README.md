@@ -14,7 +14,7 @@
 
 ---
 
-![vimee demo](https://assets.vimee.dev/brandresource/vimee.gif)
+<video src="https://assets.vimee.dev/brandresource/vimee.mp4" autoplay loop muted playsinline width="720"></video>
 
 vimee is a **framework-agnostic, pure-function Vim engine** that you can plug into any editor UI. The core engine has **zero runtime dependencies** — it takes a keystroke and returns state transitions. Framework bindings (React, etc.) are thin wrappers that turn those transitions into reactive state.
 
