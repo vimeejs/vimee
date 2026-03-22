@@ -22,6 +22,7 @@
 .sv-container {
   position: relative;
   overflow: hidden;
+  height: 100%;
   font-family: var(--sv-font-family, "Menlo", "Monaco", "Courier New", monospace);
   font-size: var(--sv-font-size, 14px);
   line-height: var(--sv-line-height, 1.5);
