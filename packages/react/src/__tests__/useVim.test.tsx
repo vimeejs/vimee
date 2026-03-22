@@ -88,25 +88,19 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("Initialization", () => {
     it("initializes with the given content", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello world" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello world" }));
       expect(result.current.content).toBe("hello world");
       unmount();
     });
 
     it("initializes in normal mode", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "test" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "test" }));
       expect(result.current.mode).toBe("normal");
       unmount();
     });
 
     it("initializes cursor at 0,0 by default", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "test" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "test" }));
       expect(result.current.cursor).toEqual({ line: 0, col: 0 });
       unmount();
     });
@@ -120,41 +114,31 @@ describe("useVim", () => {
     });
 
     it("starts with empty status message", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "" }));
       expect(result.current.statusMessage).toBe("");
       unmount();
     });
 
     it("starts with null visualAnchor", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "" }));
       expect(result.current.visualAnchor).toBeNull();
       unmount();
     });
 
     it("starts with empty commandLine", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "" }));
       expect(result.current.commandLine).toBe("");
       unmount();
     });
 
     it("starts with empty options", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "" }));
       expect(result.current.options).toEqual({});
       unmount();
     });
 
     it("starts with empty lastSearch", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "" }));
       expect(result.current.lastSearch).toBe("");
       unmount();
     });
@@ -165,9 +149,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("Keyboard event handling", () => {
     it("moves cursor right with l", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello world" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello world" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("l"));
@@ -178,9 +160,7 @@ describe("useVim", () => {
     });
 
     it("moves cursor down with j", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "line1\nline2\nline3" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "line1\nline2\nline3" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("j"));
@@ -191,9 +171,7 @@ describe("useVim", () => {
     });
 
     it("enters insert mode with i", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("i"));
@@ -204,9 +182,7 @@ describe("useVim", () => {
     });
 
     it("returns to normal mode with Escape from insert mode", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("i"));
@@ -221,9 +197,7 @@ describe("useVim", () => {
     });
 
     it("enters visual mode with v", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("v"));
@@ -235,9 +209,7 @@ describe("useVim", () => {
     });
 
     it("enters command-line mode with :", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent(":"));
@@ -249,9 +221,7 @@ describe("useVim", () => {
     });
 
     it("ignores IME composing events", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("a", { isComposing: true }));
@@ -267,9 +237,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("Content changes", () => {
     it("updates content when deleting with dd", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "line1\nline2\nline3" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "line1\nline2\nline3" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("d"));
@@ -281,9 +249,7 @@ describe("useVim", () => {
     });
 
     it("updates content when inserting text", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("i"));
@@ -296,9 +262,7 @@ describe("useVim", () => {
     });
 
     it("updates content when using x to delete characters", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("x"));
@@ -315,9 +279,7 @@ describe("useVim", () => {
   describe("Callbacks", () => {
     it("calls onChange when content changes", () => {
       const onChange = vi.fn();
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello", onChange }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello", onChange }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("x"));
@@ -329,9 +291,7 @@ describe("useVim", () => {
 
     it("calls onModeChange when mode changes", () => {
       const onModeChange = vi.fn();
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello", onModeChange }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello", onModeChange }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("i"));
@@ -343,9 +303,7 @@ describe("useVim", () => {
 
     it("calls onYank when text is yanked", () => {
       const onYank = vi.fn();
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello world", onYank }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello world", onYank }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("y"));
@@ -358,9 +316,7 @@ describe("useVim", () => {
 
     it("calls onSave when :w is executed", () => {
       const onSave = vi.fn();
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello", onSave }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello", onSave }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent(":"));
@@ -374,18 +330,14 @@ describe("useVim", () => {
 
     it("calls onAction for every action", () => {
       const onAction = vi.fn();
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello", onAction }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello", onAction }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("x"));
       });
 
       expect(onAction).toHaveBeenCalled();
-      const actionTypes = onAction.mock.calls.map(
-        ([action]: any[]) => action.type,
-      );
+      const actionTypes = onAction.mock.calls.map(([action]: any[]) => action.type);
       expect(actionTypes).toContain("content-change");
       unmount();
     });
@@ -396,9 +348,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("readOnly mode", () => {
     it("blocks insert mode in readOnly", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello", readOnly: true }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello", readOnly: true }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("i"));
@@ -422,9 +372,7 @@ describe("useVim", () => {
     });
 
     it("blocks x (delete) in readOnly", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello", readOnly: true }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello", readOnly: true }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("x"));
@@ -484,9 +432,7 @@ describe("useVim", () => {
     });
 
     it("clamps cursor to last line when scrolling down beyond buffer", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "line1\nline2\nline3" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "line1\nline2\nline3" }));
 
       act(() => {
         result.current.handleScroll("down", 100, 1.0);
@@ -502,9 +448,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("updateViewport", () => {
     it("updates viewport without crashing", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       act(() => {
         result.current.updateViewport(10, 30);
@@ -520,9 +464,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("preventDefault", () => {
     it("prevents default for Ctrl-R", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       const event = createKeyEvent("r", { ctrlKey: true });
       act(() => {
@@ -534,9 +476,7 @@ describe("useVim", () => {
     });
 
     it("prevents default for Ctrl-D", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       const event = createKeyEvent("d", { ctrlKey: true });
       act(() => {
@@ -548,9 +488,7 @@ describe("useVim", () => {
     });
 
     it("prevents default for Tab", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       const event = createKeyEvent("Tab");
       act(() => {
@@ -562,9 +500,7 @@ describe("useVim", () => {
     });
 
     it("prevents default for Escape", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       const event = createKeyEvent("Escape");
       act(() => {
@@ -576,9 +512,7 @@ describe("useVim", () => {
     });
 
     it("prevents default for /", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       const event = createKeyEvent("/");
       act(() => {
@@ -590,9 +524,7 @@ describe("useVim", () => {
     });
 
     it("does not prevent default for regular character keys", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       const event = createKeyEvent("j");
       act(() => {
@@ -609,9 +541,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("Status and command line", () => {
     it("shows command line when in command-line mode", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent(":"));
@@ -623,9 +553,7 @@ describe("useVim", () => {
     });
 
     it("clears command line after executing command", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent(":"));
@@ -660,9 +588,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe(":set option", () => {
     it("sets number option with :set number", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent(":"));
@@ -682,9 +608,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("Search", () => {
     it("updates lastSearch after search", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello world foo" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello world foo" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("/"));
@@ -705,9 +629,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("Complex workflows", () => {
     it("dd then p (cut and paste)", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "line1\nline2\nline3" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "line1\nline2\nline3" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("d"));
@@ -723,9 +645,7 @@ describe("useVim", () => {
     });
 
     it("ciw replaces a word", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello world" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello world" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("c"));
@@ -743,9 +663,7 @@ describe("useVim", () => {
     });
 
     it("visual select then delete", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "abcdef" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "abcdef" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("v"));
@@ -801,9 +719,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("Visual anchor consistency", () => {
     it("keeps visualAnchor at the original position while cursor advances with l", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "abcdefghij" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "abcdefghij" }));
 
       // Move cursor to col 2 first, then enter visual mode
       act(() => {
@@ -847,9 +763,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("Command buffer accumulation", () => {
     it("accumulates characters in commandLine as they are typed", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent(":"));
@@ -870,9 +784,7 @@ describe("useVim", () => {
     });
 
     it("accumulates characters for search commandLine with /", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("/"));
@@ -895,9 +807,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("statusError flag", () => {
     it("sets statusError to true for unknown ex commands", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent(":"));
@@ -914,9 +824,7 @@ describe("useVim", () => {
     });
 
     it("reports pattern not found in statusMessage when searching for nonexistent text", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello world" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello world" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("/"));
@@ -938,9 +846,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("lastSearch tracking", () => {
     it("updates lastSearch after a successful search", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "abc def ghi" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "abc def ghi" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("/"));
@@ -956,9 +862,7 @@ describe("useVim", () => {
     });
 
     it("updates lastSearch even when pattern is not found", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "abc def ghi" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "abc def ghi" }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("/"));
@@ -979,9 +883,7 @@ describe("useVim", () => {
   describe("Visual mode selection then yank", () => {
     it("calls onYank with selected text and returns to normal mode", () => {
       const onYank = vi.fn();
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "abcdef", onYank }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "abcdef", onYank }));
 
       // Enter visual mode, select first 3 characters (a, b, c), then yank
       act(() => {
@@ -1025,9 +927,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("Undo restores content", () => {
     it("restores content after dd with u", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "line1\nline2\nline3" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "line1\nline2\nline3" }));
 
       // Delete first line
       act(() => {
@@ -1045,9 +945,7 @@ describe("useVim", () => {
     });
 
     it("restores content after x with u", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello" }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello" }));
 
       // Delete first character
       act(() => {
@@ -1069,9 +967,7 @@ describe("useVim", () => {
   // ---------------------------------------------------
   describe("Multiple indentWidth values", () => {
     it("inserts 4 spaces when indentWidth is 4", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello", indentWidth: 4 }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello", indentWidth: 4 }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("i"));
@@ -1086,9 +982,7 @@ describe("useVim", () => {
     });
 
     it("inserts 8 spaces when indentWidth is 8", () => {
-      const { result, unmount } = renderHook(() =>
-        useVim({ content: "hello", indentWidth: 8 }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content: "hello", indentWidth: 8 }));
 
       act(() => {
         result.current.handleKeyDown(createKeyEvent("i"));
@@ -1123,9 +1017,7 @@ describe("useVim", () => {
   describe("updateViewport affects H/M/L motions", () => {
     it("M moves cursor to the middle of the viewport", () => {
       const content = Array.from({ length: 50 }, (_, i) => `line${i}`).join("\n");
-      const { result, unmount } = renderHook(() =>
-        useVim({ content }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content }));
 
       // Set viewport: top at line 10, height 20 (so middle = line 10 + floor(20/2) = line 20)
       act(() => {
@@ -1142,9 +1034,7 @@ describe("useVim", () => {
 
     it("H moves cursor to the top of the viewport", () => {
       const content = Array.from({ length: 50 }, (_, i) => `line${i}`).join("\n");
-      const { result, unmount } = renderHook(() =>
-        useVim({ content }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content }));
 
       // Set viewport: top at line 15, height 20
       act(() => {
@@ -1161,9 +1051,7 @@ describe("useVim", () => {
 
     it("L moves cursor to the bottom of the viewport", () => {
       const content = Array.from({ length: 50 }, (_, i) => `line${i}`).join("\n");
-      const { result, unmount } = renderHook(() =>
-        useVim({ content }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content }));
 
       // Set viewport: top at line 10, height 20 (so bottom = 10 + 20 - 1 = 29)
       act(() => {
@@ -1180,9 +1068,7 @@ describe("useVim", () => {
 
     it("M changes target when viewport is updated", () => {
       const content = Array.from({ length: 50 }, (_, i) => `line${i}`).join("\n");
-      const { result, unmount } = renderHook(() =>
-        useVim({ content }),
-      );
+      const { result, unmount } = renderHook(() => useVim({ content }));
 
       // First viewport setting
       act(() => {

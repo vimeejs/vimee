@@ -49,9 +49,7 @@ export function StatusLine({
             <span className="sv-command-cursor" />
           </span>
         </span>
-        <span className="sv-statusline-right">
-          {formatCursorPosition(cursor, totalLines)}
-        </span>
+        <span className="sv-statusline-right">{formatCursorPosition(cursor, totalLines)}</span>
       </div>
     );
   }
@@ -65,9 +63,7 @@ export function StatusLine({
           </span>
         )}
       </span>
-      <span className="sv-statusline-right">
-        {formatCursorPosition(cursor, totalLines)}
-      </span>
+      <span className="sv-statusline-right">{formatCursorPosition(cursor, totalLines)}</span>
     </div>
   );
 }
@@ -76,10 +72,7 @@ export function StatusLine({
  * Format cursor position in "line:column" format (1-based).
  * Also displays the position percentage within the file.
  */
-function formatCursorPosition(
-  cursor: CursorPosition,
-  totalLines: number,
-): string {
+function formatCursorPosition(cursor: CursorPosition, totalLines: number): string {
   const line = cursor.line + 1;
   const col = cursor.col + 1;
   const percentage =

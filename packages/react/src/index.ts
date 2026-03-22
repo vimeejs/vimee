@@ -5,9 +5,4 @@ export { useVim } from "./useVim";
 export type { UseVimOptions, UseVimReturn } from "./useVim";
 
 // Re-export commonly used types from core for convenience
-export type {
-  CursorPosition,
-  VimMode,
-  VimAction,
-  VimContext,
-} from "@vimee/core";
+export type { CursorPosition, VimMode, VimAction, VimContext } from "@vimee/core";

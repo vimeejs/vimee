@@ -100,12 +100,7 @@ export class TextBuffer {
     return deleted;
   }
 
-  deleteRange(
-    startLine: number,
-    startCol: number,
-    endLine: number,
-    endCol: number,
-  ): string {
+  deleteRange(startLine: number, startCol: number, endLine: number, endCol: number): string {
     if (startLine === endLine) {
       const line = this.getLine(startLine);
       const deleted = line.slice(startCol, endCol);
@@ -121,18 +116,14 @@ export class TextBuffer {
       lastLine.slice(0, endCol),
     ].join("\n");
 
-    this.lines[startLine] =
-      firstLine.slice(0, startCol) + lastLine.slice(endCol);
+    this.lines[startLine] = firstLine.slice(0, startCol) + lastLine.slice(endCol);
     this.lines.splice(startLine + 1, endLine - startLine);
 
     return deleted;
   }
 
   deleteLines(startLine: number, count: number): string[] {
-    return this.lines.splice(
-      startLine,
-      Math.min(count, this.lines.length - startLine),
-    );
+    return this.lines.splice(startLine, Math.min(count, this.lines.length - startLine));
   }
 
   insertLine(lineIndex: number, content: string): void {

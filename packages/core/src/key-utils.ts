@@ -5,13 +5,7 @@
  * Includes count detection, operator detection, mode transition helpers, etc.
  */
 
-import type {
-  VimContext,
-  VimAction,
-  VimMode,
-  Operator,
-  CharCommand,
-} from "./types";
+import type { VimContext, VimAction, VimMode, Operator, CharCommand } from "./types";
 
 /**
  * Result returned by keystroke processing functions.
@@ -47,9 +41,7 @@ export function isOperator(key: string): key is Operator {
  * r: single character replace
  */
 export function isCharCommand(key: string): key is CharCommand {
-  return (
-    key === "f" || key === "F" || key === "t" || key === "T" || key === "r"
-  );
+  return key === "f" || key === "F" || key === "t" || key === "T" || key === "r";
 }
 
 /**
@@ -74,10 +66,7 @@ export function isCountExplicit(ctx: VimContext): boolean {
  * Helper for mode transitions.
  * Also sets the status message corresponding to the mode.
  */
-export function modeChange(
-  ctx: VimContext,
-  mode: VimMode,
-): KeystrokeResult {
+export function modeChange(ctx: VimContext, mode: VimMode): KeystrokeResult {
   const statusMessage = getModeStatusMessage(mode);
 
   return {
@@ -115,10 +104,7 @@ export function getModeStatusMessage(mode: VimMode): string {
  * Accumulate a count digit.
  * Example: when count=3 and key="2" -> count=32
  */
-export function accumulateCount(
-  key: string,
-  ctx: VimContext,
-): KeystrokeResult {
+export function accumulateCount(key: string, ctx: VimContext): KeystrokeResult {
   const newCount = ctx.count * 10 + Number.parseInt(key, 10);
   return {
     newCtx: { ...ctx, count: newCount },

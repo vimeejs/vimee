@@ -73,10 +73,7 @@ function exitCommandLine(ctx: VimContext): KeystrokeResult {
  * Enter: Execute the command.
  * Execution behavior depends on the commandType.
  */
-function executeCommand(
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function executeCommand(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   const cmd = ctx.commandBuffer;
 
   if (ctx.commandType === ":") {
@@ -93,11 +90,7 @@ function executeCommand(
 /**
  * Execute an Ex command (a command starting with :).
  */
-function executeExCommand(
-  cmd: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function executeExCommand(cmd: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   const actions: VimAction[] = [];
 
   switch (cmd.trim()) {
@@ -124,10 +117,7 @@ function executeExCommand(
       // If numeric, jump to that line
       const lineNum = Number.parseInt(cmd.trim(), 10);
       if (!Number.isNaN(lineNum)) {
-        const targetLine = Math.max(
-          0,
-          Math.min(lineNum - 1, buffer.getLineCount() - 1),
-        );
+        const targetLine = Math.max(0, Math.min(lineNum - 1, buffer.getLineCount() - 1));
         const newCursor = { line: targetLine, col: 0 };
         return {
           newCtx: {
@@ -179,17 +169,12 @@ function executeExCommand(
 /**
  * Execute a search command (/ or ?).
  */
-function executeSearch(
-  pattern: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function executeSearch(pattern: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   if (!pattern) {
     return exitCommandLine(ctx);
   }
 
-  const direction =
-    ctx.commandType === "/" ? "forward" : "backward";
+  const direction = ctx.commandType === "/" ? "forward" : "backward";
 
   const found = searchInBuffer(buffer, pattern, ctx.cursor, direction as "forward" | "backward");
 
@@ -238,15 +223,9 @@ function executeSearch(
  *   N,Ms/old/new/[g]    - line range (1-based)
  *   .,$s/old/new/[g]    - current line to end
  */
-function trySubstitute(
-  cmd: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult | null {
+function trySubstitute(cmd: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult | null {
   // Parse: optional range + s + delimiter + pattern + delimiter + replacement + optional(delimiter + flags)
-  const match = cmd.match(
-    /^(%|(\d+|\.)?,?(\d+|\$)?)?s(.)(.+?)\4(.*?)(?:\4([gi]*))?$/,
-  );
+  const match = cmd.match(/^(%|(\d+|\.)?,?(\d+|\$)?)?s(.)(.+?)\4(.*?)(?:\4([gi]*))?$/);
   if (!match) return null;
 
   const [, rangeStr, rangeStart, rangeEnd, , pattern, replacement, flags = ""] = match;
@@ -262,9 +241,8 @@ function trySubstitute(
     endLine = buffer.getLineCount() - 1;
   } else if (rangeStart !== undefined || rangeEnd !== undefined) {
     startLine = resolveLineRef(rangeStart, ctx.cursor.line, buffer);
-    endLine = rangeEnd !== undefined
-      ? resolveLineRef(rangeEnd, ctx.cursor.line, buffer)
-      : startLine;
+    endLine =
+      rangeEnd !== undefined ? resolveLineRef(rangeEnd, ctx.cursor.line, buffer) : startLine;
   } else {
     // No range: current line only
     startLine = ctx.cursor.line;
@@ -313,9 +291,10 @@ function trySubstitute(
     }
   }
 
-  const statusMessage = totalReplacements > 0
-    ? `${totalReplacements} substitution${totalReplacements > 1 ? "s" : ""} on ${linesChanged} line${linesChanged > 1 ? "s" : ""}`
-    : "Pattern not found: " + pattern;
+  const statusMessage =
+    totalReplacements > 0
+      ? `${totalReplacements} substitution${totalReplacements > 1 ? "s" : ""} on ${linesChanged} line${linesChanged > 1 ? "s" : ""}`
+      : "Pattern not found: " + pattern;
 
   return {
     newCtx: {
@@ -337,11 +316,7 @@ function trySubstitute(
 /**
  * Resolve a line reference (number, '.', '$') to a 0-based line index.
  */
-function resolveLineRef(
-  ref: string | undefined,
-  currentLine: number,
-  buffer: TextBuffer,
-): number {
+function resolveLineRef(ref: string | undefined, currentLine: number, buffer: TextBuffer): number {
   if (!ref || ref === ".") return currentLine;
   if (ref === "$") return buffer.getLineCount() - 1;
   return Math.max(0, Number.parseInt(ref, 10) - 1);

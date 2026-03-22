@@ -50,27 +50,17 @@ export function Line({
     <div className="sv-line" data-line={lineIndex}>
       {/* Line number gutter */}
       {showLineNumbers && (
-        <span
-          className="sv-line-number"
-          style={{ minWidth: `${gutterWidth + 1}ch` }}
-        >
+        <span className="sv-line-number" style={{ minWidth: `${gutterWidth + 1}ch` }}>
           {lineIndex + 1}
         </span>
       )}
 
       {/* Line content */}
       <span className="sv-line-content">
-        {tokens.length === 0 ||
-        (tokens.length === 1 && tokens[0].content === "") ? (
+        {tokens.length === 0 || (tokens.length === 1 && tokens[0].content === "") ? (
           <span>{"\n"}</span>
         ) : (
-          renderTokens(
-            tokens,
-            isSelected,
-            selectionStartCol,
-            selectionEndCol,
-            searchMatches,
-          )
+          renderTokens(tokens, isSelected, selectionStartCol, selectionEndCol, searchMatches)
         )}
       </span>
     </div>
@@ -91,11 +81,7 @@ function renderTokens(
   // Entire line is selected (visual-line mode)
   if (isSelected && selectionStartCol === undefined) {
     return tokens.map((token, i) => (
-      <span
-        key={i}
-        className="sv-token sv-selected"
-        style={{ color: token.color }}
-      >
+      <span key={i} className="sv-token sv-selected" style={{ color: token.color }}>
         {token.content}
       </span>
     ));
@@ -145,11 +131,7 @@ function renderTokensWithSelection(
       );
     } else if (tokenStart >= selStart && tokenEnd <= selEnd) {
       result.push(
-        <span
-          key={`${i}`}
-          className="sv-token sv-selected"
-          style={{ color: token.color }}
-        >
+        <span key={`${i}`} className="sv-token sv-selected" style={{ color: token.color }}>
           {token.content}
         </span>,
       );
@@ -222,9 +204,7 @@ function renderTokensWithSearch(
     const tokenStart = col;
     const tokenEnd = col + token.content.length;
 
-    const overlapping = matches.filter(
-      ([ms, me]) => ms < tokenEnd && me > tokenStart,
-    );
+    const overlapping = matches.filter(([ms, me]) => ms < tokenEnd && me > tokenStart);
 
     if (overlapping.length === 0) {
       result.push(
@@ -240,11 +220,7 @@ function renderTokensWithSearch(
 
         if (relStart > pos) {
           result.push(
-            <span
-              key={`${i}-b${pos}`}
-              className="sv-token"
-              style={{ color: token.color }}
-            >
+            <span key={`${i}-b${pos}`} className="sv-token" style={{ color: token.color }}>
               {token.content.slice(pos, relStart)}
             </span>,
           );
@@ -262,11 +238,7 @@ function renderTokensWithSearch(
       }
       if (pos < token.content.length) {
         result.push(
-          <span
-            key={`${i}-a${pos}`}
-            className="sv-token"
-            style={{ color: token.color }}
-          >
+          <span key={`${i}-a${pos}`} className="sv-token" style={{ color: token.color }}>
             {token.content.slice(pos)}
           </span>,
         );

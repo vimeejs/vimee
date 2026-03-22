@@ -15,10 +15,7 @@ import { TextBuffer } from "../buffer";
 // =====================
 
 /** Create a VimContext in insert mode for testing */
-function createInsertContext(
-  cursor: CursorPosition,
-  overrides?: Partial<VimContext>,
-): VimContext {
+function createInsertContext(cursor: CursorPosition, overrides?: Partial<VimContext>): VimContext {
   return {
     mode: "insert",
     phase: "idle",
@@ -92,11 +89,7 @@ describe("Insert mode", () => {
     it("inserts multiple characters consecutively", () => {
       const buffer = new TextBuffer("");
       const ctx = createInsertContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(
-        ["h", "e", "l", "l", "o"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys(["h", "e", "l", "l", "o"], ctx, buffer);
       expect(buffer.getContent()).toBe("hello");
       expect(result.cursor.col).toBe(5);
     });
@@ -165,11 +158,7 @@ describe("Insert mode", () => {
     it("deletes multiple characters with consecutive Backspaces", () => {
       const buffer = new TextBuffer("hello");
       const ctx = createInsertContext({ line: 0, col: 5 });
-      const { ctx: result } = pressKeys(
-        ["Backspace", "Backspace", "Backspace"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys(["Backspace", "Backspace", "Backspace"], ctx, buffer);
       expect(buffer.getContent()).toBe("he");
       expect(result.cursor.col).toBe(2);
     });
@@ -250,11 +239,7 @@ describe("Insert mode", () => {
     it("inserts multiple lines with consecutive Enters", () => {
       const buffer = new TextBuffer("hello");
       const ctx = createInsertContext({ line: 0, col: 5 });
-      const { ctx: result } = pressKeys(
-        ["Enter", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys(["Enter", "Enter"], ctx, buffer);
       expect(buffer.getContent()).toBe("hello\n\n");
       expect(result.cursor).toEqual({ line: 2, col: 0 });
     });
@@ -283,11 +268,7 @@ describe("Insert mode", () => {
     it("deletes the word before the cursor", () => {
       const buffer = new TextBuffer("hello world");
       const ctx = createInsertContext({ line: 0, col: 11 });
-      const { ctx: result } = pressKeys(
-        [{ key: "w", ctrlKey: true }],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys([{ key: "w", ctrlKey: true }], ctx, buffer);
       expect(buffer.getContent()).toBe("hello ");
       expect(result.cursor).toEqual({ line: 0, col: 6 });
     });
@@ -295,11 +276,7 @@ describe("Insert mode", () => {
     it("deletes word and trailing whitespace", () => {
       const buffer = new TextBuffer("foo   bar");
       const ctx = createInsertContext({ line: 0, col: 6 });
-      const { ctx: result } = pressKeys(
-        [{ key: "w", ctrlKey: true }],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys([{ key: "w", ctrlKey: true }], ctx, buffer);
       expect(buffer.getContent()).toBe("bar");
       expect(result.cursor).toEqual({ line: 0, col: 0 });
     });
@@ -307,11 +284,7 @@ describe("Insert mode", () => {
     it("does nothing at the beginning of a line", () => {
       const buffer = new TextBuffer("hello");
       const ctx = createInsertContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(
-        [{ key: "w", ctrlKey: true }],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys([{ key: "w", ctrlKey: true }], ctx, buffer);
       expect(buffer.getContent()).toBe("hello");
       expect(result.cursor).toEqual({ line: 0, col: 0 });
     });
@@ -319,11 +292,7 @@ describe("Insert mode", () => {
     it("deletes punctuation as a separate word class", () => {
       const buffer = new TextBuffer("foo...bar");
       const ctx = createInsertContext({ line: 0, col: 6 });
-      const { ctx: result } = pressKeys(
-        [{ key: "w", ctrlKey: true }],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys([{ key: "w", ctrlKey: true }], ctx, buffer);
       expect(buffer.getContent()).toBe("foobar");
       expect(result.cursor).toEqual({ line: 0, col: 3 });
     });
@@ -389,10 +358,13 @@ describe("Insert mode", () => {
   describe("Tab with tab indentStyle", () => {
     it("inserts a tab character when indentStyle is 'tab'", () => {
       const buffer = new TextBuffer("hello");
-      const ctx = createInsertContext({ line: 0, col: 0 }, {
-        indentStyle: "tab",
-        indentWidth: 4,
-      });
+      const ctx = createInsertContext(
+        { line: 0, col: 0 },
+        {
+          indentStyle: "tab",
+          indentWidth: 4,
+        },
+      );
       const { ctx: result } = pressKeys(["Tab"], ctx, buffer);
       expect(buffer.getContent()).toBe("\thello");
       expect(result.cursor.col).toBe(1);
@@ -400,10 +372,13 @@ describe("Insert mode", () => {
 
     it("inserts a tab character in the middle of a line when indentStyle is 'tab'", () => {
       const buffer = new TextBuffer("helloworld");
-      const ctx = createInsertContext({ line: 0, col: 5 }, {
-        indentStyle: "tab",
-        indentWidth: 4,
-      });
+      const ctx = createInsertContext(
+        { line: 0, col: 5 },
+        {
+          indentStyle: "tab",
+          indentWidth: 4,
+        },
+      );
       const { ctx: result } = pressKeys(["Tab"], ctx, buffer);
       expect(buffer.getContent()).toBe("hello\tworld");
       expect(result.cursor.col).toBe(6);
@@ -418,11 +393,7 @@ describe("Insert mode", () => {
       // Cursor right after "!!!", should delete the punctuation group
       const buffer = new TextBuffer("hello!!!world");
       const ctx = createInsertContext({ line: 0, col: 8 });
-      const { ctx: result } = pressKeys(
-        [{ key: "w", ctrlKey: true }],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys([{ key: "w", ctrlKey: true }], ctx, buffer);
       expect(buffer.getContent()).toBe("helloworld");
       expect(result.cursor).toEqual({ line: 0, col: 5 });
     });
@@ -430,11 +401,7 @@ describe("Insert mode", () => {
     it("deletes backward through mixed punctuation", () => {
       const buffer = new TextBuffer("foo@#$bar");
       const ctx = createInsertContext({ line: 0, col: 6 });
-      const { ctx: result } = pressKeys(
-        [{ key: "w", ctrlKey: true }],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys([{ key: "w", ctrlKey: true }], ctx, buffer);
       expect(buffer.getContent()).toBe("foobar");
       expect(result.cursor).toEqual({ line: 0, col: 3 });
     });

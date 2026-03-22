@@ -16,9 +16,7 @@ describe("testkit integration — normal mode patterns", () => {
     });
 
     it("correctly processes two-digit count like 10j", () => {
-      const lines = Array.from({ length: 20 }, (_, i) => `line${i}`).join(
-        "\n",
-      );
+      const lines = Array.from({ length: 20 }, (_, i) => `line${i}`).join("\n");
       const v = vim(lines);
       v.type("10j");
       expect(v.cursor().line).toBe(10);

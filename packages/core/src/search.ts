@@ -90,9 +90,7 @@ function searchBackward(
 
     // For the first line, only include matches before the cursor position
     const validMatches =
-      i === 0
-        ? allMatches.filter((m) => (m.index ?? 0) < cursor.col)
-        : allMatches;
+      i === 0 ? allMatches.filter((m) => (m.index ?? 0) < cursor.col) : allMatches;
 
     if (validMatches.length > 0) {
       // Return the last match (closest to the cursor in a backward search)

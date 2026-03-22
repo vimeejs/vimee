@@ -92,11 +92,7 @@ describe("parseKeys", () => {
 
   describe("mixed sequences", () => {
     it("handles plain + special", () => {
-      expect(parseKeys("dd<C-r>")).toEqual([
-        "d",
-        "d",
-        { key: "r", ctrlKey: true },
-      ]);
+      expect(parseKeys("dd<C-r>")).toEqual(["d", "d", { key: "r", ctrlKey: true }]);
     });
 
     it("handles special + plain", () => {
@@ -111,15 +107,7 @@ describe("parseKeys", () => {
     });
 
     it("handles sequence ending with Escape", () => {
-      expect(parseKeys("ciwfoo<Esc>")).toEqual([
-        "c",
-        "i",
-        "w",
-        "f",
-        "o",
-        "o",
-        "Escape",
-      ]);
+      expect(parseKeys("ciwfoo<Esc>")).toEqual(["c", "i", "w", "f", "o", "o", "Escape"]);
     });
   });
 

@@ -136,9 +136,7 @@ export function useVim(options: UseVimOptions): UseVimReturn {
 
   // Display-related state
   const [content, setContent] = useState(initialContent);
-  const [cursor, setCursor] = useState<CursorPosition>(
-    parseCursorPosition(cursorPosition),
-  );
+  const [cursor, setCursor] = useState<CursorPosition>(parseCursorPosition(cursorPosition));
   const [mode, setMode] = useState<VimMode>("normal");
   const [statusMessage, setStatusMessage] = useState("");
   const [statusError, setStatusError] = useState(false);
@@ -203,11 +201,7 @@ export function useVim(options: UseVimOptions): UseVimReturn {
       setStatusMessage(newCtx.statusMessage);
       setStatusError(newCtx.statusError);
       setVisualAnchor(newCtx.visualAnchor);
-      setCommandLine(
-        newCtx.commandType
-          ? newCtx.commandType + newCtx.commandBuffer
-          : "",
-      );
+      setCommandLine(newCtx.commandType ? newCtx.commandType + newCtx.commandBuffer : "");
     },
     [onChange, onYank, onSave, onModeChange, onAction],
   );
@@ -273,16 +267,13 @@ export function useVim(options: UseVimOptions): UseVimReturn {
   /**
    * Update the viewport information (called from the component on scroll/resize).
    */
-  const updateViewport = useCallback(
-    (topLine: number, height: number) => {
-      ctxRef.current = {
-        ...ctxRef.current,
-        viewportTopLine: topLine,
-        viewportHeight: height,
-      };
-    },
-    [],
-  );
+  const updateViewport = useCallback((topLine: number, height: number) => {
+    ctxRef.current = {
+      ...ctxRef.current,
+      viewportTopLine: topLine,
+      viewportHeight: height,
+    };
+  }, []);
 
   return {
     content,

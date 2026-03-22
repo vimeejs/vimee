@@ -158,10 +158,7 @@ export function Vim<L extends string, T extends string>({
   const searchMatchesByLine = useMemo(() => {
     if (
       !engine.commandLine ||
-      !(
-        engine.commandLine.startsWith("/") ||
-        engine.commandLine.startsWith("?")
-      )
+      !(engine.commandLine.startsWith("/") || engine.commandLine.startsWith("?"))
     ) {
       return {};
     }
@@ -186,11 +183,7 @@ export function Vim<L extends string, T extends string>({
 
   // --- Calculate visual selection range ---
   const selectionInfo = useMemo(() => {
-    return computeSelectionInfo(
-      engine.mode,
-      engine.visualAnchor,
-      engine.cursor,
-    );
+    return computeSelectionInfo(engine.mode, engine.visualAnchor, engine.cursor);
   }, [engine.mode, engine.visualAnchor, engine.cursor]);
 
   // --- Scroll to keep cursor visible ---
@@ -217,10 +210,7 @@ export function Vim<L extends string, T extends string>({
       engine.handleKeyDown(e);
 
       if (e.ctrlKey && codeAreaRef.current) {
-        const scrollKeys: Record<
-          string,
-          { direction: "up" | "down"; amount: number }
-        > = {
+        const scrollKeys: Record<string, { direction: "up" | "down"; amount: number }> = {
           b: { direction: "up", amount: 1.0 },
           f: { direction: "down", amount: 1.0 },
           u: { direction: "up", amount: 0.5 },
@@ -229,9 +219,7 @@ export function Vim<L extends string, T extends string>({
         const scroll = scrollKeys[e.key];
         if (scroll) {
           const areaHeight = codeAreaRef.current.clientHeight;
-          const lineHeight = parseFloat(
-            getComputedStyle(codeAreaRef.current).lineHeight,
-          );
+          const lineHeight = parseFloat(getComputedStyle(codeAreaRef.current).lineHeight);
           const visibleLines = Math.floor(areaHeight / lineHeight);
           engine.handleScroll(scroll.direction, visibleLines, scroll.amount);
         }
@@ -339,12 +327,7 @@ export function computeSelectionInfo(
   anchor: CursorPosition | null,
   cursor: CursorPosition,
 ): SelectionInfo {
-  if (
-    (mode !== "visual" &&
-      mode !== "visual-line" &&
-      mode !== "visual-block") ||
-    !anchor
-  ) {
+  if ((mode !== "visual" && mode !== "visual-line" && mode !== "visual-block") || !anchor) {
     return {
       isLineSelected: () => false,
       getSelectionStartCol: () => undefined,
@@ -355,20 +338,17 @@ export function computeSelectionInfo(
   const startLine = Math.min(anchor.line, cursor.line);
   const endLine = Math.max(anchor.line, cursor.line);
   const startPos =
-    anchor.line < cursor.line ||
-    (anchor.line === cursor.line && anchor.col <= cursor.col)
+    anchor.line < cursor.line || (anchor.line === cursor.line && anchor.col <= cursor.col)
       ? anchor
       : cursor;
   const endPos =
-    anchor.line < cursor.line ||
-    (anchor.line === cursor.line && anchor.col <= cursor.col)
+    anchor.line < cursor.line || (anchor.line === cursor.line && anchor.col <= cursor.col)
       ? cursor
       : anchor;
 
   if (mode === "visual-line") {
     return {
-      isLineSelected: (lineIndex) =>
-        lineIndex >= startLine && lineIndex <= endLine,
+      isLineSelected: (lineIndex) => lineIndex >= startLine && lineIndex <= endLine,
       getSelectionStartCol: () => undefined,
       getSelectionEndCol: () => undefined,
     };
@@ -378,23 +358,17 @@ export function computeSelectionInfo(
     const blockStartCol = Math.min(anchor.col, cursor.col);
     const blockEndCol = Math.max(anchor.col, cursor.col) + 1;
     return {
-      isLineSelected: (lineIndex) =>
-        lineIndex >= startLine && lineIndex <= endLine,
+      isLineSelected: (lineIndex) => lineIndex >= startLine && lineIndex <= endLine,
       getSelectionStartCol: (lineIndex) =>
-        lineIndex >= startLine && lineIndex <= endLine
-          ? blockStartCol
-          : undefined,
+        lineIndex >= startLine && lineIndex <= endLine ? blockStartCol : undefined,
       getSelectionEndCol: (lineIndex) =>
-        lineIndex >= startLine && lineIndex <= endLine
-          ? blockEndCol
-          : undefined,
+        lineIndex >= startLine && lineIndex <= endLine ? blockEndCol : undefined,
     };
   }
 
   // visual (character-wise)
   return {
-    isLineSelected: (lineIndex) =>
-      lineIndex >= startLine && lineIndex <= endLine,
+    isLineSelected: (lineIndex) => lineIndex >= startLine && lineIndex <= endLine,
     getSelectionStartCol: (lineIndex) => {
       if (lineIndex < startLine || lineIndex > endLine) return undefined;
       if (lineIndex === startPos.line) return startPos.col;

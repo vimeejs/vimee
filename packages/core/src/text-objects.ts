@@ -34,19 +34,13 @@ export function resolveTextObject(
 ): MotionRange | null {
   switch (key) {
     case "w":
-      return modifier === "i"
-        ? innerWord(cursor, buffer)
-        : aWord(cursor, buffer);
+      return modifier === "i" ? innerWord(cursor, buffer) : aWord(cursor, buffer);
     case "W":
-      return modifier === "i"
-        ? innerBigWord(cursor, buffer)
-        : aBigWord(cursor, buffer);
+      return modifier === "i" ? innerBigWord(cursor, buffer) : aBigWord(cursor, buffer);
     case '"':
     case "'":
     case "`":
-      return modifier === "i"
-        ? innerQuote(cursor, buffer, key)
-        : aQuote(cursor, buffer, key);
+      return modifier === "i" ? innerQuote(cursor, buffer, key) : aQuote(cursor, buffer, key);
     case "(":
     case ")":
       return modifier === "i"
@@ -92,8 +86,20 @@ function innerWord(cursor: CursorPosition, buffer: TextBuffer): MotionRange | nu
     while (end < line.length - 1 && (line[end + 1] === " " || line[end + 1] === "\t")) end++;
   } else {
     // Punctuation
-    while (start > 0 && !isWordChar(line[start - 1]) && line[start - 1] !== " " && line[start - 1] !== "\t") start--;
-    while (end < line.length - 1 && !isWordChar(line[end + 1]) && line[end + 1] !== " " && line[end + 1] !== "\t") end++;
+    while (
+      start > 0 &&
+      !isWordChar(line[start - 1]) &&
+      line[start - 1] !== " " &&
+      line[start - 1] !== "\t"
+    )
+      start--;
+    while (
+      end < line.length - 1 &&
+      !isWordChar(line[end + 1]) &&
+      line[end + 1] !== " " &&
+      line[end + 1] !== "\t"
+    )
+      end++;
   }
 
   return {
@@ -184,11 +190,7 @@ function aBigWord(cursor: CursorPosition, buffer: TextBuffer): MotionRange | nul
 
 // --- Quote text objects ---
 
-function innerQuote(
-  cursor: CursorPosition,
-  buffer: TextBuffer,
-  quote: string,
-): MotionRange | null {
+function innerQuote(cursor: CursorPosition, buffer: TextBuffer, quote: string): MotionRange | null {
   const line = buffer.getLine(cursor.line);
   const col = cursor.col;
 
@@ -244,11 +246,7 @@ function innerQuote(
   };
 }
 
-function aQuote(
-  cursor: CursorPosition,
-  buffer: TextBuffer,
-  quote: string,
-): MotionRange | null {
+function aQuote(cursor: CursorPosition, buffer: TextBuffer, quote: string): MotionRange | null {
   const inner = innerQuote(cursor, buffer, quote);
   if (!inner) return null;
 

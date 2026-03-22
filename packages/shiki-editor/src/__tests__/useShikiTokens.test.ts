@@ -24,13 +24,11 @@ function renderHook<T>(hookFn: () => T): { result: T } {
 }
 
 /** Create a mock highlighter that returns the given codeToTokens result */
-function createMockHighlighter(
-  codeToTokensResult: {
-    bg?: string;
-    fg?: string;
-    tokens: ThemedToken[][];
-  },
-): HighlighterGeneric<string, string> {
+function createMockHighlighter(codeToTokensResult: {
+  bg?: string;
+  fg?: string;
+  tokens: ThemedToken[][];
+}): HighlighterGeneric<string, string> {
   return {
     codeToTokens: vi.fn().mockReturnValue(codeToTokensResult),
   } as unknown as HighlighterGeneric<string, string>;
@@ -52,9 +50,7 @@ describe("useShikiTokens", () => {
         { content: "const", color: "#569cd6", offset: 0 } as ThemedToken,
         { content: " x", color: "#d4d4d4", offset: 5 } as ThemedToken,
       ],
-      [
-        { content: "return", color: "#c586c0", offset: 0 } as ThemedToken,
-      ],
+      [{ content: "return", color: "#c586c0", offset: 0 } as ThemedToken],
     ];
 
     const highlighter = createMockHighlighter({
@@ -137,9 +133,7 @@ describe("useShikiTokens", () => {
   it("returns single fallback token per line with correct offset on error", () => {
     const highlighter = createThrowingHighlighter();
 
-    const { result } = renderHook(() =>
-      useShikiTokens(highlighter, "single line", "go", "nord"),
-    );
+    const { result } = renderHook(() => useShikiTokens(highlighter, "single line", "go", "nord"));
 
     expect(result.tokenLines).toHaveLength(1);
     const token = result.tokenLines[0][0];

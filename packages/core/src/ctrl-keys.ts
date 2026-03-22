@@ -47,10 +47,7 @@ export function handleCtrlKey(
  * Ctrl-R: Redo
  * Reverses the last undo.
  */
-function handleCtrlR(
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleCtrlR(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   const linesBefore = buffer.getLineCount();
   const restored = buffer.redo(ctx.cursor);
 
@@ -75,9 +72,7 @@ function handleCtrlR(
 
   return {
     newCtx: { ...ctx, count: 0, statusMessage: "Already at newest change" },
-    actions: [
-      { type: "status-message", message: "Already at newest change" },
-    ],
+    actions: [{ type: "status-message", message: "Already at newest change" }],
   };
 }
 
@@ -144,7 +139,7 @@ function handleCtrlV(ctx: VimContext): KeystrokeResult {
   // Enter visual-block (from normal, visual, or visual-line)
   const anchor =
     ctx.mode === "visual" || ctx.mode === "visual-line"
-      ? ctx.visualAnchor ?? { ...ctx.cursor }
+      ? (ctx.visualAnchor ?? { ...ctx.cursor })
       : { ...ctx.cursor };
 
   return {

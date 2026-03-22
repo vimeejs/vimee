@@ -18,12 +18,7 @@ import type { CursorPosition, VimContext, Operator } from "./types";
 import type { TextBuffer } from "./buffer";
 import type { MotionResult, MotionRange } from "./motions";
 import type { KeystrokeResult } from "./key-utils";
-import {
-  isCountKey,
-  getEffectiveCount,
-  isCountExplicit,
-  resetContext,
-} from "./key-utils";
+import { isCountKey, getEffectiveCount, isCountExplicit, resetContext } from "./key-utils";
 import { handleCtrlKey } from "./ctrl-keys";
 import { resolveMotion } from "./motion-resolver";
 import { executeOperatorOnRange } from "./operators";
@@ -163,9 +158,7 @@ export function processVisualMode(
 
   // --- Mode switch ---
   if (key === "v") {
-    return ctx.mode === "visual"
-      ? exitVisualMode(ctx)
-      : switchVisualSubMode(ctx, "visual");
+    return ctx.mode === "visual" ? exitVisualMode(ctx) : switchVisualSubMode(ctx, "visual");
   }
   if (key === "V") {
     return ctx.mode === "visual-line"
@@ -227,11 +220,7 @@ function switchVisualSubMode(
 /**
  * Handle g prefix (gg)
  */
-function handleGPendingInVisual(
-  key: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleGPendingInVisual(key: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   if (key === "g") {
     const count = ctx.count > 0 ? ctx.count : null;
     const result = motionGG(ctx.cursor, buffer, count);
@@ -260,11 +249,7 @@ function handleGPendingInVisual(
  * y: Yank
  * c: Change (delete and enter insert mode)
  */
-function executeVisualOperator(
-  key: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function executeVisualOperator(key: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   if (!ctx.visualAnchor) {
     return { newCtx: ctx, actions: [] };
   }
@@ -303,9 +288,10 @@ function executeVisualOperator(
   } else if (ctx.selectedRegister && result.yankedText) {
     const lines = result.yankedText.split("\n").length - (result.yankedText.endsWith("\n") ? 1 : 0);
     if (lines >= 1 && operator === "y") {
-      statusMessage = lines >= 2
-        ? `${lines} lines yanked into "${ctx.selectedRegister}`
-        : `yanked into "${ctx.selectedRegister}`;
+      statusMessage =
+        lines >= 2
+          ? `${lines} lines yanked into "${ctx.selectedRegister}`
+          : `yanked into "${ctx.selectedRegister}`;
     }
   }
 
@@ -343,10 +329,7 @@ function executeVisualOperator(
  * The blockInsert info is stored so that on Escape, the typed text
  * is replicated to all lines in the block.
  */
-function enterBlockInsert(
-  key: string,
-  ctx: VimContext,
-): KeystrokeResult {
+function enterBlockInsert(key: string, ctx: VimContext): KeystrokeResult {
   const anchor = ctx.visualAnchor!;
   const startLine = Math.min(anchor.line, ctx.cursor.line);
   const endLine = Math.max(anchor.line, ctx.cursor.line);
@@ -402,9 +385,7 @@ function executeVisualBlockOperator(
   }
   const yankedText = yankLines.join("\n");
 
-  const actions: import("./types").VimAction[] = [
-    { type: "yank", text: yankedText },
-  ];
+  const actions: import("./types").VimAction[] = [{ type: "yank", text: yankedText }];
 
   // Named register support
   const regUpdates: Partial<import("./types").VimContext> = {
@@ -428,7 +409,12 @@ function executeVisualBlockOperator(
         cursor: newCursor,
         ...regUpdates,
         visualAnchor: null,
-        statusMessage: lineCount >= 2 ? `${lineCount} lines yanked${regSuffix}` : regSuffix ? `yanked${regSuffix}` : "",
+        statusMessage:
+          lineCount >= 2
+            ? `${lineCount} lines yanked${regSuffix}`
+            : regSuffix
+              ? `yanked${regSuffix}`
+              : "",
       },
       actions: [
         ...actions,

@@ -13,10 +13,7 @@ import { TextBuffer } from "../buffer";
 import type { VimContext } from "../types";
 
 // Helper: create a context in char-pending phase with a given charCommand
-function createCharPendingCtx(
-  charCommand: string,
-  cursor = { line: 0, col: 0 },
-): VimContext {
+function createCharPendingCtx(charCommand: string, cursor = { line: 0, col: 0 }): VimContext {
   return {
     ...createInitialContext(cursor),
     phase: "char-pending",

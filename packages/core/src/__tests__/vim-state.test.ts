@@ -17,10 +17,7 @@ import { TextBuffer } from "../buffer";
 // =====================
 
 /** Create a VimContext for testing */
-function createTestContext(
-  cursor: CursorPosition,
-  overrides?: Partial<VimContext>,
-): VimContext {
+function createTestContext(cursor: CursorPosition, overrides?: Partial<VimContext>): VimContext {
   return {
     ...createInitialContext(cursor),
     ...overrides,
@@ -112,9 +109,12 @@ describe("processKeystroke default mode fallback", () => {
   it("returns the context unchanged when mode is unknown", () => {
     const buffer = new TextBuffer("hello");
     // Force an invalid mode by casting
-    const ctx = createTestContext({ line: 0, col: 0 }, {
-      mode: "nonexistent-mode" as VimContext["mode"],
-    });
+    const ctx = createTestContext(
+      { line: 0, col: 0 },
+      {
+        mode: "nonexistent-mode" as VimContext["mode"],
+      },
+    );
     const result = processKeystroke("j", ctx, buffer);
     // The default case returns { newCtx: ctx, actions: [] }
     expect(result.actions).toEqual([]);
@@ -124,9 +124,12 @@ describe("processKeystroke default mode fallback", () => {
 
   it("does not crash and returns no actions for any key with unknown mode", () => {
     const buffer = new TextBuffer("hello\nworld");
-    const ctx = createTestContext({ line: 0, col: 0 }, {
-      mode: "unknown" as VimContext["mode"],
-    });
+    const ctx = createTestContext(
+      { line: 0, col: 0 },
+      {
+        mode: "unknown" as VimContext["mode"],
+      },
+    );
     const result = processKeystroke("x", ctx, buffer);
     expect(result.actions).toEqual([]);
     expect(result.newCtx.cursor).toEqual({ line: 0, col: 0 });

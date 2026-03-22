@@ -1,14 +1,5 @@
-import {
-  TextBuffer,
-  processKeystroke,
-  createInitialContext,
-} from "@vimee/core";
-import type {
-  VimContext,
-  VimAction,
-  VimMode,
-  CursorPosition,
-} from "@vimee/core";
+import { TextBuffer, processKeystroke, createInitialContext } from "@vimee/core";
+import type { VimContext, VimAction, VimMode, CursorPosition } from "@vimee/core";
 import { parseKeys } from "./key-parser";
 import type { KeyInput } from "./key-parser";
 

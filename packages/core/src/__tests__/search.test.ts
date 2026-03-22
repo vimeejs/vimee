@@ -20,45 +20,25 @@ describe("Search functionality", () => {
   describe("Forward search", () => {
     it("finds the first match after the cursor position", () => {
       const buffer = new TextBuffer("hello world hello");
-      const result = searchInBuffer(
-        buffer,
-        "hello",
-        { line: 0, col: 0 },
-        "forward",
-      );
+      const result = searchInBuffer(buffer, "hello", { line: 0, col: 0 }, "forward");
       expect(result).toEqual({ line: 0, col: 12 });
     });
 
     it("finds a match on the next line", () => {
       const buffer = new TextBuffer("foo\nbar\nbaz");
-      const result = searchInBuffer(
-        buffer,
-        "baz",
-        { line: 0, col: 0 },
-        "forward",
-      );
+      const result = searchInBuffer(buffer, "baz", { line: 0, col: 0 }, "forward");
       expect(result).toEqual({ line: 2, col: 0 });
     });
 
     it("wraps around to find a match from the beginning", () => {
       const buffer = new TextBuffer("hello\nworld\nfoo");
-      const result = searchInBuffer(
-        buffer,
-        "hello",
-        { line: 1, col: 0 },
-        "forward",
-      );
+      const result = searchInBuffer(buffer, "hello", { line: 1, col: 0 }, "forward");
       expect(result).toEqual({ line: 0, col: 0 });
     });
 
     it("finds a match after the cursor on the same line", () => {
       const buffer = new TextBuffer("foo bar foo");
-      const result = searchInBuffer(
-        buffer,
-        "foo",
-        { line: 0, col: 0 },
-        "forward",
-      );
+      const result = searchInBuffer(buffer, "foo", { line: 0, col: 0 }, "forward");
       expect(result).toEqual({ line: 0, col: 8 });
     });
   });
@@ -69,34 +49,19 @@ describe("Search functionality", () => {
   describe("Backward search", () => {
     it("finds the closest match before the cursor position", () => {
       const buffer = new TextBuffer("hello world hello");
-      const result = searchInBuffer(
-        buffer,
-        "hello",
-        { line: 0, col: 12 },
-        "backward",
-      );
+      const result = searchInBuffer(buffer, "hello", { line: 0, col: 12 }, "backward");
       expect(result).toEqual({ line: 0, col: 0 });
     });
 
     it("finds a match on a previous line", () => {
       const buffer = new TextBuffer("foo\nbar\nbaz");
-      const result = searchInBuffer(
-        buffer,
-        "foo",
-        { line: 2, col: 0 },
-        "backward",
-      );
+      const result = searchInBuffer(buffer, "foo", { line: 2, col: 0 }, "backward");
       expect(result).toEqual({ line: 0, col: 0 });
     });
 
     it("wraps around to find a match from the end", () => {
       const buffer = new TextBuffer("foo\nbar\nhello");
-      const result = searchInBuffer(
-        buffer,
-        "hello",
-        { line: 0, col: 0 },
-        "backward",
-      );
+      const result = searchInBuffer(buffer, "hello", { line: 0, col: 0 }, "backward");
       expect(result).toEqual({ line: 2, col: 0 });
     });
   });
@@ -107,23 +72,13 @@ describe("Search functionality", () => {
   describe("No match", () => {
     it("returns null when the pattern is not found", () => {
       const buffer = new TextBuffer("hello world");
-      const result = searchInBuffer(
-        buffer,
-        "xyz",
-        { line: 0, col: 0 },
-        "forward",
-      );
+      const result = searchInBuffer(buffer, "xyz", { line: 0, col: 0 }, "forward");
       expect(result).toBeNull();
     });
 
     it("returns null for backward search when no match is found", () => {
       const buffer = new TextBuffer("hello world");
-      const result = searchInBuffer(
-        buffer,
-        "xyz",
-        { line: 0, col: 10 },
-        "backward",
-      );
+      const result = searchInBuffer(buffer, "xyz", { line: 0, col: 10 }, "backward");
       expect(result).toBeNull();
     });
   });
@@ -134,12 +89,7 @@ describe("Search functionality", () => {
   describe("Invalid regex", () => {
     it("returns null for an invalid regex pattern", () => {
       const buffer = new TextBuffer("hello world");
-      const result = searchInBuffer(
-        buffer,
-        "[invalid",
-        { line: 0, col: 0 },
-        "forward",
-      );
+      const result = searchInBuffer(buffer, "[invalid", { line: 0, col: 0 }, "forward");
       expect(result).toBeNull();
     });
   });
@@ -150,23 +100,13 @@ describe("Search functionality", () => {
   describe("Multiple matches on the same line", () => {
     it("returns the first match on the same line for forward search", () => {
       const buffer = new TextBuffer("aaa bbb aaa bbb aaa");
-      const result = searchInBuffer(
-        buffer,
-        "bbb",
-        { line: 0, col: 0 },
-        "forward",
-      );
+      const result = searchInBuffer(buffer, "bbb", { line: 0, col: 0 }, "forward");
       expect(result).toEqual({ line: 0, col: 4 });
     });
 
     it("returns the closest match to the cursor on the same line for backward search", () => {
       const buffer = new TextBuffer("aaa bbb aaa bbb aaa");
-      const result = searchInBuffer(
-        buffer,
-        "bbb",
-        { line: 0, col: 15 },
-        "backward",
-      );
+      const result = searchInBuffer(buffer, "bbb", { line: 0, col: 15 }, "backward");
       expect(result).toEqual({ line: 0, col: 12 });
     });
   });
@@ -177,23 +117,13 @@ describe("Search functionality", () => {
   describe("Regex patterns", () => {
     it("matches using a regex pattern", () => {
       const buffer = new TextBuffer("abc 123 def 456");
-      const result = searchInBuffer(
-        buffer,
-        "\\d+",
-        { line: 0, col: 0 },
-        "forward",
-      );
+      const result = searchInBuffer(buffer, "\\d+", { line: 0, col: 0 }, "forward");
       expect(result).toEqual({ line: 0, col: 4 });
     });
 
     it("regex works across multiple lines", () => {
       const buffer = new TextBuffer("foo\nbar123\nbaz");
-      const result = searchInBuffer(
-        buffer,
-        "\\d+",
-        { line: 0, col: 0 },
-        "forward",
-      );
+      const result = searchInBuffer(buffer, "\\d+", { line: 0, col: 0 }, "forward");
       expect(result).toEqual({ line: 1, col: 3 });
     });
   });

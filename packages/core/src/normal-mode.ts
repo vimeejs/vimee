@@ -312,10 +312,7 @@ export function processNormalMode(
  * Handle register name input after " prefix.
  * Valid register names: a-z (named), " (unnamed).
  */
-function handleRegisterPending(
-  key: string,
-  ctx: VimContext,
-): KeystrokeResult {
+function handleRegisterPending(key: string, ctx: VimContext): KeystrokeResult {
   if (/^[a-z"]$/i.test(key)) {
     return {
       newCtx: {
@@ -353,9 +350,7 @@ function handleTextObjectPending(
         mode: result.newMode,
         cursor: result.newCursor,
         ...storeRegister(ctx, result.yankedText),
-        statusMessage: result.newMode === "insert"
-          ? "-- INSERT --"
-          : result.statusMessage || "",
+        statusMessage: result.newMode === "insert" ? "-- INSERT --" : result.statusMessage || "",
       },
       actions: [
         ...result.actions,
@@ -371,11 +366,7 @@ function handleTextObjectPending(
   return { newCtx: resetContext(ctx), actions: [] };
 }
 
-function handleGPending(
-  key: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleGPending(key: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   if (key === "g") {
     const count = ctx.count > 0 ? ctx.count : null;
     const result = motionGG(ctx.cursor, buffer, count);
@@ -428,11 +419,7 @@ function handleGPending(
  * Key processing during operator-pending state.
  * Waits for a motion or count after the operator.
  */
-function handleOperatorPending(
-  key: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleOperatorPending(key: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   // Note: Count input is handled by the top-level isCountKey check in processNormalMode
   // before this function is called, so no count check is needed here.
 
@@ -483,7 +470,10 @@ function handleOperatorPending(
   // ; / , repeat last char search with operator (e.g., d;)
   if ((key === ";" || key === ",") && ctx.lastCharSearch) {
     const charMotion = resolveCharSearchRepeat(key, ctx, buffer);
-    if (charMotion && (charMotion.cursor.line !== ctx.cursor.line || charMotion.cursor.col !== ctx.cursor.col)) {
+    if (
+      charMotion &&
+      (charMotion.cursor.line !== ctx.cursor.line || charMotion.cursor.col !== ctx.cursor.col)
+    ) {
       buffer.saveUndoPoint(ctx.cursor);
       const result = executeOperatorOnRange(
         ctx.operator!,
@@ -564,11 +554,7 @@ function handleOperatorPending(
  * Attempt to resolve and execute a motion.
  * Returns null if no motion matches.
  */
-function tryMotion(
-  key: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult | null {
+function tryMotion(key: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult | null {
   const count = getEffectiveCount(ctx);
   const countExplicit = isCountExplicit(ctx);
   const motion = resolveMotion(key, ctx.cursor, buffer, count, countExplicit, ctx);
@@ -588,44 +574,28 @@ function tryMotion(
  * Attempt to transition to insert mode.
  * Handles i, a, I, A, o, O.
  */
-function tryInsertEntry(
-  key: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult | null {
+function tryInsertEntry(key: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult | null {
   switch (key) {
     case "i":
       return modeChange(ctx, "insert");
 
     case "a": {
       // Move cursor one position to the right (do not exceed end of line)
-      const col = Math.min(
-        ctx.cursor.col + 1,
-        buffer.getLineLength(ctx.cursor.line),
-      );
-      return modeChange(
-        { ...ctx, cursor: { ...ctx.cursor, col } },
-        "insert",
-      );
+      const col = Math.min(ctx.cursor.col + 1, buffer.getLineLength(ctx.cursor.line));
+      return modeChange({ ...ctx, cursor: { ...ctx.cursor, col } }, "insert");
     }
 
     case "I": {
       // Move to the first non-whitespace character on the line and enter insert
       const lineText = buffer.getLine(ctx.cursor.line);
       const col = lineText.match(/\S/)?.index ?? 0;
-      return modeChange(
-        { ...ctx, cursor: { ...ctx.cursor, col } },
-        "insert",
-      );
+      return modeChange({ ...ctx, cursor: { ...ctx.cursor, col } }, "insert");
     }
 
     case "A": {
       // Move to end of line and enter insert
       const col = buffer.getLineLength(ctx.cursor.line);
-      return modeChange(
-        { ...ctx, cursor: { ...ctx.cursor, col } },
-        "insert",
-      );
+      return modeChange({ ...ctx, cursor: { ...ctx.cursor, col } }, "insert");
     }
 
     case "o": {
@@ -678,11 +648,7 @@ function tryInsertEntry(
 /**
  * Attempt to handle edit commands (x, p, P).
  */
-function tryEditCommand(
-  key: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult | null {
+function tryEditCommand(key: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult | null {
   const count = getEffectiveCount(ctx);
 
   switch (key) {
@@ -706,10 +672,7 @@ function tryEditCommand(
 /**
  * D: Delete from cursor to end of line (equivalent to d$)
  */
-function handleDeleteToEndOfLine(
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleDeleteToEndOfLine(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   const motion = motionDollar(ctx.cursor, buffer, 1);
   buffer.saveUndoPoint(ctx.cursor);
   const result = executeOperatorOnRange("d", motion.range, buffer, ctx.cursor);
@@ -721,20 +684,14 @@ function handleDeleteToEndOfLine(
       register: result.yankedText,
       statusMessage: result.statusMessage,
     },
-    actions: [
-      ...result.actions,
-      { type: "cursor-move", position: result.newCursor },
-    ],
+    actions: [...result.actions, { type: "cursor-move", position: result.newCursor }],
   };
 }
 
 /**
  * C: Change from cursor to end of line (equivalent to c$)
  */
-function handleChangeToEndOfLine(
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleChangeToEndOfLine(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   const motion = motionDollar(ctx.cursor, buffer, 1);
   buffer.saveUndoPoint(ctx.cursor);
   const result = executeOperatorOnRange("c", motion.range, buffer, ctx.cursor);
@@ -758,11 +715,7 @@ function handleChangeToEndOfLine(
 /**
  * ~: Toggle case of the character under the cursor and advance
  */
-function handleToggleCase(
-  ctx: VimContext,
-  buffer: TextBuffer,
-  count: number,
-): KeystrokeResult {
+function handleToggleCase(ctx: VimContext, buffer: TextBuffer, count: number): KeystrokeResult {
   const lineLen = buffer.getLineLength(ctx.cursor.line);
   if (lineLen === 0) {
     return { newCtx: resetContext(ctx), actions: [] };
@@ -796,11 +749,7 @@ function handleToggleCase(
 /**
  * x: Delete the character under the cursor
  */
-function handleDeleteChar(
-  ctx: VimContext,
-  buffer: TextBuffer,
-  count: number,
-): KeystrokeResult {
+function handleDeleteChar(ctx: VimContext, buffer: TextBuffer, count: number): KeystrokeResult {
   if (buffer.getLineLength(ctx.cursor.line) === 0) {
     return { newCtx: ctx, actions: [] };
   }
@@ -830,11 +779,7 @@ function handleDeleteChar(
 /**
  * p: Paste after the cursor
  */
-function handlePasteAfter(
-  ctx: VimContext,
-  buffer: TextBuffer,
-  count: number,
-): KeystrokeResult {
+function handlePasteAfter(ctx: VimContext, buffer: TextBuffer, count: number): KeystrokeResult {
   const text = getRegisterText(ctx);
   if (!text) return { newCtx: resetContext(ctx), actions: [] };
 
@@ -884,11 +829,7 @@ function handlePasteAfter(
 /**
  * P: Paste before the cursor
  */
-function handlePasteBefore(
-  ctx: VimContext,
-  buffer: TextBuffer,
-  count: number,
-): KeystrokeResult {
+function handlePasteBefore(ctx: VimContext, buffer: TextBuffer, count: number): KeystrokeResult {
   const text = getRegisterText(ctx);
   if (!text) return { newCtx: resetContext(ctx), actions: [] };
 
@@ -935,10 +876,7 @@ function handlePasteBefore(
 /**
  * u: undo
  */
-function handleUndo(
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleUndo(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   const linesBefore = buffer.getLineCount();
   const restored = buffer.undo(ctx.cursor);
 
@@ -963,19 +901,14 @@ function handleUndo(
 
   return {
     newCtx: { ...ctx, count: 0, statusMessage: "Already at oldest change" },
-    actions: [
-      { type: "status-message", message: "Already at oldest change" },
-    ],
+    actions: [{ type: "status-message", message: "Already at oldest change" }],
   };
 }
 
 /**
  * Transition to command-line / search mode
  */
-function enterCommandLine(
-  type: ":" | "/" | "?",
-  ctx: VimContext,
-): KeystrokeResult {
+function enterCommandLine(type: ":" | "/" | "?", ctx: VimContext): KeystrokeResult {
   return {
     newCtx: {
       ...ctx,
@@ -998,11 +931,7 @@ function enterCommandLine(
  * * / #: Search for the word under the cursor.
  * * searches forward, # searches backward.
  */
-function handleWordSearch(
-  key: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleWordSearch(key: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   const line = buffer.getLine(ctx.cursor.line);
   const word = getWordUnderCursor(line, ctx.cursor.col);
 
@@ -1033,9 +962,7 @@ function handleWordSearch(
       ...resetContext(ctx),
       statusMessage: `Pattern not found: ${pattern}`,
     },
-    actions: [
-      { type: "status-message", message: `Pattern not found: ${pattern}` },
-    ],
+    actions: [{ type: "status-message", message: `Pattern not found: ${pattern}` }],
   };
 }
 
@@ -1066,11 +993,7 @@ function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function handleSearchRepeat(
-  key: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleSearchRepeat(key: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   if (!ctx.lastSearch) {
     return { newCtx: ctx, actions: [] };
   }
@@ -1110,17 +1033,16 @@ function handleSearchRepeat(
 /**
  * Resolve the motion for a ; or , repeat of last f/F/t/T.
  */
-function resolveCharSearchRepeat(
-  key: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-) {
+function resolveCharSearchRepeat(key: string, ctx: VimContext, buffer: TextBuffer) {
   if (!ctx.lastCharSearch) return null;
 
   const count = getEffectiveCount(ctx);
   const { command, char } = ctx.lastCharSearch;
   const reverseMap: Record<string, "f" | "F" | "t" | "T"> = {
-    f: "F", F: "f", t: "T", T: "t",
+    f: "F",
+    F: "f",
+    t: "T",
+    T: "t",
   };
   const effectiveCommand = key === "," ? reverseMap[command] : command;
 
@@ -1140,18 +1062,10 @@ function resolveCharSearchRepeat(
  * ; / ,: Repeat last f/F/t/T search
  * ; repeats in the same direction, , repeats in the opposite direction.
  */
-function handleCharSearchRepeat(
-  key: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleCharSearchRepeat(key: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   const motion = resolveCharSearchRepeat(key, ctx, buffer);
 
-  if (
-    !motion ||
-    (motion.cursor.line === ctx.cursor.line &&
-      motion.cursor.col === ctx.cursor.col)
-  ) {
+  if (!motion || (motion.cursor.line === ctx.cursor.line && motion.cursor.col === ctx.cursor.col)) {
     return { newCtx: resetContext(ctx), actions: [] };
   }
 
@@ -1170,10 +1084,7 @@ function handleCharSearchRepeat(
 /**
  * m{a-z}: Set a mark at the current cursor position.
  */
-function handleMarkPending(
-  key: string,
-  ctx: VimContext,
-): KeystrokeResult {
+function handleMarkPending(key: string, ctx: VimContext): KeystrokeResult {
   if (/^[a-z]$/.test(key)) {
     return {
       newCtx: {
@@ -1193,11 +1104,7 @@ function handleMarkPending(
  * `{a-z} or '{a-z}: Jump to a mark.
  * ` jumps to exact position, ' jumps to the line's first non-blank character.
  */
-function handleJumpMarkPending(
-  key: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleJumpMarkPending(key: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   if (/^[a-z]$/.test(key) && ctx.marks[key]) {
     const mark = ctx.marks[key];
     // Clamp to buffer bounds
@@ -1220,9 +1127,7 @@ function handleJumpMarkPending(
         ...resetContext(ctx),
         statusMessage: `Mark '${key}' not set`,
       },
-      actions: [
-        { type: "status-message", message: `Mark '${key}' not set` },
-      ],
+      actions: [{ type: "status-message", message: `Mark '${key}' not set` }],
     };
   }
 
@@ -1234,10 +1139,7 @@ function getLeadingWhitespace(line: string): string {
   return match ? match[1] : "";
 }
 
-function handleJoinLines(
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleJoinLines(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   if (ctx.cursor.line >= buffer.getLineCount() - 1) {
     return { newCtx: ctx, actions: [] };
   }
@@ -1247,10 +1149,7 @@ function handleJoinLines(
   const currentLen = buffer.getLineLength(ctx.cursor.line);
   const nextLine = buffer.getLine(ctx.cursor.line + 1).trimStart();
 
-  buffer.setLine(
-    ctx.cursor.line,
-    buffer.getLine(ctx.cursor.line) + " " + nextLine,
-  );
+  buffer.setLine(ctx.cursor.line, buffer.getLine(ctx.cursor.line) + " " + nextLine);
   buffer.deleteLines(ctx.cursor.line + 1, 1);
 
   const newCursor = { line: ctx.cursor.line, col: currentLen };

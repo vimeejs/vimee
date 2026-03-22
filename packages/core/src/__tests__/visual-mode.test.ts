@@ -94,10 +94,7 @@ describe("Visual mode", () => {
 
     it("expands selection to the right with l", () => {
       const buffer = new TextBuffer("hello world");
-      const ctx = createVisualContext(
-        { line: 0, col: 3 },
-        { line: 0, col: 3 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 3 }, { line: 0, col: 3 });
       const { ctx: result } = pressKeys(["l", "l"], ctx, buffer);
       expect(result.cursor.col).toBe(5);
       expect(result.visualAnchor).toEqual({ line: 0, col: 3 });
@@ -105,10 +102,7 @@ describe("Visual mode", () => {
 
     it("expands selection to the line below with j", () => {
       const buffer = new TextBuffer("hello\nworld\nfoo");
-      const ctx = createVisualContext(
-        { line: 0, col: 2 },
-        { line: 0, col: 2 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 2 }, { line: 0, col: 2 });
       const { ctx: result } = pressKeys(["j"], ctx, buffer);
       expect(result.cursor.line).toBe(1);
       expect(result.visualAnchor).toEqual({ line: 0, col: 2 });
@@ -116,20 +110,14 @@ describe("Visual mode", () => {
 
     it("moves cursor left and shrinks selection with h", () => {
       const buffer = new TextBuffer("hello world");
-      const ctx = createVisualContext(
-        { line: 0, col: 5 },
-        { line: 0, col: 3 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 5 }, { line: 0, col: 3 });
       const { ctx: result } = pressKeys(["h"], ctx, buffer);
       expect(result.cursor.col).toBe(4);
     });
 
     it("moves to the beginning of the file with gg", () => {
       const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createVisualContext(
-        { line: 2, col: 0 },
-        { line: 2, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 2, col: 0 }, { line: 2, col: 0 });
       const { ctx: result } = pressKeys(["g", "g"], ctx, buffer);
       expect(result.cursor.line).toBe(0);
       expect(result.visualAnchor).toEqual({ line: 2, col: 0 });
@@ -142,10 +130,7 @@ describe("Visual mode", () => {
   describe("Operators in visual mode", () => {
     it("deletes the selection with d", () => {
       const buffer = new TextBuffer("hello world");
-      const ctx = createVisualContext(
-        { line: 0, col: 5 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 5 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["d"], ctx, buffer);
       expect(buffer.getContent()).toBe("world");
       expect(result.mode).toBe("normal");
@@ -154,10 +139,7 @@ describe("Visual mode", () => {
 
     it("deletes the selection with x (same behavior as d)", () => {
       const buffer = new TextBuffer("hello world");
-      const ctx = createVisualContext(
-        { line: 0, col: 5 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 5 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["x"], ctx, buffer);
       expect(buffer.getContent()).toBe("world");
       expect(result.mode).toBe("normal");
@@ -165,10 +147,7 @@ describe("Visual mode", () => {
 
     it("yanks the selection with y (buffer unchanged)", () => {
       const buffer = new TextBuffer("hello world");
-      const ctx = createVisualContext(
-        { line: 0, col: 4 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 4 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["y"], ctx, buffer);
       expect(buffer.getContent()).toBe("hello world");
       expect(result.register).toBe("hello");
@@ -177,10 +156,7 @@ describe("Visual mode", () => {
 
     it("deletes the selection and enters insert mode with c", () => {
       const buffer = new TextBuffer("hello world");
-      const ctx = createVisualContext(
-        { line: 0, col: 4 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 4 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["c"], ctx, buffer);
       expect(buffer.getContent()).toBe(" world");
       expect(result.mode).toBe("insert");
@@ -188,10 +164,7 @@ describe("Visual mode", () => {
 
     it("deletes a multi-line selection with d", () => {
       const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createVisualContext(
-        { line: 1, col: 2 },
-        { line: 0, col: 3 },
-      );
+      const ctx = createVisualContext({ line: 1, col: 2 }, { line: 0, col: 3 });
       const { ctx: result } = pressKeys(["d"], ctx, buffer);
       // line1 cols 0-2 + line2 cols 3+ are deleted
       expect(result.mode).toBe("normal");
@@ -211,10 +184,7 @@ describe("Visual mode", () => {
 
     it("deletes entire lines with d in visual-line mode", () => {
       const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createVisualLineContext(
-        { line: 1, col: 0 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualLineContext({ line: 1, col: 0 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["d"], ctx, buffer);
       expect(buffer.getContent()).toBe("line3");
       expect(result.mode).toBe("normal");
@@ -223,10 +193,7 @@ describe("Visual mode", () => {
 
     it("yanks entire lines with y in visual-line mode", () => {
       const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createVisualLineContext(
-        { line: 1, col: 0 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualLineContext({ line: 1, col: 0 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["y"], ctx, buffer);
       expect(buffer.getContent()).toBe("line1\nline2\nline3");
       expect(result.register).toBe("line1\nline2\n");
@@ -235,10 +202,7 @@ describe("Visual mode", () => {
 
     it("expands selection downward when pressing j in visual-line mode", () => {
       const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createVisualLineContext(
-        { line: 0, col: 0 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualLineContext({ line: 0, col: 0 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["j"], ctx, buffer);
       expect(result.cursor.line).toBe(1);
       expect(result.mode).toBe("visual-line");
@@ -251,10 +215,7 @@ describe("Visual mode", () => {
   describe("Escape (exit visual mode)", () => {
     it("returns to normal mode with Escape", () => {
       const buffer = new TextBuffer("hello world");
-      const ctx = createVisualContext(
-        { line: 0, col: 5 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 5 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["Escape"], ctx, buffer);
       expect(result.mode).toBe("normal");
       expect(result.visualAnchor).toBeNull();
@@ -262,10 +223,7 @@ describe("Visual mode", () => {
 
     it("returns to normal mode when pressing Escape in visual-line mode", () => {
       const buffer = new TextBuffer("line1\nline2");
-      const ctx = createVisualLineContext(
-        { line: 1, col: 0 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualLineContext({ line: 1, col: 0 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["Escape"], ctx, buffer);
       expect(result.mode).toBe("normal");
     });
@@ -277,40 +235,28 @@ describe("Visual mode", () => {
   describe("Mode switching", () => {
     it("returns to normal mode when pressing v again in visual mode", () => {
       const buffer = new TextBuffer("hello");
-      const ctx = createVisualContext(
-        { line: 0, col: 3 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 3 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["v"], ctx, buffer);
       expect(result.mode).toBe("normal");
     });
 
     it("switches to visual-line mode when pressing V in visual mode", () => {
       const buffer = new TextBuffer("hello");
-      const ctx = createVisualContext(
-        { line: 0, col: 3 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 3 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["V"], ctx, buffer);
       expect(result.mode).toBe("visual-line");
     });
 
     it("returns to normal mode when pressing V again in visual-line mode", () => {
       const buffer = new TextBuffer("hello");
-      const ctx = createVisualLineContext(
-        { line: 0, col: 0 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualLineContext({ line: 0, col: 0 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["V"], ctx, buffer);
       expect(result.mode).toBe("normal");
     });
 
     it("switches to visual mode when pressing v in visual-line mode", () => {
       const buffer = new TextBuffer("hello");
-      const ctx = createVisualLineContext(
-        { line: 0, col: 0 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualLineContext({ line: 0, col: 0 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["v"], ctx, buffer);
       expect(result.mode).toBe("visual");
     });
@@ -322,10 +268,7 @@ describe("Visual mode", () => {
   describe("Count prefix", () => {
     it("moves cursor 3 positions right with 3l", () => {
       const buffer = new TextBuffer("hello world");
-      const ctx = createVisualContext(
-        { line: 0, col: 0 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 0 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["3", "l"], ctx, buffer);
       expect(result.cursor.col).toBe(3);
     });
@@ -387,10 +330,7 @@ describe("Visual mode", () => {
     it("d deletes the rectangular block", () => {
       const buffer = new TextBuffer("abcde\nfghij\nklmno");
       // Select columns 1-3 on lines 0-1
-      const ctx = createBlockContext(
-        { line: 1, col: 3 },
-        { line: 0, col: 1 },
-      );
+      const ctx = createBlockContext({ line: 1, col: 3 }, { line: 0, col: 1 });
       const { ctx: result } = pressKeys(["d"], ctx, buffer);
       expect(buffer.getLine(0)).toBe("ae");
       expect(buffer.getLine(1)).toBe("fj");
@@ -401,10 +341,7 @@ describe("Visual mode", () => {
 
     it("y yanks the rectangular block without modifying buffer", () => {
       const buffer = new TextBuffer("abcde\nfghij\nklmno");
-      const ctx = createBlockContext(
-        { line: 2, col: 2 },
-        { line: 0, col: 1 },
-      );
+      const ctx = createBlockContext({ line: 2, col: 2 }, { line: 0, col: 1 });
       const { ctx: result } = pressKeys(["y"], ctx, buffer);
       expect(buffer.getContent()).toBe("abcde\nfghij\nklmno");
       expect(result.register).toBe("bc\ngh\nlm");
@@ -413,10 +350,7 @@ describe("Visual mode", () => {
 
     it("c deletes the block and enters insert mode", () => {
       const buffer = new TextBuffer("abcde\nfghij");
-      const ctx = createBlockContext(
-        { line: 1, col: 2 },
-        { line: 0, col: 1 },
-      );
+      const ctx = createBlockContext({ line: 1, col: 2 }, { line: 0, col: 1 });
       const { ctx: result } = pressKeys(["c"], ctx, buffer);
       expect(buffer.getLine(0)).toBe("ade");
       expect(buffer.getLine(1)).toBe("fij");
@@ -426,10 +360,7 @@ describe("Visual mode", () => {
 
     it("o swaps anchor and cursor", () => {
       const buffer = new TextBuffer("abcde\nfghij");
-      const ctx = createBlockContext(
-        { line: 1, col: 3 },
-        { line: 0, col: 1 },
-      );
+      const ctx = createBlockContext({ line: 1, col: 3 }, { line: 0, col: 1 });
       const { ctx: result } = pressKeys(["o"], ctx, buffer);
       expect(result.cursor).toEqual({ line: 0, col: 1 });
       expect(result.visualAnchor).toEqual({ line: 1, col: 3 });
@@ -437,10 +368,7 @@ describe("Visual mode", () => {
 
     it("switches from visual to visual-block with Ctrl-V", () => {
       const buffer = new TextBuffer("hello\nworld");
-      const ctx = createVisualContext(
-        { line: 0, col: 3 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 3 }, { line: 0, col: 0 });
       const result = processKeystroke("v", ctx, buffer, true);
       expect(result.newCtx.mode).toBe("visual-block");
       expect(result.newCtx.visualAnchor).toEqual({ line: 0, col: 0 });
@@ -448,20 +376,14 @@ describe("Visual mode", () => {
 
     it("switches from visual-block to visual with v", () => {
       const buffer = new TextBuffer("hello\nworld");
-      const ctx = createBlockContext(
-        { line: 1, col: 3 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createBlockContext({ line: 1, col: 3 }, { line: 0, col: 0 });
       const result = processKeystroke("v", ctx, buffer);
       expect(result.newCtx.mode).toBe("visual");
     });
 
     it("switches from visual-block to visual-line with V", () => {
       const buffer = new TextBuffer("hello\nworld");
-      const ctx = createBlockContext(
-        { line: 1, col: 3 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createBlockContext({ line: 1, col: 3 }, { line: 0, col: 0 });
       const result = processKeystroke("V", ctx, buffer);
       expect(result.newCtx.mode).toBe("visual-line");
     });
@@ -469,10 +391,7 @@ describe("Visual mode", () => {
     it("I inserts text at block left column on all lines", () => {
       const buffer = new TextBuffer("abcde\nfghij\nklmno");
       // Block select cols 2-3 on lines 0-2
-      const ctx = createBlockContext(
-        { line: 2, col: 3 },
-        { line: 0, col: 2 },
-      );
+      const ctx = createBlockContext({ line: 2, col: 3 }, { line: 0, col: 2 });
       // I enters insert mode at left col (2) on first line
       const { ctx: insertCtx } = pressKeys(["Shift", "I"], ctx, buffer);
       expect(insertCtx.mode).toBe("insert");
@@ -495,10 +414,7 @@ describe("Visual mode", () => {
     it("A appends text at block right column on all lines", () => {
       const buffer = new TextBuffer("abcde\nfghij\nklmno");
       // Block select cols 1-2 on lines 0-1
-      const ctx = createBlockContext(
-        { line: 1, col: 2 },
-        { line: 0, col: 1 },
-      );
+      const ctx = createBlockContext({ line: 1, col: 2 }, { line: 0, col: 1 });
       // A enters insert mode at right col + 1 (3) on first line
       const { ctx: insertCtx } = pressKeys(["Shift", "A"], ctx, buffer);
       expect(insertCtx.mode).toBe("insert");
@@ -517,10 +433,7 @@ describe("Visual mode", () => {
 
     it("I with no text typed does not modify other lines", () => {
       const buffer = new TextBuffer("abc\ndef\nghi");
-      const ctx = createBlockContext(
-        { line: 2, col: 1 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createBlockContext({ line: 2, col: 1 }, { line: 0, col: 0 });
       const { ctx: insertCtx } = pressKeys(["Shift", "I"], ctx, buffer);
       // Immediately Escape without typing
       pressKeys(["Escape"], insertCtx, buffer);
@@ -530,10 +443,7 @@ describe("Visual mode", () => {
     it("I pads short lines with spaces", () => {
       const buffer = new TextBuffer("abcdef\nab\nabcdef");
       // Block select col 4 on lines 0-2
-      const ctx = createBlockContext(
-        { line: 2, col: 4 },
-        { line: 0, col: 4 },
-      );
+      const ctx = createBlockContext({ line: 2, col: 4 }, { line: 0, col: 4 });
       const { ctx: insertCtx } = pressKeys(["Shift", "I"], ctx, buffer);
       const { ctx: afterType } = pressKeys(["X"], insertCtx, buffer);
       pressKeys(["Escape"], afterType, buffer);
@@ -544,10 +454,7 @@ describe("Visual mode", () => {
 
     it("block insert can be undone with u", () => {
       const buffer = new TextBuffer("abc\ndef\nghi");
-      const ctx = createBlockContext(
-        { line: 2, col: 1 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createBlockContext({ line: 2, col: 1 }, { line: 0, col: 0 });
       const { ctx: insertCtx } = pressKeys(["Shift", "I"], ctx, buffer);
       const { ctx: afterType } = pressKeys(["X"], insertCtx, buffer);
       const { ctx: afterEsc } = pressKeys(["Escape"], afterType, buffer);
@@ -557,8 +464,8 @@ describe("Visual mode", () => {
       // Undo the block replication
       const { ctx: afterUndo } = pressKeys(["u"], afterEsc, buffer);
       expect(buffer.getLine(0)).toBe("Xabc"); // first line typed directly
-      expect(buffer.getLine(1)).toBe("def");   // reverted
-      expect(buffer.getLine(2)).toBe("ghi");   // reverted
+      expect(buffer.getLine(1)).toBe("def"); // reverted
+      expect(buffer.getLine(2)).toBe("ghi"); // reverted
       expect(afterUndo.mode).toBe("normal");
     });
   });
@@ -602,10 +509,7 @@ describe("Visual mode", () => {
 
     it('"bd in visual mode deletes into register b', () => {
       const buffer = new TextBuffer("hello world");
-      const ctx = createVisualContext(
-        { line: 0, col: 4 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 4 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(['"', "b", "d"], ctx, buffer);
       expect(buffer.getContent()).toBe(" world");
       expect(result.registers.b).toBe("hello");
@@ -614,10 +518,7 @@ describe("Visual mode", () => {
 
     it("visual block yank into named register", () => {
       const buffer = new TextBuffer("abcde\nfghij\nklmno");
-      const ctx = createBlockContext(
-        { line: 1, col: 2 },
-        { line: 0, col: 1 },
-      );
+      const ctx = createBlockContext({ line: 1, col: 2 }, { line: 0, col: 1 });
       const { ctx: result } = pressKeys(['"', "c", "y"], ctx, buffer);
       expect(result.registers.c).toBe("bc\ngh");
       expect(result.statusMessage).toBe('2 lines yanked into "c');
@@ -631,10 +532,7 @@ describe("Visual mode", () => {
     it("viw selects the inner word and updates anchor/cursor", () => {
       const buffer = new TextBuffer("hello world foo");
       // Start visual mode with cursor on 'w' of "world"
-      const ctx = createVisualContext(
-        { line: 0, col: 6 },
-        { line: 0, col: 6 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 6 }, { line: 0, col: 6 });
       // Press 'i' to enter text-object-pending, then 'w' to resolve inner word
       const { ctx: result } = pressKeys(["i", "w"], ctx, buffer);
       expect(result.phase).toBe("idle");
@@ -671,10 +569,7 @@ describe("Visual mode", () => {
   describe("Invalid register key in visual mode", () => {
     it('pressing " then an invalid register key like 1 resets phase', () => {
       const buffer = new TextBuffer("hello world");
-      const ctx = createVisualContext(
-        { line: 0, col: 5 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 5 }, { line: 0, col: 0 });
       // Press " to enter register-pending, then "1" which is not [a-z"]
       const { ctx: result } = pressKeys(['"', "1"], ctx, buffer);
       expect(result.phase).toBe("idle");
@@ -685,10 +580,7 @@ describe("Visual mode", () => {
 
     it('pressing " then @ resets phase without selecting a register', () => {
       const buffer = new TextBuffer("hello world");
-      const ctx = createVisualContext(
-        { line: 0, col: 5 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 5 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(['"', "@"], ctx, buffer);
       expect(result.phase).toBe("idle");
       expect(result.mode).toBe("visual");
@@ -701,10 +593,7 @@ describe("Visual mode", () => {
   describe("Text object entry with 'a' key", () => {
     it("pressing a enters text-object-pending with around modifier", () => {
       const buffer = new TextBuffer('hello "world" foo');
-      const ctx = createVisualContext(
-        { line: 0, col: 7 },
-        { line: 0, col: 7 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 7 }, { line: 0, col: 7 });
       // Press 'a' to start around-text-object pending
       const { ctx: pending } = pressKeys(["a"], ctx, buffer);
       expect(pending.phase).toBe("text-object-pending");
@@ -713,10 +602,7 @@ describe("Visual mode", () => {
 
     it('a" selects around the quoted string', () => {
       const buffer = new TextBuffer('hello "world" foo');
-      const ctx = createVisualContext(
-        { line: 0, col: 7 },
-        { line: 0, col: 7 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 7 }, { line: 0, col: 7 });
       // Press 'a' then '"' to select around the double-quoted string
       const { ctx: result } = pressKeys(["a", '"'], ctx, buffer);
       expect(result.phase).toBe("idle");
@@ -733,10 +619,7 @@ describe("Visual mode", () => {
   describe("Unhandled keys in visual mode", () => {
     it("pressing Q does nothing and returns ctx unchanged", () => {
       const buffer = new TextBuffer("hello world");
-      const ctx = createVisualContext(
-        { line: 0, col: 5 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 5 }, { line: 0, col: 0 });
       const { ctx: result, allActions } = pressKeys(["Q"], ctx, buffer);
       expect(result.mode).toBe("visual");
       expect(result.cursor).toEqual({ line: 0, col: 5 });
@@ -746,10 +629,7 @@ describe("Visual mode", () => {
 
     it("pressing Z does nothing and returns ctx unchanged", () => {
       const buffer = new TextBuffer("hello world");
-      const ctx = createVisualContext(
-        { line: 0, col: 3 },
-        { line: 0, col: 1 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 3 }, { line: 0, col: 1 });
       const { ctx: result, allActions } = pressKeys(["Z"], ctx, buffer);
       expect(result.mode).toBe("visual");
       expect(result.cursor).toEqual({ line: 0, col: 3 });
@@ -764,10 +644,7 @@ describe("Visual mode", () => {
   describe("Unknown g command in visual mode", () => {
     it("pressing g then x resets g-pending phase", () => {
       const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createVisualContext(
-        { line: 2, col: 0 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 2, col: 0 }, { line: 0, col: 0 });
       // Press 'g' to enter g-pending, then 'x' which is unknown
       const { ctx: result, allActions } = pressKeys(["g", "x"], ctx, buffer);
       expect(result.phase).toBe("idle");
@@ -780,10 +657,7 @@ describe("Visual mode", () => {
 
     it("pressing g then z resets g-pending phase", () => {
       const buffer = new TextBuffer("hello");
-      const ctx = createVisualContext(
-        { line: 0, col: 3 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 3 }, { line: 0, col: 0 });
       const { ctx: result } = pressKeys(["g", "z"], ctx, buffer);
       expect(result.phase).toBe("idle");
       expect(result.count).toBe(0);
@@ -797,10 +671,7 @@ describe("Visual mode", () => {
     it("delete works correctly when cursor is before anchor (same line)", () => {
       const buffer = new TextBuffer("hello world");
       // cursor at col 2, anchor at col 8 -> cursor is before anchor
-      const ctx = createVisualContext(
-        { line: 0, col: 2 },
-        { line: 0, col: 8 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 2 }, { line: 0, col: 8 });
       const { ctx: result } = pressKeys(["d"], ctx, buffer);
       expect(result.mode).toBe("normal");
       // normalizeSelection should swap: start=col2, end=col8
@@ -811,10 +682,7 @@ describe("Visual mode", () => {
     it("yank works correctly when cursor line is before anchor line", () => {
       const buffer = new TextBuffer("line1\nline2\nline3");
       // cursor on line 0, anchor on line 2 -> cursor is before anchor
-      const ctx = createVisualContext(
-        { line: 0, col: 2 },
-        { line: 2, col: 3 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 2 }, { line: 2, col: 3 });
       const { ctx: result } = pressKeys(["y"], ctx, buffer);
       expect(result.mode).toBe("normal");
       // The yanked text should span from (0,2) to (2,3)
@@ -826,10 +694,7 @@ describe("Visual mode", () => {
     it("delete with cursor on earlier line than anchor normalizes correctly", () => {
       const buffer = new TextBuffer("aaa\nbbb\nccc");
       // cursor at line 0 col 1, anchor at line 1 col 1 -> b comes before a
-      const ctx = createVisualContext(
-        { line: 0, col: 1 },
-        { line: 1, col: 1 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 1 }, { line: 1, col: 1 });
       const { ctx: result } = pressKeys(["d"], ctx, buffer);
       expect(result.mode).toBe("normal");
       // normalizeSelection: start=(0,1), end=(1,1), deletes from (0,1) to (1,1) inclusive
@@ -844,10 +709,7 @@ describe("Visual mode", () => {
   describe('Register selection with "" in visual mode', () => {
     it('"" selects the unnamed register (selectedRegister becomes null)', () => {
       const buffer = new TextBuffer("hello world");
-      const ctx = createVisualContext(
-        { line: 0, col: 0 },
-        { line: 0, col: 4 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 0 }, { line: 0, col: 4 });
       // Press " to enter register-pending, then " to select unnamed register
       const { ctx: result } = pressKeys(['"', '"'], ctx, buffer);
       expect(result.selectedRegister).toBeNull();
@@ -863,10 +725,7 @@ describe("Visual mode", () => {
   describe("Visual-block I/A in readOnly mode", () => {
     it("I in visual-block readOnly mode does nothing", () => {
       const buffer = new TextBuffer("aaa\nbbb\nccc");
-      const ctx = createBlockContext(
-        { line: 0, col: 0 },
-        { line: 2, col: 2 },
-      );
+      const ctx = createBlockContext({ line: 0, col: 0 }, { line: 2, col: 2 });
       const result = processKeystroke("I", ctx, buffer, false, true);
       expect(result.newCtx.mode).toBe("visual-block"); // stays in visual-block
       expect(result.actions).toEqual([]);
@@ -874,10 +733,7 @@ describe("Visual mode", () => {
 
     it("A in visual-block readOnly mode does nothing", () => {
       const buffer = new TextBuffer("aaa\nbbb\nccc");
-      const ctx = createBlockContext(
-        { line: 0, col: 0 },
-        { line: 2, col: 2 },
-      );
+      const ctx = createBlockContext({ line: 0, col: 0 }, { line: 2, col: 2 });
       const result = processKeystroke("A", ctx, buffer, false, true);
       expect(result.newCtx.mode).toBe("visual-block"); // stays in visual-block
       expect(result.actions).toEqual([]);
@@ -910,10 +766,7 @@ describe("Visual mode", () => {
   describe("5gg in visual mode (g-pending with explicit count)", () => {
     it("5gg moves cursor to line 4 (0-indexed) in visual mode", () => {
       const buffer = new TextBuffer("line1\nline2\nline3\nline4\nline5\nline6");
-      const ctx = createVisualContext(
-        { line: 0, col: 0 },
-        { line: 0, col: 0 },
-      );
+      const ctx = createVisualContext({ line: 0, col: 0 }, { line: 0, col: 0 });
       // Press 5, g, g → moves to line 4 (5th line, 0-indexed)
       const { ctx: result } = pressKeys(["5", "g", "g"], ctx, buffer);
       expect(result.cursor.line).toBe(4);

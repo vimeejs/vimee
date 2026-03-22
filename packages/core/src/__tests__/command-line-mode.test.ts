@@ -61,11 +61,7 @@ describe("Command-line mode", () => {
     it("issues a save action with :w", () => {
       const buffer = new TextBuffer("hello world");
       const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { ctx: result, allActions } = pressKeys(
-        ["w", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result, allActions } = pressKeys(["w", "Enter"], ctx, buffer);
       expect(result.mode).toBe("normal");
       expect(allActions).toContainEqual({
         type: "save",
@@ -89,11 +85,7 @@ describe("Command-line mode", () => {
     it("searches forward for 'foo' and moves the cursor to the match position with /foo", () => {
       const buffer = new TextBuffer("hello foo world");
       const ctx = createCommandLineContext({ line: 0, col: 0 }, "/");
-      const { ctx: result } = pressKeys(
-        ["f", "o", "o", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys(["f", "o", "o", "Enter"], ctx, buffer);
       expect(result.mode).toBe("normal");
       expect(result.cursor).toEqual({ line: 0, col: 6 });
       expect(result.lastSearch).toBe("foo");
@@ -102,11 +94,7 @@ describe("Command-line mode", () => {
     it("displays a status message when there is no match", () => {
       const buffer = new TextBuffer("hello world");
       const ctx = createCommandLineContext({ line: 0, col: 0 }, "/");
-      const { ctx: result, allActions } = pressKeys(
-        ["x", "y", "z", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result, allActions } = pressKeys(["x", "y", "z", "Enter"], ctx, buffer);
       expect(result.mode).toBe("normal");
       expect(result.statusMessage).toBe("Pattern not found: xyz");
       expect(result.lastSearch).toBe("xyz");
@@ -131,11 +119,7 @@ describe("Command-line mode", () => {
     it("searches backward for 'foo' with ?foo", () => {
       const buffer = new TextBuffer("foo hello foo");
       const ctx = createCommandLineContext({ line: 0, col: 10 }, "?");
-      const { ctx: result } = pressKeys(
-        ["f", "o", "o", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys(["f", "o", "o", "Enter"], ctx, buffer);
       expect(result.mode).toBe("normal");
       expect(result.cursor).toEqual({ line: 0, col: 0 });
       expect(result.searchDirection).toBe("backward");
@@ -144,11 +128,7 @@ describe("Command-line mode", () => {
     it("displays a message when backward search finds no match", () => {
       const buffer = new TextBuffer("hello world");
       const ctx = createCommandLineContext({ line: 0, col: 5 }, "?");
-      const { ctx: result } = pressKeys(
-        ["z", "z", "z", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys(["z", "z", "z", "Enter"], ctx, buffer);
       expect(result.statusMessage).toBe("Pattern not found: zzz");
     });
   });
@@ -211,11 +191,7 @@ describe("Command-line mode", () => {
     it("jumps to line 3 (0-based line 2) with :3", () => {
       const buffer = new TextBuffer("line1\nline2\nline3\nline4");
       const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { ctx: result, allActions } = pressKeys(
-        ["3", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result, allActions } = pressKeys(["3", "Enter"], ctx, buffer);
       expect(result.mode).toBe("normal");
       expect(result.cursor).toEqual({ line: 2, col: 0 });
       expect(allActions).toContainEqual({
@@ -234,11 +210,7 @@ describe("Command-line mode", () => {
     it("clamps when the number exceeds the buffer line count", () => {
       const buffer = new TextBuffer("line1\nline2\nline3");
       const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { ctx: result } = pressKeys(
-        ["9", "9", "9", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys(["9", "9", "9", "Enter"], ctx, buffer);
       expect(result.cursor.line).toBe(2); // last line
     });
 
@@ -279,11 +251,7 @@ describe("Command-line mode", () => {
     it("emits set-option number=true with :set number", () => {
       const buffer = new TextBuffer("hello");
       const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { ctx: result, allActions } = pressKeys(
-        [..."set number", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result, allActions } = pressKeys([..."set number", "Enter"], ctx, buffer);
       expect(result.mode).toBe("normal");
       expect(allActions).toContainEqual({
         type: "set-option",
@@ -295,11 +263,7 @@ describe("Command-line mode", () => {
     it("emits set-option number=false with :set nonumber", () => {
       const buffer = new TextBuffer("hello");
       const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { ctx: result, allActions } = pressKeys(
-        [..."set nonumber", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result, allActions } = pressKeys([..."set nonumber", "Enter"], ctx, buffer);
       expect(result.mode).toBe("normal");
       expect(allActions).toContainEqual({
         type: "set-option",
@@ -327,11 +291,7 @@ describe("Command-line mode", () => {
     it("shows E492 error for unknown command", () => {
       const buffer = new TextBuffer("hello");
       const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { ctx: result, allActions } = pressKeys(
-        [..."aaa", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result, allActions } = pressKeys([..."aaa", "Enter"], ctx, buffer);
       expect(result.mode).toBe("normal");
       expect(result.statusMessage).toBe("E492: Not an editor command: aaa");
       expect(result.statusError).toBe(true);
@@ -360,20 +320,14 @@ describe("Command-line mode", () => {
     it("searches by typing /hello from normal mode end-to-end", () => {
       const buffer = new TextBuffer("foo\nbar\nhello\nworld");
       const ctx = createInitialContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(
-        ["/", "h", "e", "l", "l", "o", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys(["/", "h", "e", "l", "l", "o", "Enter"], ctx, buffer);
       expect(result.mode).toBe("normal");
       expect(result.cursor).toEqual({ line: 2, col: 0 });
       expect(result.lastSearch).toBe("hello");
     });
 
     it("jumps to line 5 by typing :5 from normal mode", () => {
-      const lines = Array.from({ length: 10 }, (_, i) => `line${i + 1}`).join(
-        "\n",
-      );
+      const lines = Array.from({ length: 10 }, (_, i) => `line${i + 1}`).join("\n");
       const buffer = new TextBuffer(lines);
       const ctx = createInitialContext({ line: 0, col: 0 });
       const { ctx: result } = pressKeys([":", "5", "Enter"], ctx, buffer);
@@ -389,11 +343,7 @@ describe("Command-line mode", () => {
     it(":s/old/new/ replaces first match on current line", () => {
       const buffer = new TextBuffer("foo bar foo");
       const ctx = createInitialContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(
-        [...":", ..."s/foo/baz/", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys([...":", ..."s/foo/baz/", "Enter"], ctx, buffer);
       expect(buffer.getContent()).toBe("baz bar foo");
       expect(result.mode).toBe("normal");
       expect(result.statusMessage).toContain("1 substitution");
@@ -409,11 +359,7 @@ describe("Command-line mode", () => {
     it(":%s/old/new/g replaces all matches in entire file", () => {
       const buffer = new TextBuffer("foo\nbar\nfoo\nbaz");
       const ctx = createInitialContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(
-        [...":", ..."%s/foo/replaced/g", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys([...":", ..."%s/foo/replaced/g", "Enter"], ctx, buffer);
       expect(buffer.getContent()).toBe("replaced\nbar\nreplaced\nbaz");
       expect(result.statusMessage).toContain("2 substitutions on 2 lines");
     });
@@ -435,11 +381,7 @@ describe("Command-line mode", () => {
     it(":s with no match shows error", () => {
       const buffer = new TextBuffer("hello world");
       const ctx = createInitialContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(
-        [...":", ..."s/xyz/abc/", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys([...":", ..."s/xyz/abc/", "Enter"], ctx, buffer);
       expect(buffer.getContent()).toBe("hello world");
       expect(result.statusMessage).toContain("Pattern not found");
     });
@@ -447,11 +389,7 @@ describe("Command-line mode", () => {
     it(":s can be undone", () => {
       const buffer = new TextBuffer("foo bar");
       const ctx = createInitialContext({ line: 0, col: 0 });
-      const { ctx: afterSub } = pressKeys(
-        [...":", ..."s/foo/baz/", "Enter"],
-        ctx,
-        buffer,
-      );
+      const { ctx: afterSub } = pressKeys([...":", ..."s/foo/baz/", "Enter"], ctx, buffer);
       expect(buffer.getContent()).toBe("baz bar");
       pressKeys(["u"], afterSub, buffer);
       expect(buffer.getContent()).toBe("foo bar");

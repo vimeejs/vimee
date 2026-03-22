@@ -76,11 +76,12 @@ function executeLinewiseOperator(
   const actions: VimAction[] = [{ type: "yank", text: yankedText }];
 
   // Status message for 2+ lines (Vim's default report threshold)
-  const statusMessage = lineCount >= 2
-    ? operator === "y"
-      ? `${lineCount} lines yanked`
-      : `${lineCount} fewer lines`
-    : "";
+  const statusMessage =
+    lineCount >= 2
+      ? operator === "y"
+        ? `${lineCount} lines yanked`
+        : `${lineCount} fewer lines`
+      : "";
 
   // y (yank) does not delete
   if (operator === "y") {
@@ -141,10 +142,7 @@ function executeCharwiseOperator(
   let start = range.start;
   let end = range.end;
 
-  if (
-    start.line > end.line ||
-    (start.line === end.line && start.col > end.col)
-  ) {
+  if (start.line > end.line || (start.line === end.line && start.col > end.col)) {
     [start, end] = [end, start];
   }
 
@@ -181,9 +179,10 @@ function executeCharwiseOperator(
   // Calculate cursor position
   const newCursor = {
     line: start.line,
-    col: operator === "c"
-      ? start.col
-      : Math.min(start.col, Math.max(0, buffer.getLineLength(start.line) - 1)),
+    col:
+      operator === "c"
+        ? start.col
+        : Math.min(start.col, Math.max(0, buffer.getLineLength(start.line) - 1)),
   };
 
   return {
@@ -198,11 +197,7 @@ function executeCharwiseOperator(
 /**
  * Get text from the buffer within the specified range (non-destructive)
  */
-function getTextInRange(
-  buffer: TextBuffer,
-  start: CursorPosition,
-  end: CursorPosition,
-): string {
+function getTextInRange(buffer: TextBuffer, start: CursorPosition, end: CursorPosition): string {
   if (start.line === end.line) {
     return buffer.getLine(start.line).slice(start.col, end.col);
   }
@@ -255,9 +250,8 @@ function executeIndentOperator(
     }
   }
 
-  const statusMessage = lineCount >= 2
-    ? `${lineCount} lines ${operator === ">" ? ">" : "<"}ed 1 time`
-    : "";
+  const statusMessage =
+    lineCount >= 2 ? `${lineCount} lines ${operator === ">" ? ">" : "<"}ed 1 time` : "";
 
   return {
     actions: [{ type: "content-change", content: buffer.getContent() }],

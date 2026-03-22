@@ -16,10 +16,7 @@ import { TextBuffer } from "../buffer";
 // =====================
 
 /** Create a VimContext for testing */
-function createTestContext(
-  cursor: CursorPosition,
-  overrides?: Partial<VimContext>,
-): VimContext {
+function createTestContext(cursor: CursorPosition, overrides?: Partial<VimContext>): VimContext {
   return {
     ...createInitialContext(cursor),
     ...overrides,
@@ -88,9 +85,7 @@ describe("Normal mode", () => {
     });
 
     it("correctly processes a two-digit count like 10j", () => {
-      const lines = Array.from({ length: 20 }, (_, i) => `line${i}`).join(
-        "\n",
-      );
+      const lines = Array.from({ length: 20 }, (_, i) => `line${i}`).join("\n");
       const buffer = new TextBuffer(lines);
       const ctx = createTestContext({ line: 0, col: 0 });
       const { ctx: result } = pressKeys(["1", "0", "j"], ctx, buffer);
@@ -324,10 +319,7 @@ describe("Normal mode", () => {
 
     it("pastes line-wise on the next line with p", () => {
       const buffer = new TextBuffer("line1\nline3");
-      const ctx = createTestContext(
-        { line: 0, col: 0 },
-        { register: "line2\n" },
-      );
+      const ctx = createTestContext({ line: 0, col: 0 }, { register: "line2\n" });
       const { ctx: result } = pressKeys(["p"], ctx, buffer);
       expect(buffer.getContent()).toBe("line1\nline2\nline3");
       expect(result.cursor).toEqual({ line: 1, col: 0 });
@@ -335,10 +327,7 @@ describe("Normal mode", () => {
 
     it("pastes line-wise above the current line with P", () => {
       const buffer = new TextBuffer("line1\nline3");
-      const ctx = createTestContext(
-        { line: 1, col: 0 },
-        { register: "line2\n" },
-      );
+      const ctx = createTestContext({ line: 1, col: 0 }, { register: "line2\n" });
       const { ctx: result } = pressKeys(["P"], ctx, buffer);
       expect(buffer.getContent()).toBe("line1\nline2\nline3");
       expect(result.cursor).toEqual({ line: 1, col: 0 });
@@ -353,10 +342,7 @@ describe("Normal mode", () => {
 
     it("pastes multi-line register line-wise with p and keeps buffer lines in sync", () => {
       const buffer = new TextBuffer("above\nbelow");
-      const ctx = createTestContext(
-        { line: 0, col: 0 },
-        { register: "line1\nline2\nline3\n" },
-      );
+      const ctx = createTestContext({ line: 0, col: 0 }, { register: "line1\nline2\nline3\n" });
       const { ctx: result } = pressKeys(["p"], ctx, buffer);
       expect(buffer.getContent()).toBe("above\nline1\nline2\nline3\nbelow");
       expect(buffer.getLineCount()).toBe(5);
@@ -369,10 +355,7 @@ describe("Normal mode", () => {
 
     it("pastes multi-line register line-wise with P and keeps buffer lines in sync", () => {
       const buffer = new TextBuffer("above\nbelow");
-      const ctx = createTestContext(
-        { line: 1, col: 0 },
-        { register: "line1\nline2\n" },
-      );
+      const ctx = createTestContext({ line: 1, col: 0 }, { register: "line1\nline2\n" });
       const { ctx: result } = pressKeys(["P"], ctx, buffer);
       expect(buffer.getContent()).toBe("above\nline1\nline2\nbelow");
       expect(buffer.getLineCount()).toBe(4);
@@ -971,9 +954,7 @@ describe("Normal mode", () => {
       const buffer = new TextBuffer("hello");
       const ctx = createTestContext({ line: 0, col: 0 });
       const result = processKeystroke("r", ctx, buffer, true);
-      expect(result.newCtx.statusMessage).toBe(
-        "Already at newest change",
-      );
+      expect(result.newCtx.statusMessage).toBe("Already at newest change");
     });
   });
 
@@ -1024,7 +1005,7 @@ describe("Normal mode", () => {
       expect(buffer.getLine(1)).toBe("  bbb");
       expect(buffer.getLine(2)).toBe("  ccc");
       expect(buffer.getLine(3)).toBe("ddd");
-      expect(result.statusMessage).toBe('3 lines >ed 1 time');
+      expect(result.statusMessage).toBe("3 lines >ed 1 time");
     });
 
     it("3<< dedents 3 lines", () => {
@@ -1110,10 +1091,7 @@ describe("Normal mode", () => {
 
     it('"bp pastes from register b', () => {
       const buffer = new TextBuffer("ab");
-      const ctx = createTestContext(
-        { line: 0, col: 0 },
-        { registers: { b: "X" } },
-      );
+      const ctx = createTestContext({ line: 0, col: 0 }, { registers: { b: "X" } });
       pressKeys(['"', "b", "p"], ctx, buffer);
       expect(buffer.getContent()).toBe("aXb");
     });
@@ -1218,11 +1196,7 @@ describe("Normal mode", () => {
     it("repeats insert session (ihi<Esc>)", () => {
       const buffer = new TextBuffer("ab");
       const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: afterInsert } = pressKeys(
-        ["i", "X", "Escape"],
-        ctx,
-        buffer,
-      );
+      const { ctx: afterInsert } = pressKeys(["i", "X", "Escape"], ctx, buffer);
       expect(buffer.getContent()).toBe("Xab");
       // Move right and repeat -> inserts X before cursor
       const { ctx: moved } = pressKeys(["l", "l"], afterInsert, buffer);
@@ -1348,11 +1322,7 @@ describe("Normal mode", () => {
       const buffer = new TextBuffer("world\nworld");
       const ctx = createTestContext({ line: 0, col: 0 });
       // Record: ihello<Esc>
-      const { ctx: afterRecord } = pressKeys(
-        ["q", "a", "i", "h", "i", "Escape", "q"],
-        ctx,
-        buffer,
-      );
+      const { ctx: afterRecord } = pressKeys(["q", "a", "i", "h", "i", "Escape", "q"], ctx, buffer);
       expect(buffer.getContent()).toBe("hiworld\nworld");
       // Move to next line and replay
       const { ctx: onLine1 } = pressKeys(["j", "0"], afterRecord, buffer);
@@ -1390,11 +1360,7 @@ describe("Normal mode", () => {
   // ---------------------------------------------------
   describe("readOnly mode", () => {
     /** Helper to process multiple keys in readOnly mode */
-    function pressKeysReadOnly(
-      keys: string[],
-      ctx: VimContext,
-      buffer: TextBuffer,
-    ) {
+    function pressKeysReadOnly(keys: string[], ctx: VimContext, buffer: TextBuffer) {
       let current = ctx;
       const allActions: import("../types").VimAction[] = [];
       for (const key of keys) {
@@ -1434,11 +1400,7 @@ describe("Normal mode", () => {
       const buffer = new TextBuffer("hello world");
       const ctx = createTestContext({ line: 0, col: 0 });
 
-      const { ctx: result, allActions } = pressKeysReadOnly(
-        ["y", "w"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result, allActions } = pressKeysReadOnly(["y", "w"], ctx, buffer);
       expect(result.register).toBe("hello ");
       expect(allActions.some((a) => a.type === "yank")).toBe(true);
       expect(buffer.getContent()).toBe("hello world");
@@ -1446,10 +1408,7 @@ describe("Normal mode", () => {
 
     it("blocks x, p, P", () => {
       const buffer = new TextBuffer("hello");
-      const ctx = createTestContext(
-        { line: 0, col: 0 },
-        { register: "test" },
-      );
+      const ctx = createTestContext({ line: 0, col: 0 }, { register: "test" });
 
       for (const key of ["x", "p", "P"]) {
         const result = processKeystroke(key, ctx, buffer, false, true);
@@ -1839,11 +1798,7 @@ describe("Normal mode", () => {
     it('"a3dd shows status message with register info', () => {
       const buffer = new TextBuffer("line1\nline2\nline3\nline4\nline5");
       const ctx = createTestContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(
-        ['"', "a", "3", "d", "d"],
-        ctx,
-        buffer,
-      );
+      const { ctx: result } = pressKeys(['"', "a", "3", "d", "d"], ctx, buffer);
       expect(buffer.getContent()).toBe("line4\nline5");
       expect(result.registers.a).toBe("line1\nline2\nline3\n");
       // statusMessage should include register info
@@ -1873,11 +1828,14 @@ describe("Normal mode", () => {
     it("resets gracefully when text-object-pending state has no operator", () => {
       const buffer = new TextBuffer("hello world");
       // Manually construct a context in text-object-pending state without an operator
-      const ctx = createTestContext({ line: 0, col: 0 }, {
-        phase: "text-object-pending" as const,
-        textObjectModifier: "i",
-        operator: null,
-      });
+      const ctx = createTestContext(
+        { line: 0, col: 0 },
+        {
+          phase: "text-object-pending" as const,
+          textObjectModifier: "i",
+          operator: null,
+        },
+      );
       // Press 'w' to trigger the text-object-pending handler with a valid text object but no operator
       const result = processKeystroke("w", ctx, buffer);
       expect(result.newCtx.phase).toBe("idle");

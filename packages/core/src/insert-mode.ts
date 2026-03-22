@@ -95,9 +95,7 @@ function handleEscape(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
         if (l === cursorAtInsertStart.line) continue;
         const line = buffer.getLine(l);
         // Pad with spaces if the line is shorter than the insert column
-        const padded = line.length < col
-          ? line + " ".repeat(col - line.length)
-          : line;
+        const padded = line.length < col ? line + " ".repeat(col - line.length) : line;
         buffer.setLine(l, padded.slice(0, col) + insertedText + padded.slice(col));
       }
       actions.push({ type: "content-change", content: buffer.getContent() });
@@ -131,10 +129,7 @@ function handleEscape(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
  * Backspace: Delete the character before the cursor.
  * At the beginning of a line, join with the previous line.
  */
-function handleBackspace(
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleBackspace(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   // At the beginning of a line
   if (ctx.cursor.col === 0) {
     // Do nothing at the start of the first line
@@ -173,10 +168,7 @@ function handleBackspace(
  * Delete: Delete the character at the cursor position.
  * At the end of a line, join with the next line.
  */
-function handleDelete(
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleDelete(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   // At the end of a line
   if (ctx.cursor.col >= buffer.getLineLength(ctx.cursor.line)) {
     // Do nothing at the end of the last line
@@ -201,10 +193,7 @@ function handleDelete(
  * Enter: Split the line at the current cursor position.
  * Preserves the indentation of the current line.
  */
-function handleEnter(
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleEnter(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   const indent = getLineIndent(buffer.getLine(ctx.cursor.line));
   buffer.splitLine(ctx.cursor.line, ctx.cursor.col);
   if (indent) {
@@ -225,12 +214,8 @@ function handleEnter(
 /**
  * Tab: Insert indentation based on context settings.
  */
-function handleTab(
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
-  const indent =
-    ctx.indentStyle === "tab" ? "\t" : " ".repeat(ctx.indentWidth);
+function handleTab(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
+  const indent = ctx.indentStyle === "tab" ? "\t" : " ".repeat(ctx.indentWidth);
   buffer.insertAt(ctx.cursor.line, ctx.cursor.col, indent);
   const newCursor = {
     line: ctx.cursor.line,
@@ -249,10 +234,7 @@ function handleTab(
 /**
  * Ctrl-W: Delete the word before the cursor.
  */
-function handleCtrlW(
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleCtrlW(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   if (ctx.cursor.col === 0) {
     return { newCtx: ctx, actions: [] };
   }
@@ -267,7 +249,8 @@ function handleCtrlW(
     while (col > 0 && /\w/.test(line[col - 1])) col--;
   } else if (col > 0) {
     // Skip non-word, non-whitespace characters backward
-    while (col > 0 && !/\w/.test(line[col - 1]) && line[col - 1] !== " " && line[col - 1] !== "\t") col--;
+    while (col > 0 && !/\w/.test(line[col - 1]) && line[col - 1] !== " " && line[col - 1] !== "\t")
+      col--;
   }
 
   const newLine = line.slice(0, col) + line.slice(ctx.cursor.col);
@@ -294,11 +277,7 @@ function getLineIndent(line: string): string {
 /**
  * Normal character input: Insert one character at the cursor position.
  */
-function handleCharInput(
-  key: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleCharInput(key: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   buffer.insertAt(ctx.cursor.line, ctx.cursor.col, key);
   const newCursor = {
     line: ctx.cursor.line,

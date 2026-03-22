@@ -29,12 +29,7 @@ export type { AttachOptions, VimTextarea } from "./types";
 export { cursorToOffset, offsetToCursor, applyCursorToTextarea } from "./cursor";
 
 // Viewport utilities (for advanced usage)
-export {
-  getLineHeight,
-  getVisibleLines,
-  getTopLine,
-  scrollToLine,
-} from "./viewport";
+export { getLineHeight, getVisibleLines, getTopLine, scrollToLine } from "./viewport";
 
 // Re-export commonly used core types for convenience
 export type { VimMode, VimAction, CursorPosition } from "@vimee/core";

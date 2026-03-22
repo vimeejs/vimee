@@ -10,10 +10,7 @@ import type { CursorPosition } from "@vimee/core";
 /**
  * Convert a 0-based CursorPosition to a flat string offset.
  */
-export function cursorToOffset(
-  content: string,
-  cursor: CursorPosition,
-): number {
+export function cursorToOffset(content: string, cursor: CursorPosition): number {
   const lines = content.split("\n");
   let offset = 0;
   for (let i = 0; i < cursor.line && i < lines.length; i++) {
@@ -27,10 +24,7 @@ export function cursorToOffset(
 /**
  * Convert a flat string offset to a 0-based CursorPosition.
  */
-export function offsetToCursor(
-  content: string,
-  offset: number,
-): CursorPosition {
+export function offsetToCursor(content: string, offset: number): CursorPosition {
   let remaining = offset;
   const lines = content.split("\n");
   for (let i = 0; i < lines.length; i++) {
@@ -47,10 +41,7 @@ export function offsetToCursor(
 /**
  * Apply a CursorPosition to a textarea's selectionStart/selectionEnd.
  */
-export function applyCursorToTextarea(
-  textarea: HTMLTextAreaElement,
-  cursor: CursorPosition,
-): void {
+export function applyCursorToTextarea(textarea: HTMLTextAreaElement, cursor: CursorPosition): void {
   const offset = cursorToOffset(textarea.value, cursor);
   textarea.selectionStart = offset;
   textarea.selectionEnd = offset;

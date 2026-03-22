@@ -43,10 +43,7 @@ export function getTopLine(textarea: HTMLTextAreaElement): number {
 /**
  * Scroll the textarea so the given line is visible.
  */
-export function scrollToLine(
-  textarea: HTMLTextAreaElement,
-  line: number,
-): void {
+export function scrollToLine(textarea: HTMLTextAreaElement, line: number): void {
   const lineHeight = getLineHeight(textarea);
   if (lineHeight <= 0) return;
 

@@ -17,11 +17,7 @@ export type { MotionRange, MotionResult } from "./motions";
 export { TextBuffer } from "./buffer";
 
 // Vim state machine
-export {
-  processKeystroke,
-  createInitialContext,
-  parseCursorPosition,
-} from "./vim-state";
+export { processKeystroke, createInitialContext, parseCursorPosition } from "./vim-state";
 
 // Key utilities
 export {

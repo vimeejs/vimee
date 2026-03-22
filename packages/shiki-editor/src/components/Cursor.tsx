@@ -35,13 +35,7 @@ export interface CursorProps {
  */
 const BLINK_RESTART_DELAY = 500;
 
-export function Cursor({
-  position,
-  visualCol,
-  mode,
-  showLineNumbers,
-  gutterWidth,
-}: CursorProps) {
+export function Cursor({ position, visualCol, mode, showLineNumbers, gutterWidth }: CursorProps) {
   const cursorClass = getCursorClass(mode);
 
   // Pause blink while cursor is moving, resume after idle

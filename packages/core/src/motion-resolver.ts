@@ -101,21 +101,16 @@ export function resolveMotion(
 
     // --- Screen-relative movement ---
     case "H":
-      return motionBigH(
-        cursor, buffer, count,
-        ctx?.viewportTopLine ?? 0,
-      );
+      return motionBigH(cursor, buffer, count, ctx?.viewportTopLine ?? 0);
 
     case "M":
-      return motionBigM(
-        cursor, buffer,
-        ctx?.viewportTopLine ?? 0,
-        ctx?.viewportHeight ?? 50,
-      );
+      return motionBigM(cursor, buffer, ctx?.viewportTopLine ?? 0, ctx?.viewportHeight ?? 50);
 
     case "L":
       return motionBigL(
-        cursor, buffer, count,
+        cursor,
+        buffer,
+        count,
         ctx?.viewportTopLine ?? 0,
         ctx?.viewportHeight ?? 50,
       );

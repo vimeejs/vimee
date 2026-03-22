@@ -196,28 +196,18 @@ function processKeystrokeInner(
  * During a change, all keys are accumulated in pendingChange.
  * When complete, pendingChange is saved to lastChange.
  */
-function trackChange(
-  key: string,
-  prevCtx: VimContext,
-  result: KeystrokeResult,
-): KeystrokeResult {
+function trackChange(key: string, prevCtx: VimContext, result: KeystrokeResult): KeystrokeResult {
   const newCtx = result.newCtx;
-  const hasContentChange = result.actions.some(
-    (a) => a.type === "content-change",
-  );
+  const hasContentChange = result.actions.some((a) => a.type === "content-change");
 
   const wasInChange = prevCtx.pendingChange.length > 0;
   const prevWasNormal = prevCtx.mode === "normal";
   const nowNormalIdle = newCtx.mode === "normal" && newCtx.phase === "idle";
-  const enteredInsert =
-    newCtx.mode === "insert" && prevCtx.mode !== "insert";
-  const enteredOperatorPending =
-    newCtx.phase === "operator-pending" && prevCtx.phase === "idle";
-  const enteredCharPending =
-    newCtx.phase === "char-pending" && prevCtx.phase !== "char-pending";
+  const enteredInsert = newCtx.mode === "insert" && prevCtx.mode !== "insert";
+  const enteredOperatorPending = newCtx.phase === "operator-pending" && prevCtx.phase === "idle";
+  const enteredCharPending = newCtx.phase === "char-pending" && prevCtx.phase !== "char-pending";
   const enteredTextObjectPending =
-    newCtx.phase === "text-object-pending" &&
-    prevCtx.phase !== "text-object-pending";
+    newCtx.phase === "text-object-pending" && prevCtx.phase !== "text-object-pending";
 
   // In insert mode, keep accumulating
   if (prevCtx.mode === "insert" && newCtx.mode === "insert") {
@@ -247,9 +237,7 @@ function trackChange(
   if (prevWasNormal && (enteredOperatorPending || enteredCharPending || enteredInsert)) {
     // If already accumulating (e.g., ciw enters insert from operator-pending),
     // keep the existing pendingChange
-    const pending = wasInChange
-      ? [...prevCtx.pendingChange, key]
-      : [key];
+    const pending = wasInChange ? [...prevCtx.pendingChange, key] : [key];
     return {
       ...result,
       newCtx: {
@@ -314,11 +302,7 @@ function trackChange(
 /**
  * Replay the last change key sequence.
  */
-function replayLastChange(
-  ctx: VimContext,
-  buffer: TextBuffer,
-  readOnly: boolean,
-): KeystrokeResult {
+function replayLastChange(ctx: VimContext, buffer: TextBuffer, readOnly: boolean): KeystrokeResult {
   let current = { ...ctx, pendingChange: [] as string[] };
   const allActions: import("./types").VimAction[] = [];
 
@@ -359,11 +343,12 @@ function maybeCaptureKey(
   const existing = result.newCtx.macros[reg] ?? [];
   const recordingStatus = `recording @${reg}`;
   // Preserve "recording @x" in status line unless there's a more important message
-  const statusMessage = result.newCtx.statusMessage
-    && result.newCtx.statusMessage !== ""
-    && result.newCtx.statusMessage !== recordingStatus
-    ? result.newCtx.statusMessage
-    : recordingStatus;
+  const statusMessage =
+    result.newCtx.statusMessage &&
+    result.newCtx.statusMessage !== "" &&
+    result.newCtx.statusMessage !== recordingStatus
+      ? result.newCtx.statusMessage
+      : recordingStatus;
 
   return {
     ...result,
@@ -382,10 +367,7 @@ function maybeCaptureKey(
 /**
  * Start recording a macro into the given register.
  */
-function startMacroRecording(
-  key: string,
-  ctx: VimContext,
-): KeystrokeResult {
+function startMacroRecording(key: string, ctx: VimContext): KeystrokeResult {
   if (/^[a-z]$/.test(key)) {
     return {
       newCtx: {

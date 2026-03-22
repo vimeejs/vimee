@@ -9,11 +9,7 @@ import type { VimContext, VimAction, CursorPosition } from "@vimee/core";
 import { TextBuffer, createInitialContext, processKeystroke } from "@vimee/core";
 import type { AttachOptions, VimTextarea } from "./types";
 import { applyCursorToTextarea, offsetToCursor } from "./cursor";
-import {
-  getVisibleLines,
-  getTopLine,
-  scrollToLine,
-} from "./viewport";
+import { getVisibleLines, getTopLine, scrollToLine } from "./viewport";
 
 /**
  * Attach vim editing to a textarea element.
@@ -28,10 +24,7 @@ import {
  * vim.destroy();
  * ```
  */
-export function attach(
-  textarea: HTMLTextAreaElement,
-  options: AttachOptions = {},
-): VimTextarea {
+export function attach(textarea: HTMLTextAreaElement, options: AttachOptions = {}): VimTextarea {
   const {
     readOnly = false,
     onChange,
@@ -45,10 +38,7 @@ export function attach(
 
   // --- Initialize vim engine ---
   const buffer = new TextBuffer(textarea.value);
-  const initialCursor = offsetToCursor(
-    textarea.value,
-    textarea.selectionStart ?? 0,
-  );
+  const initialCursor = offsetToCursor(textarea.value, textarea.selectionStart ?? 0);
   let ctx: VimContext = createInitialContext(initialCursor, {
     indentStyle,
     indentWidth,
@@ -183,13 +173,7 @@ export function attach(
       e.preventDefault();
     }
 
-    const { newCtx, actions } = processKeystroke(
-      e.key,
-      ctx,
-      buffer,
-      e.ctrlKey,
-      readOnly,
-    );
+    const { newCtx, actions } = processKeystroke(e.key, ctx, buffer, e.ctrlKey, readOnly);
 
     ctx = newCtx;
     processActions(actions, newCtx, e.key);

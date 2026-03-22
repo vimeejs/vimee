@@ -33,11 +33,7 @@ describe("computeSelectionInfo", () => {
 
   describe("visual (character-wise)", () => {
     it("selects single line range", () => {
-      const info = computeSelectionInfo(
-        "visual",
-        { line: 0, col: 2 },
-        { line: 0, col: 5 },
-      );
+      const info = computeSelectionInfo("visual", { line: 0, col: 2 }, { line: 0, col: 5 });
       expect(info.isLineSelected(0)).toBe(true);
       expect(info.isLineSelected(1)).toBe(false);
       expect(info.getSelectionStartCol(0)).toBe(2);
@@ -45,11 +41,7 @@ describe("computeSelectionInfo", () => {
     });
 
     it("selects multi-line range (anchor before cursor)", () => {
-      const info = computeSelectionInfo(
-        "visual",
-        { line: 1, col: 3 },
-        { line: 3, col: 5 },
-      );
+      const info = computeSelectionInfo("visual", { line: 1, col: 3 }, { line: 3, col: 5 });
       expect(info.isLineSelected(0)).toBe(false);
       expect(info.isLineSelected(1)).toBe(true);
       expect(info.isLineSelected(2)).toBe(true);
@@ -66,11 +58,7 @@ describe("computeSelectionInfo", () => {
     });
 
     it("normalizes range when cursor is before anchor", () => {
-      const info = computeSelectionInfo(
-        "visual",
-        { line: 2, col: 5 },
-        { line: 0, col: 1 },
-      );
+      const info = computeSelectionInfo("visual", { line: 2, col: 5 }, { line: 0, col: 1 });
       expect(info.isLineSelected(0)).toBe(true);
       expect(info.isLineSelected(1)).toBe(true);
       expect(info.isLineSelected(2)).toBe(true);
@@ -81,11 +69,7 @@ describe("computeSelectionInfo", () => {
 
   describe("visual-line", () => {
     it("selects whole lines", () => {
-      const info = computeSelectionInfo(
-        "visual-line",
-        { line: 1, col: 0 },
-        { line: 3, col: 0 },
-      );
+      const info = computeSelectionInfo("visual-line", { line: 1, col: 0 }, { line: 3, col: 0 });
       expect(info.isLineSelected(0)).toBe(false);
       expect(info.isLineSelected(1)).toBe(true);
       expect(info.isLineSelected(2)).toBe(true);
@@ -99,11 +83,7 @@ describe("computeSelectionInfo", () => {
 
   describe("visual-block", () => {
     it("selects rectangular region", () => {
-      const info = computeSelectionInfo(
-        "visual-block",
-        { line: 1, col: 2 },
-        { line: 3, col: 5 },
-      );
+      const info = computeSelectionInfo("visual-block", { line: 1, col: 2 }, { line: 3, col: 5 });
       expect(info.isLineSelected(0)).toBe(false);
       expect(info.isLineSelected(1)).toBe(true);
       expect(info.isLineSelected(2)).toBe(true);
@@ -117,11 +97,7 @@ describe("computeSelectionInfo", () => {
     });
 
     it("normalizes block when cursor col < anchor col", () => {
-      const info = computeSelectionInfo(
-        "visual-block",
-        { line: 0, col: 8 },
-        { line: 2, col: 3 },
-      );
+      const info = computeSelectionInfo("visual-block", { line: 0, col: 8 }, { line: 2, col: 3 });
       expect(info.getSelectionStartCol(1)).toBe(3);
       expect(info.getSelectionEndCol(1)).toBe(9);
     });

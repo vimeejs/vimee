@@ -28,12 +28,7 @@ describe("Operators", () => {
         linewise: false,
         inclusive: false,
       };
-      const result = executeOperatorOnRange(
-        "d",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      const result = executeOperatorOnRange("d", range, buffer, { line: 0, col: 0 });
       expect(buffer.getContent()).toBe("world");
       expect(result.newCursor.col).toBe(0);
       expect(result.newMode).toBe("normal");
@@ -48,12 +43,7 @@ describe("Operators", () => {
         linewise: false,
         inclusive: true,
       };
-      const result = executeOperatorOnRange(
-        "d",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      const result = executeOperatorOnRange("d", range, buffer, { line: 0, col: 0 });
       expect(buffer.getContent()).toBe("lo");
       expect(result.yankedText).toBe("hel");
     });
@@ -66,12 +56,7 @@ describe("Operators", () => {
         linewise: false,
         inclusive: false,
       };
-      const result = executeOperatorOnRange(
-        "d",
-        range,
-        buffer,
-        { line: 0, col: 3 },
-      );
+      const result = executeOperatorOnRange("d", range, buffer, { line: 0, col: 3 });
       expect(buffer.getContent()).toBe("lo");
       expect(result.newCursor.col).toBe(0);
     });
@@ -84,12 +69,7 @@ describe("Operators", () => {
         linewise: false,
         inclusive: false,
       };
-      const result = executeOperatorOnRange(
-        "d",
-        range,
-        buffer,
-        { line: 0, col: 3 },
-      );
+      const result = executeOperatorOnRange("d", range, buffer, { line: 0, col: 3 });
       expect(buffer.getContent()).toBe("helld\nfoo");
       expect(result.yankedText).toBe("lo\nwor");
     });
@@ -108,12 +88,7 @@ describe("Operators", () => {
         linewise: false,
         inclusive: false,
       };
-      const result = executeOperatorOnRange(
-        "y",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      const result = executeOperatorOnRange("y", range, buffer, { line: 0, col: 0 });
       expect(buffer.getContent()).toBe("hello world");
       expect(result.yankedText).toBe("hello ");
       expect(result.newMode).toBe("normal");
@@ -127,12 +102,7 @@ describe("Operators", () => {
         linewise: false,
         inclusive: true,
       };
-      const result = executeOperatorOnRange(
-        "y",
-        range,
-        buffer,
-        { line: 0, col: 6 },
-      );
+      const result = executeOperatorOnRange("y", range, buffer, { line: 0, col: 6 });
       expect(result.newCursor).toEqual({ line: 0, col: 6 });
       expect(result.yankedText).toBe("world");
     });
@@ -151,12 +121,7 @@ describe("Operators", () => {
         linewise: false,
         inclusive: false,
       };
-      const result = executeOperatorOnRange(
-        "c",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      const result = executeOperatorOnRange("c", range, buffer, { line: 0, col: 0 });
       expect(buffer.getContent()).toBe("world");
       expect(result.newMode).toBe("insert");
       expect(result.newCursor.col).toBe(0);
@@ -170,12 +135,7 @@ describe("Operators", () => {
         linewise: false,
         inclusive: true,
       };
-      const result = executeOperatorOnRange(
-        "c",
-        range,
-        buffer,
-        { line: 0, col: 6 },
-      );
+      const result = executeOperatorOnRange("c", range, buffer, { line: 0, col: 6 });
       expect(result.newCursor.col).toBe(6);
     });
   });
@@ -192,12 +152,7 @@ describe("Operators", () => {
         linewise: true,
         inclusive: true,
       };
-      const result = executeOperatorOnRange(
-        "d",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      const result = executeOperatorOnRange("d", range, buffer, { line: 0, col: 0 });
       expect(buffer.getContent()).toBe("line3");
       expect(result.yankedText).toBe("line1\nline2\n");
     });
@@ -210,12 +165,7 @@ describe("Operators", () => {
         linewise: true,
         inclusive: true,
       };
-      const result = executeOperatorOnRange(
-        "y",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      const result = executeOperatorOnRange("y", range, buffer, { line: 0, col: 0 });
       expect(buffer.getContent()).toBe("line1\nline2\nline3");
       expect(result.yankedText).toBe("line1\nline2\n");
     });
@@ -228,12 +178,7 @@ describe("Operators", () => {
         linewise: true,
         inclusive: true,
       };
-      const result = executeOperatorOnRange(
-        "c",
-        range,
-        buffer,
-        { line: 1, col: 0 },
-      );
+      const result = executeOperatorOnRange("c", range, buffer, { line: 1, col: 0 });
       expect(result.newMode).toBe("insert");
       expect(result.newCursor).toEqual({ line: 1, col: 0 });
       expect(buffer.getLine(1)).toBe("");
@@ -246,48 +191,28 @@ describe("Operators", () => {
   describe("executeLineOperator", () => {
     it("deletes 1 line with dd (count=1)", () => {
       const buffer = new TextBuffer("line1\nline2\nline3");
-      const result = executeLineOperator(
-        "d",
-        { line: 1, col: 0 },
-        1,
-        buffer,
-      );
+      const result = executeLineOperator("d", { line: 1, col: 0 }, 1, buffer);
       expect(buffer.getContent()).toBe("line1\nline3");
       expect(result.yankedText).toBe("line2\n");
     });
 
     it("deletes 2 lines with 2dd", () => {
       const buffer = new TextBuffer("line1\nline2\nline3\nline4");
-      const result = executeLineOperator(
-        "d",
-        { line: 1, col: 0 },
-        2,
-        buffer,
-      );
+      const result = executeLineOperator("d", { line: 1, col: 0 }, 2, buffer);
       expect(buffer.getContent()).toBe("line1\nline4");
       expect(result.yankedText).toBe("line2\nline3\n");
     });
 
     it("yanks 1 line with yy", () => {
       const buffer = new TextBuffer("line1\nline2");
-      const result = executeLineOperator(
-        "y",
-        { line: 0, col: 0 },
-        1,
-        buffer,
-      );
+      const result = executeLineOperator("y", { line: 0, col: 0 }, 1, buffer);
       expect(buffer.getContent()).toBe("line1\nline2");
       expect(result.yankedText).toBe("line1\n");
     });
 
     it("changes a line with cc", () => {
       const buffer = new TextBuffer("line1\nline2\nline3");
-      const result = executeLineOperator(
-        "c",
-        { line: 1, col: 0 },
-        1,
-        buffer,
-      );
+      const result = executeLineOperator("c", { line: 1, col: 0 }, 1, buffer);
       expect(result.newMode).toBe("insert");
       expect(buffer.getLine(1)).toBe("");
     });
@@ -299,12 +224,7 @@ describe("Operators", () => {
   describe("Edge cases", () => {
     it("leaves one empty line in the buffer when deleting all lines", () => {
       const buffer = new TextBuffer("only line");
-      const result = executeLineOperator(
-        "d",
-        { line: 0, col: 0 },
-        1,
-        buffer,
-      );
+      const result = executeLineOperator("d", { line: 0, col: 0 }, 1, buffer);
       expect(buffer.getContent()).toBe("");
       expect(buffer.getLineCount()).toBe(1);
       expect(result.newCursor.line).toBe(0);
@@ -312,12 +232,7 @@ describe("Operators", () => {
 
     it("clamps when count exceeds the buffer line count", () => {
       const buffer = new TextBuffer("line1\nline2");
-      const result = executeLineOperator(
-        "d",
-        { line: 0, col: 0 },
-        100,
-        buffer,
-      );
+      const result = executeLineOperator("d", { line: 0, col: 0 }, 100, buffer);
       // All lines deleted
       expect(buffer.getLineCount()).toBe(1);
       expect(buffer.getContent()).toBe("");
@@ -325,12 +240,7 @@ describe("Operators", () => {
 
     it("executes line-wise yank on an empty buffer", () => {
       const buffer = new TextBuffer("");
-      const result = executeLineOperator(
-        "y",
-        { line: 0, col: 0 },
-        1,
-        buffer,
-      );
+      const result = executeLineOperator("y", { line: 0, col: 0 }, 1, buffer);
       expect(result.yankedText).toBe("\n");
       expect(buffer.getContent()).toBe("");
     });
@@ -343,12 +253,7 @@ describe("Operators", () => {
         linewise: false,
         inclusive: true,
       };
-      const result = executeOperatorOnRange(
-        "d",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      const result = executeOperatorOnRange("d", range, buffer, { line: 0, col: 0 });
       expect(buffer.getContent()).toBe("");
       expect(result.newCursor.col).toBe(0);
     });
@@ -366,12 +271,7 @@ describe("Operators", () => {
         linewise: true,
         inclusive: true,
       };
-      const result = executeOperatorOnRange(
-        ">",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      const result = executeOperatorOnRange(">", range, buffer, { line: 0, col: 0 });
       expect(buffer.getLine(0)).toBe("  hello");
       expect(result.newCursor).toEqual({ line: 0, col: 0 });
       expect(result.newMode).toBe("normal");
@@ -385,12 +285,7 @@ describe("Operators", () => {
         linewise: true,
         inclusive: true,
       };
-      const result = executeOperatorOnRange(
-        ">",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      const result = executeOperatorOnRange(">", range, buffer, { line: 0, col: 0 });
       expect(buffer.getLine(0)).toBe("  line1");
       expect(buffer.getLine(1)).toBe("  line2");
       expect(buffer.getLine(2)).toBe("line3");
@@ -405,13 +300,7 @@ describe("Operators", () => {
         linewise: true,
         inclusive: true,
       };
-      executeOperatorOnRange(
-        ">",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-        { style: "tab", width: 4 },
-      );
+      executeOperatorOnRange(">", range, buffer, { line: 0, col: 0 }, { style: "tab", width: 4 });
       expect(buffer.getLine(0)).toBe("\thello");
     });
 
@@ -423,13 +312,7 @@ describe("Operators", () => {
         linewise: true,
         inclusive: true,
       };
-      executeOperatorOnRange(
-        ">",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-        { style: "space", width: 4 },
-      );
+      executeOperatorOnRange(">", range, buffer, { line: 0, col: 0 }, { style: "space", width: 4 });
       expect(buffer.getLine(0)).toBe("    hello");
     });
   });
@@ -443,12 +326,7 @@ describe("Operators", () => {
         linewise: true,
         inclusive: true,
       };
-      executeOperatorOnRange(
-        "<",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      executeOperatorOnRange("<", range, buffer, { line: 0, col: 0 });
       expect(buffer.getLine(0)).toBe("hello");
     });
 
@@ -460,12 +338,7 @@ describe("Operators", () => {
         linewise: true,
         inclusive: true,
       };
-      executeOperatorOnRange(
-        "<",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      executeOperatorOnRange("<", range, buffer, { line: 0, col: 0 });
       expect(buffer.getLine(0)).toBe("hello");
     });
 
@@ -477,12 +350,7 @@ describe("Operators", () => {
         linewise: true,
         inclusive: true,
       };
-      executeOperatorOnRange(
-        "<",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      executeOperatorOnRange("<", range, buffer, { line: 0, col: 0 });
       expect(buffer.getLine(0)).toBe("hello");
     });
 
@@ -494,12 +362,7 @@ describe("Operators", () => {
         linewise: true,
         inclusive: true,
       };
-      executeOperatorOnRange(
-        "<",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      executeOperatorOnRange("<", range, buffer, { line: 0, col: 0 });
       expect(buffer.getLine(0)).toBe("hello");
     });
 
@@ -511,12 +374,7 @@ describe("Operators", () => {
         linewise: true,
         inclusive: true,
       };
-      const result = executeOperatorOnRange(
-        "<",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      const result = executeOperatorOnRange("<", range, buffer, { line: 0, col: 0 });
       expect(buffer.getLine(0)).toBe("line1");
       expect(buffer.getLine(1)).toBe("line2");
       expect(result.statusMessage).toContain("2 lines");
@@ -529,35 +387,20 @@ describe("Operators", () => {
   describe("executeLineOperator - indent/dedent", () => {
     it("indents a line with >>", () => {
       const buffer = new TextBuffer("hello\nworld");
-      const result = executeLineOperator(
-        ">",
-        { line: 0, col: 0 },
-        1,
-        buffer,
-      );
+      const result = executeLineOperator(">", { line: 0, col: 0 }, 1, buffer);
       expect(buffer.getLine(0)).toBe("  hello");
       expect(result.newMode).toBe("normal");
     });
 
     it("dedents a line with <<", () => {
       const buffer = new TextBuffer("  hello\nworld");
-      executeLineOperator(
-        "<",
-        { line: 0, col: 0 },
-        1,
-        buffer,
-      );
+      executeLineOperator("<", { line: 0, col: 0 }, 1, buffer);
       expect(buffer.getLine(0)).toBe("hello");
     });
 
     it("indents 2 lines with 2>>", () => {
       const buffer = new TextBuffer("line1\nline2\nline3");
-      executeLineOperator(
-        ">",
-        { line: 0, col: 0 },
-        2,
-        buffer,
-      );
+      executeLineOperator(">", { line: 0, col: 0 }, 2, buffer);
       expect(buffer.getLine(0)).toBe("  line1");
       expect(buffer.getLine(1)).toBe("  line2");
       expect(buffer.getLine(2)).toBe("line3");
@@ -576,12 +419,7 @@ describe("Operators", () => {
         linewise: false,
         inclusive: true,
       };
-      const result = executeOperatorOnRange(
-        "y",
-        range,
-        buffer,
-        { line: 0, col: 1 },
-      );
+      const result = executeOperatorOnRange("y", range, buffer, { line: 0, col: 1 });
       expect(result.yankedText).toBe("aa\nbbb\nccc");
       expect(buffer.getContent()).toBe("aaa\nbbb\nccc\nddd");
     });
@@ -600,12 +438,7 @@ describe("Operators", () => {
         linewise: false,
         inclusive: false,
       };
-      const result = executeOperatorOnRange(
-        "d",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-      );
+      const result = executeOperatorOnRange("d", range, buffer, { line: 0, col: 0 });
       expect(buffer.getContent()).toBe(" world");
       expect(result.statusMessage).toBe("");
     });
@@ -620,12 +453,7 @@ describe("Operators", () => {
         linewise: false,
         inclusive: false,
       };
-      const result = executeOperatorOnRange(
-        "d",
-        range,
-        buffer,
-        { line: 0, col: 3 },
-      );
+      const result = executeOperatorOnRange("d", range, buffer, { line: 0, col: 3 });
       // "hel" + "ld" = "helld"
       expect(buffer.getLineCount()).toBe(1);
       expect(result.statusMessage).toBe("");
@@ -645,13 +473,7 @@ describe("Operators", () => {
         linewise: true,
         inclusive: true,
       };
-      executeOperatorOnRange(
-        "<",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-        { style: "space", width: 4 },
-      );
+      executeOperatorOnRange("<", range, buffer, { line: 0, col: 0 }, { style: "space", width: 4 });
       // Line has 1 leading space, indent width is 4, so removes 1 space
       expect(buffer.getLine(0)).toBe("hello");
     });
@@ -664,13 +486,7 @@ describe("Operators", () => {
         linewise: true,
         inclusive: true,
       };
-      executeOperatorOnRange(
-        "<",
-        range,
-        buffer,
-        { line: 0, col: 0 },
-        { style: "space", width: 4 },
-      );
+      executeOperatorOnRange("<", range, buffer, { line: 0, col: 0 }, { style: "space", width: 4 });
       // 3 leading spaces < indent width 4, so removes all 3
       expect(buffer.getLine(0)).toBe("hello");
     });

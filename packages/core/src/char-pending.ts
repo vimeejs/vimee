@@ -19,12 +19,7 @@ import type { TextBuffer } from "./buffer";
 import type { KeystrokeResult } from "./key-utils";
 import { getEffectiveCount, resetContext } from "./key-utils";
 import { executeOperatorOnRange } from "./operators";
-import {
-  motionFChar,
-  motionFCharBack,
-  motionTChar,
-  motionTCharBack,
-} from "./motions";
+import { motionFChar, motionFCharBack, motionTChar, motionTCharBack } from "./motions";
 
 /**
  * Process key input for character-pending commands.
@@ -61,13 +56,10 @@ export function handleCharPending(
   // If in operator-pending state (e.g., df{char})
   if (ctx.operator) {
     buffer.saveUndoPoint(ctx.cursor);
-    const result = executeOperatorOnRange(
-      ctx.operator,
-      motion.range,
-      buffer,
-      ctx.cursor,
-      { style: ctx.indentStyle, width: ctx.indentWidth },
-    );
+    const result = executeOperatorOnRange(ctx.operator, motion.range, buffer, ctx.cursor, {
+      style: ctx.indentStyle,
+      width: ctx.indentWidth,
+    });
 
     return {
       newCtx: {
@@ -76,10 +68,7 @@ export function handleCharPending(
         cursor: result.newCursor,
         register: result.yankedText,
         lastCharSearch,
-        statusMessage:
-          result.newMode === "insert"
-            ? "-- INSERT --"
-            : result.statusMessage || "",
+        statusMessage: result.newMode === "insert" ? "-- INSERT --" : result.statusMessage || "",
       },
       actions: [
         ...result.actions,
@@ -106,11 +95,7 @@ export function handleCharPending(
  * r{char}: Replace the single character under the cursor.
  * Does nothing if the line is empty.
  */
-function handleReplace(
-  key: string,
-  ctx: VimContext,
-  buffer: TextBuffer,
-): KeystrokeResult {
+function handleReplace(key: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
   if (buffer.getLineLength(ctx.cursor.line) === 0) {
     return {
       newCtx: resetContext(ctx),
@@ -121,10 +106,7 @@ function handleReplace(
   buffer.saveUndoPoint(ctx.cursor);
 
   const lineText = buffer.getLine(ctx.cursor.line);
-  const newLine =
-    lineText.slice(0, ctx.cursor.col) +
-    key +
-    lineText.slice(ctx.cursor.col + 1);
+  const newLine = lineText.slice(0, ctx.cursor.col) + key + lineText.slice(ctx.cursor.col + 1);
   buffer.setLine(ctx.cursor.line, newLine);
 
   return {
