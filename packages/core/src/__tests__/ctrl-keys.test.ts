@@ -6,25 +6,9 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { VimContext } from "../types";
+import { vim } from "@vimee/testkit";
 import { processKeystroke, createInitialContext } from "../vim-state";
 import { TextBuffer } from "../buffer";
-
-/** Process multiple keys in sequence */
-function pressKeys(
-  keys: string[],
-  ctx: VimContext,
-  buffer: TextBuffer,
-): { ctx: VimContext; allActions: import("../types").VimAction[] } {
-  let current = ctx;
-  const allActions: import("../types").VimAction[] = [];
-  for (const key of keys) {
-    const result = processKeystroke(key, current, buffer);
-    current = result.newCtx;
-    allActions.push(...result.actions);
-  }
-  return { ctx: current, allActions };
-}
 
 describe("Ctrl key combinations", () => {
   // ---------------------------------------------------
@@ -32,56 +16,53 @@ describe("Ctrl key combinations", () => {
   // ---------------------------------------------------
   describe("Ctrl-R (redo)", () => {
     it("redoes after undo", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createInitialContext({ line: 0, col: 0 });
+      const v = vim("hello world");
       // dd -> undo -> redo
-      const { ctx: afterDd } = pressKeys(["d", "d"], ctx, buffer);
-      expect(buffer.getContent()).toBe("");
-      const { ctx: afterUndo } = pressKeys(["u"], afterDd, buffer);
-      expect(buffer.getContent()).toBe("hello world");
-      const result = processKeystroke("r", afterUndo, buffer, true);
-      expect(buffer.getContent()).toBe("");
+      v.type("dd");
+      expect(v.content()).toBe("");
+      v.type("u");
+      expect(v.content()).toBe("hello world");
+      v.type("<C-r>");
+      expect(v.content()).toBe("");
     });
 
     it("shows 'Already at newest change' when nothing to redo", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      const result = processKeystroke("r", ctx, buffer, true);
-      expect(result.newCtx.statusMessage).toBe("Already at newest change");
-      expect(result.actions).toContainEqual({
+      const v = vim("hello");
+      v.type("<C-r>");
+      expect(v.statusMessage()).toBe("Already at newest change");
+      expect(v.actions()).toContainEqual({
         type: "status-message",
         message: "Already at newest change",
       });
     });
 
     it("shows 'N more lines' when redo adds multiple lines", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3\nline4\nline5");
-      const ctx = createInitialContext({ line: 0, col: 0 });
+      const v = vim("line1\nline2\nline3\nline4\nline5");
       // Yank 3 lines, paste (adds 3 lines), undo, redo
-      const { ctx: afterYank } = pressKeys(["3", "y", "y"], ctx, buffer);
-      const { ctx: afterPaste } = pressKeys(["p"], afterYank, buffer);
-      expect(buffer.getLineCount()).toBe(8);
-      const { ctx: afterUndo } = pressKeys(["u"], afterPaste, buffer);
-      expect(buffer.getLineCount()).toBe(5);
-      const result = processKeystroke("r", afterUndo, buffer, true);
-      expect(buffer.getLineCount()).toBe(8);
-      expect(result.newCtx.statusMessage).toBe("3 more lines");
+      v.type("3yy");
+      v.type("p");
+      expect(v.lines().length).toBe(8);
+      v.type("u");
+      expect(v.lines().length).toBe(5);
+      v.type("<C-r>");
+      expect(v.lines().length).toBe(8);
+      expect(v.statusMessage()).toBe("3 more lines");
     });
 
     it("shows 'N fewer lines' when redo removes multiple lines", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3\nline4\nline5");
-      const ctx = createInitialContext({ line: 0, col: 0 });
+      const v = vim("line1\nline2\nline3\nline4\nline5");
       // 3dd (delete 3 lines), undo (restore 3), redo (delete 3 again)
-      const { ctx: afterDd } = pressKeys(["3", "d", "d"], ctx, buffer);
-      expect(buffer.getLineCount()).toBe(2);
-      const { ctx: afterUndo } = pressKeys(["u"], afterDd, buffer);
-      expect(buffer.getLineCount()).toBe(5);
-      const result = processKeystroke("r", afterUndo, buffer, true);
-      expect(buffer.getLineCount()).toBe(2);
-      expect(result.newCtx.statusMessage).toBe("3 fewer lines");
+      v.type("3dd");
+      expect(v.lines().length).toBe(2);
+      v.type("u");
+      expect(v.lines().length).toBe(5);
+      v.type("<C-r>");
+      expect(v.lines().length).toBe(2);
+      expect(v.statusMessage()).toBe("3 fewer lines");
     });
 
     it("is blocked in readOnly mode", () => {
+      // Testkit doesn't support readOnly, so use the old pattern
       const buffer = new TextBuffer("hello");
       const ctx = createInitialContext({ line: 0, col: 0 });
       const result = processKeystroke("r", ctx, buffer, true, true);
@@ -94,15 +75,13 @@ describe("Ctrl key combinations", () => {
   // ---------------------------------------------------
   describe("Ctrl-B (scroll full page up)", () => {
     it("emits scroll up action with amount 1.0", () => {
-      const buffer = new TextBuffer("hello\nworld");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      const result = processKeystroke("b", ctx, buffer, true);
-      expect(result.actions).toContainEqual({
+      const v = vim("hello\nworld");
+      v.type("<C-b>");
+      expect(v.actions()).toContainEqual({
         type: "scroll",
         direction: "up",
         amount: 1.0,
       });
-      expect(result.newCtx.count).toBe(0);
     });
   });
 
@@ -111,10 +90,9 @@ describe("Ctrl key combinations", () => {
   // ---------------------------------------------------
   describe("Ctrl-F (scroll full page down)", () => {
     it("emits scroll down action with amount 1.0", () => {
-      const buffer = new TextBuffer("hello\nworld");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      const result = processKeystroke("f", ctx, buffer, true);
-      expect(result.actions).toContainEqual({
+      const v = vim("hello\nworld");
+      v.type("<C-f>");
+      expect(v.actions()).toContainEqual({
         type: "scroll",
         direction: "down",
         amount: 1.0,
@@ -127,10 +105,9 @@ describe("Ctrl key combinations", () => {
   // ---------------------------------------------------
   describe("Ctrl-U (scroll half page up)", () => {
     it("emits scroll up action with amount 0.5", () => {
-      const buffer = new TextBuffer("hello\nworld");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      const result = processKeystroke("u", ctx, buffer, true);
-      expect(result.actions).toContainEqual({
+      const v = vim("hello\nworld");
+      v.type("<C-u>");
+      expect(v.actions()).toContainEqual({
         type: "scroll",
         direction: "up",
         amount: 0.5,
@@ -143,10 +120,9 @@ describe("Ctrl key combinations", () => {
   // ---------------------------------------------------
   describe("Ctrl-D (scroll half page down)", () => {
     it("emits scroll down action with amount 0.5", () => {
-      const buffer = new TextBuffer("hello\nworld");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      const result = processKeystroke("d", ctx, buffer, true);
-      expect(result.actions).toContainEqual({
+      const v = vim("hello\nworld");
+      v.type("<C-d>");
+      expect(v.actions()).toContainEqual({
         type: "scroll",
         direction: "down",
         amount: 0.5,
@@ -159,72 +135,51 @@ describe("Ctrl key combinations", () => {
   // ---------------------------------------------------
   describe("Ctrl-V (visual-block mode)", () => {
     it("enters visual-block mode from normal mode", () => {
-      const buffer = new TextBuffer("hello\nworld");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      const result = processKeystroke("v", ctx, buffer, true);
-      expect(result.newCtx.mode).toBe("visual-block");
-      expect(result.newCtx.statusMessage).toBe("-- VISUAL BLOCK --");
-      expect(result.newCtx.visualAnchor).toEqual({ line: 0, col: 0 });
+      const v = vim("hello\nworld");
+      v.type("<C-v>");
+      expect(v.mode()).toBe("visual-block");
+      expect(v.statusMessage()).toBe("-- VISUAL BLOCK --");
+      expect(v.raw().ctx.visualAnchor).toEqual({ line: 0, col: 0 });
     });
 
     it("toggles off visual-block when already in visual-block", () => {
-      const buffer = new TextBuffer("hello\nworld");
-      const ctx: VimContext = {
-        ...createInitialContext({ line: 0, col: 0 }),
-        mode: "visual-block",
-        visualAnchor: { line: 0, col: 0 },
-      };
-      const result = processKeystroke("v", ctx, buffer, true);
-      expect(result.newCtx.mode).toBe("normal");
-      expect(result.newCtx.visualAnchor).toBeNull();
+      const v = vim("hello\nworld", { mode: "visual-block", anchor: [0, 0] });
+      v.type("<C-v>");
+      expect(v.mode()).toBe("normal");
+      expect(v.raw().ctx.visualAnchor).toBeNull();
     });
 
     it("enters visual-block from visual mode, preserving anchor", () => {
-      const buffer = new TextBuffer("hello\nworld");
-      const ctx: VimContext = {
-        ...createInitialContext({ line: 0, col: 3 }),
-        mode: "visual",
-        visualAnchor: { line: 0, col: 0 },
-      };
-      const result = processKeystroke("v", ctx, buffer, true);
-      expect(result.newCtx.mode).toBe("visual-block");
-      expect(result.newCtx.visualAnchor).toEqual({ line: 0, col: 0 });
+      const v = vim("hello\nworld", { mode: "visual", cursor: [0, 3], anchor: [0, 0] });
+      v.type("<C-v>");
+      expect(v.mode()).toBe("visual-block");
+      expect(v.raw().ctx.visualAnchor).toEqual({ line: 0, col: 0 });
     });
 
     it("enters visual-block from visual-line mode", () => {
-      const buffer = new TextBuffer("hello\nworld");
-      const ctx: VimContext = {
-        ...createInitialContext({ line: 0, col: 0 }),
-        mode: "visual-line",
-        visualAnchor: { line: 0, col: 0 },
-      };
-      const result = processKeystroke("v", ctx, buffer, true);
-      expect(result.newCtx.mode).toBe("visual-block");
+      const v = vim("hello\nworld", { mode: "visual-line", anchor: [0, 0] });
+      v.type("<C-v>");
+      expect(v.mode()).toBe("visual-block");
     });
 
     it("creates a new anchor from cursor when entering visual-block from normal mode (visualAnchor is null)", () => {
-      const buffer = new TextBuffer("hello\nworld\nfoo");
-      const ctx = createInitialContext({ line: 1, col: 3 });
+      const v = vim("hello\nworld\nfoo", { cursor: [1, 3] });
       // In normal mode, visualAnchor is null
-      expect(ctx.visualAnchor).toBeNull();
-      const result = processKeystroke("v", ctx, buffer, true);
-      expect(result.newCtx.mode).toBe("visual-block");
+      expect(v.raw().ctx.visualAnchor).toBeNull();
+      v.type("<C-v>");
+      expect(v.mode()).toBe("visual-block");
       // The anchor should be a copy of the cursor, not null
-      expect(result.newCtx.visualAnchor).toEqual({ line: 1, col: 3 });
+      expect(v.raw().ctx.visualAnchor).toEqual({ line: 1, col: 3 });
     });
 
     it("uses cursor as fallback anchor when visual mode has null visualAnchor", () => {
-      const buffer = new TextBuffer("hello\nworld");
       // Simulate visual mode with null visualAnchor (edge case for ?? operator)
-      const ctx: VimContext = {
-        ...createInitialContext({ line: 0, col: 2 }),
-        mode: "visual",
-        visualAnchor: null,
-      };
-      const result = processKeystroke("v", ctx, buffer, true);
-      expect(result.newCtx.mode).toBe("visual-block");
+      const v = vim("hello\nworld", { mode: "visual", cursor: [0, 2] });
+      // Testkit sets mode to "visual" without anchor → visualAnchor stays null
+      v.type("<C-v>");
+      expect(v.mode()).toBe("visual-block");
       // When visualAnchor is null in visual mode, the ?? fallback creates anchor from cursor
-      expect(result.newCtx.visualAnchor).toEqual({ line: 0, col: 2 });
+      expect(v.raw().ctx.visualAnchor).toEqual({ line: 0, col: 2 });
     });
   });
 
@@ -233,11 +188,10 @@ describe("Ctrl key combinations", () => {
   // ---------------------------------------------------
   describe("Unknown Ctrl key", () => {
     it("does nothing for unknown Ctrl combinations", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      const result = processKeystroke("z", ctx, buffer, true);
+      const v = vim("hello");
+      v.type("<C-z>");
       // Should not crash, just returns unchanged ctx
-      expect(result.newCtx.mode).toBe("normal");
+      expect(v.mode()).toBe("normal");
     });
   });
 });

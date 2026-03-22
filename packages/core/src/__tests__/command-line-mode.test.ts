@@ -6,48 +6,11 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { VimContext, CursorPosition } from "../types";
-import { processKeystroke, createInitialContext } from "../vim-state";
+import type { VimContext } from "../types";
+import { createInitialContext } from "../vim-state";
 import { processCommandLineMode } from "../command-line-mode";
 import { TextBuffer } from "../buffer";
-
-// =====================
-// Helper functions
-// =====================
-
-/** Create a VimContext in command-line mode for testing */
-function createCommandLineContext(
-  cursor: CursorPosition,
-  commandType: ":" | "/" | "?",
-  overrides?: Partial<VimContext>,
-): VimContext {
-  return {
-    ...createInitialContext(cursor),
-    mode: "command-line",
-    commandType,
-    commandBuffer: "",
-    statusMessage: commandType,
-    ...(commandType === "/" ? { searchDirection: "forward" as const } : {}),
-    ...(commandType === "?" ? { searchDirection: "backward" as const } : {}),
-    ...overrides,
-  };
-}
-
-/** Process multiple keys in sequence and return the final state */
-function pressKeys(
-  keys: string[],
-  ctx: VimContext,
-  buffer: TextBuffer,
-): { ctx: VimContext; allActions: import("../types").VimAction[] } {
-  let current = ctx;
-  const allActions: import("../types").VimAction[] = [];
-  for (const key of keys) {
-    const result = processKeystroke(key, current, buffer);
-    current = result.newCtx;
-    allActions.push(...result.actions);
-  }
-  return { ctx: current, allActions };
-}
+import { vim } from "@vimee/testkit";
 
 // =====================
 // Tests
@@ -59,22 +22,21 @@ describe("Command-line mode", () => {
   // ---------------------------------------------------
   describe(":w command (save)", () => {
     it("issues a save action with :w", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { ctx: result, allActions } = pressKeys(["w", "Enter"], ctx, buffer);
-      expect(result.mode).toBe("normal");
-      expect(allActions).toContainEqual({
+      const v = vim("hello world");
+      v.type(":w<Enter>");
+      expect(v.mode()).toBe("normal");
+      expect(v.allActions()).toContainEqual({
         type: "save",
         content: "hello world",
       });
     });
 
     it("clears the command buffer after :w", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { ctx: result } = pressKeys(["w", "Enter"], ctx, buffer);
-      expect(result.commandBuffer).toBe("");
-      expect(result.commandType).toBeNull();
+      const v = vim("hello");
+      v.type(":w<Enter>");
+      const { ctx } = v.raw();
+      expect(ctx.commandBuffer).toBe("");
+      expect(ctx.commandType).toBeNull();
     });
   });
 
@@ -83,32 +45,29 @@ describe("Command-line mode", () => {
   // ---------------------------------------------------
   describe("/pattern (forward search)", () => {
     it("searches forward for 'foo' and moves the cursor to the match position with /foo", () => {
-      const buffer = new TextBuffer("hello foo world");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, "/");
-      const { ctx: result } = pressKeys(["f", "o", "o", "Enter"], ctx, buffer);
-      expect(result.mode).toBe("normal");
-      expect(result.cursor).toEqual({ line: 0, col: 6 });
-      expect(result.lastSearch).toBe("foo");
+      const v = vim("hello foo world");
+      v.type("/foo<Enter>");
+      expect(v.mode()).toBe("normal");
+      expect(v.cursor()).toEqual({ line: 0, col: 6 });
+      expect(v.raw().ctx.lastSearch).toBe("foo");
     });
 
     it("displays a status message when there is no match", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, "/");
-      const { ctx: result, allActions } = pressKeys(["x", "y", "z", "Enter"], ctx, buffer);
-      expect(result.mode).toBe("normal");
-      expect(result.statusMessage).toBe("Pattern not found: xyz");
-      expect(result.lastSearch).toBe("xyz");
-      expect(allActions).toContainEqual({
+      const v = vim("hello world");
+      v.type("/xyz<Enter>");
+      expect(v.mode()).toBe("normal");
+      expect(v.statusMessage()).toBe("Pattern not found: xyz");
+      expect(v.raw().ctx.lastSearch).toBe("xyz");
+      expect(v.allActions()).toContainEqual({
         type: "status-message",
         message: "Pattern not found: xyz",
       });
     });
 
     it("just exits command-line mode when pressing Enter with an empty pattern", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, "/");
-      const { ctx: result } = pressKeys(["Enter"], ctx, buffer);
-      expect(result.mode).toBe("normal");
+      const v = vim("hello");
+      v.type("/<Enter>");
+      expect(v.mode()).toBe("normal");
     });
   });
 
@@ -117,19 +76,17 @@ describe("Command-line mode", () => {
   // ---------------------------------------------------
   describe("?pattern (backward search)", () => {
     it("searches backward for 'foo' with ?foo", () => {
-      const buffer = new TextBuffer("foo hello foo");
-      const ctx = createCommandLineContext({ line: 0, col: 10 }, "?");
-      const { ctx: result } = pressKeys(["f", "o", "o", "Enter"], ctx, buffer);
-      expect(result.mode).toBe("normal");
-      expect(result.cursor).toEqual({ line: 0, col: 0 });
-      expect(result.searchDirection).toBe("backward");
+      const v = vim("foo hello foo", { cursor: [0, 10] });
+      v.type("?foo<Enter>");
+      expect(v.mode()).toBe("normal");
+      expect(v.cursor()).toEqual({ line: 0, col: 0 });
+      expect(v.raw().ctx.searchDirection).toBe("backward");
     });
 
     it("displays a message when backward search finds no match", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createCommandLineContext({ line: 0, col: 5 }, "?");
-      const { ctx: result } = pressKeys(["z", "z", "z", "Enter"], ctx, buffer);
-      expect(result.statusMessage).toBe("Pattern not found: zzz");
+      const v = vim("hello world", { cursor: [0, 5] });
+      v.type("?zzz<Enter>");
+      expect(v.statusMessage()).toBe("Pattern not found: zzz");
     });
   });
 
@@ -138,24 +95,19 @@ describe("Command-line mode", () => {
   // ---------------------------------------------------
   describe("Backspace (command buffer editing)", () => {
     it("deletes the last character from the command buffer with Backspace", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":", {
-        commandBuffer: "wq",
-        statusMessage: ":wq",
-      });
-      const { ctx: result } = pressKeys(["Backspace"], ctx, buffer);
-      expect(result.commandBuffer).toBe("w");
-      expect(result.statusMessage).toBe(":w");
+      const v = vim("hello");
+      v.type(":wq<BS>");
+      const { ctx } = v.raw();
+      expect(ctx.commandBuffer).toBe("w");
+      expect(ctx.statusMessage).toBe(":w");
     });
 
     it("exits command-line mode when pressing Backspace with an empty command buffer", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":", {
-        commandBuffer: "",
-      });
-      const { ctx: result } = pressKeys(["Backspace"], ctx, buffer);
-      expect(result.mode).toBe("normal");
-      expect(result.commandType).toBeNull();
+      const v = vim("hello");
+      v.type(":<BS>");
+      const { ctx } = v.raw();
+      expect(ctx.mode).toBe("normal");
+      expect(ctx.commandType).toBeNull();
     });
   });
 
@@ -164,23 +116,18 @@ describe("Command-line mode", () => {
   // ---------------------------------------------------
   describe("Escape (exit command-line mode)", () => {
     it("exits command-line mode and returns to normal mode with Escape", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":", {
-        commandBuffer: "some",
-      });
-      const { ctx: result } = pressKeys(["Escape"], ctx, buffer);
-      expect(result.mode).toBe("normal");
-      expect(result.commandBuffer).toBe("");
-      expect(result.commandType).toBeNull();
+      const v = vim("hello");
+      v.type(":some<Esc>");
+      expect(v.mode()).toBe("normal");
+      const { ctx } = v.raw();
+      expect(ctx.commandBuffer).toBe("");
+      expect(ctx.commandType).toBeNull();
     });
 
     it("can exit search mode with Escape as well", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, "/", {
-        commandBuffer: "pattern",
-      });
-      const { ctx: result } = pressKeys(["Escape"], ctx, buffer);
-      expect(result.mode).toBe("normal");
+      const v = vim("hello");
+      v.type("/pattern<Esc>");
+      expect(v.mode()).toBe("normal");
     });
   });
 
@@ -189,36 +136,32 @@ describe("Command-line mode", () => {
   // ---------------------------------------------------
   describe(":{number} (line jump)", () => {
     it("jumps to line 3 (0-based line 2) with :3", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3\nline4");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { ctx: result, allActions } = pressKeys(["3", "Enter"], ctx, buffer);
-      expect(result.mode).toBe("normal");
-      expect(result.cursor).toEqual({ line: 2, col: 0 });
-      expect(allActions).toContainEqual({
+      const v = vim("line1\nline2\nline3\nline4");
+      v.type(":3<Enter>");
+      expect(v.mode()).toBe("normal");
+      expect(v.cursor()).toEqual({ line: 2, col: 0 });
+      expect(v.allActions()).toContainEqual({
         type: "cursor-move",
         position: { line: 2, col: 0 },
       });
     });
 
     it("jumps to line 1 with :1", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createCommandLineContext({ line: 2, col: 3 }, ":");
-      const { ctx: result } = pressKeys(["1", "Enter"], ctx, buffer);
-      expect(result.cursor).toEqual({ line: 0, col: 0 });
+      const v = vim("line1\nline2\nline3", { cursor: [2, 3] });
+      v.type(":1<Enter>");
+      expect(v.cursor()).toEqual({ line: 0, col: 0 });
     });
 
     it("clamps when the number exceeds the buffer line count", () => {
-      const buffer = new TextBuffer("line1\nline2\nline3");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { ctx: result } = pressKeys(["9", "9", "9", "Enter"], ctx, buffer);
-      expect(result.cursor.line).toBe(2); // last line
+      const v = vim("line1\nline2\nline3");
+      v.type(":999<Enter>");
+      expect(v.cursor().line).toBe(2); // last line
     });
 
     it("clamps :0 to line 1", () => {
-      const buffer = new TextBuffer("line1\nline2");
-      const ctx = createCommandLineContext({ line: 1, col: 0 }, ":");
-      const { ctx: result } = pressKeys(["0", "Enter"], ctx, buffer);
-      expect(result.cursor.line).toBe(0);
+      const v = vim("line1\nline2", { cursor: [1, 0] });
+      v.type(":0<Enter>");
+      expect(v.cursor().line).toBe(0);
     });
   });
 
@@ -227,20 +170,19 @@ describe("Command-line mode", () => {
   // ---------------------------------------------------
   describe("Character input", () => {
     it("appends characters to the command buffer", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { ctx: result } = pressKeys(["h", "e", "l", "p"], ctx, buffer);
-      expect(result.commandBuffer).toBe("help");
-      expect(result.statusMessage).toBe(":help");
+      const v = vim("hello");
+      v.type(":help");
+      const { ctx } = v.raw();
+      expect(ctx.commandBuffer).toBe("help");
+      expect(ctx.statusMessage).toBe(":help");
     });
 
     it("ignores special keys (long key names)", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":", {
-        commandBuffer: "test",
-      });
-      const { ctx: result } = pressKeys(["ArrowLeft"], ctx, buffer);
-      expect(result.commandBuffer).toBe("test");
+      const v = vim("hello");
+      v.type(":test");
+      v.type("<Left>");
+      const { ctx } = v.raw();
+      expect(ctx.commandBuffer).toBe("test");
     });
   });
 
@@ -249,11 +191,10 @@ describe("Command-line mode", () => {
   // ---------------------------------------------------
   describe(":set number / :set nonumber", () => {
     it("emits set-option number=true with :set number", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { ctx: result, allActions } = pressKeys([..."set number", "Enter"], ctx, buffer);
-      expect(result.mode).toBe("normal");
-      expect(allActions).toContainEqual({
+      const v = vim("hello");
+      v.type(":set number<Enter>");
+      expect(v.mode()).toBe("normal");
+      expect(v.allActions()).toContainEqual({
         type: "set-option",
         option: "number",
         value: true,
@@ -261,11 +202,10 @@ describe("Command-line mode", () => {
     });
 
     it("emits set-option number=false with :set nonumber", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { ctx: result, allActions } = pressKeys([..."set nonumber", "Enter"], ctx, buffer);
-      expect(result.mode).toBe("normal");
-      expect(allActions).toContainEqual({
+      const v = vim("hello");
+      v.type(":set nonumber<Enter>");
+      expect(v.mode()).toBe("normal");
+      expect(v.allActions()).toContainEqual({
         type: "set-option",
         option: "number",
         value: false,
@@ -273,14 +213,17 @@ describe("Command-line mode", () => {
     });
 
     it("emits set-option with short form :set nu / :set nonu", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx1 = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { allActions: a1 } = pressKeys([..."set nu", "Enter"], ctx1, buffer);
-      expect(a1).toContainEqual({ type: "set-option", option: "number", value: true });
+      const v1 = vim("hello");
+      v1.type(":set nu<Enter>");
+      expect(v1.allActions()).toContainEqual({ type: "set-option", option: "number", value: true });
 
-      const ctx2 = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { allActions: a2 } = pressKeys([..."set nonu", "Enter"], ctx2, buffer);
-      expect(a2).toContainEqual({ type: "set-option", option: "number", value: false });
+      const v2 = vim("hello");
+      v2.type(":set nonu<Enter>");
+      expect(v2.allActions()).toContainEqual({
+        type: "set-option",
+        option: "number",
+        value: false,
+      });
     });
   });
 
@@ -289,27 +232,24 @@ describe("Command-line mode", () => {
   // ---------------------------------------------------
   describe("Unknown command (E492)", () => {
     it("shows E492 error for unknown command", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
-      const { ctx: result, allActions } = pressKeys([..."aaa", "Enter"], ctx, buffer);
-      expect(result.mode).toBe("normal");
-      expect(result.statusMessage).toBe("E492: Not an editor command: aaa");
-      expect(result.statusError).toBe(true);
-      expect(allActions).toContainEqual({
+      const v = vim("hello");
+      v.type(":aaa<Enter>");
+      expect(v.mode()).toBe("normal");
+      expect(v.statusMessage()).toBe("E492: Not an editor command: aaa");
+      expect(v.raw().ctx.statusError).toBe(true);
+      expect(v.allActions()).toContainEqual({
         type: "status-message",
         message: "E492: Not an editor command: aaa",
       });
     });
 
     it("clears error status on next command-line entry", () => {
-      const buffer = new TextBuffer("hello");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":", {
-        statusError: true,
-        statusMessage: "E492: Not an editor command: foo",
-      });
-      const { ctx: result } = pressKeys(["Escape"], ctx, buffer);
-      expect(result.statusError).toBe(false);
-      expect(result.statusMessage).toBe("");
+      const v = vim("hello");
+      v.type(":aaa<Enter>");
+      // Now enter command-line mode again and escape
+      v.type(":<Esc>");
+      expect(v.raw().ctx.statusError).toBe(false);
+      expect(v.statusMessage()).toBe("");
     });
   });
 
@@ -318,21 +258,19 @@ describe("Command-line mode", () => {
   // ---------------------------------------------------
   describe("Integration tests", () => {
     it("searches by typing /hello from normal mode end-to-end", () => {
-      const buffer = new TextBuffer("foo\nbar\nhello\nworld");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(["/", "h", "e", "l", "l", "o", "Enter"], ctx, buffer);
-      expect(result.mode).toBe("normal");
-      expect(result.cursor).toEqual({ line: 2, col: 0 });
-      expect(result.lastSearch).toBe("hello");
+      const v = vim("foo\nbar\nhello\nworld");
+      v.type("/hello<Enter>");
+      expect(v.mode()).toBe("normal");
+      expect(v.cursor()).toEqual({ line: 2, col: 0 });
+      expect(v.raw().ctx.lastSearch).toBe("hello");
     });
 
     it("jumps to line 5 by typing :5 from normal mode", () => {
       const lines = Array.from({ length: 10 }, (_, i) => `line${i + 1}`).join("\n");
-      const buffer = new TextBuffer(lines);
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys([":", "5", "Enter"], ctx, buffer);
-      expect(result.mode).toBe("normal");
-      expect(result.cursor).toEqual({ line: 4, col: 0 });
+      const v = vim(lines);
+      v.type(":5<Enter>");
+      expect(v.mode()).toBe("normal");
+      expect(v.cursor()).toEqual({ line: 4, col: 0 });
     });
   });
 
@@ -341,99 +279,85 @@ describe("Command-line mode", () => {
   // ---------------------------------------------------
   describe(":s substitute", () => {
     it(":s/old/new/ replaces first match on current line", () => {
-      const buffer = new TextBuffer("foo bar foo");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys([...":", ..."s/foo/baz/", "Enter"], ctx, buffer);
-      expect(buffer.getContent()).toBe("baz bar foo");
-      expect(result.mode).toBe("normal");
-      expect(result.statusMessage).toContain("1 substitution");
+      const v = vim("foo bar foo");
+      v.type(":s/foo/baz/<Enter>");
+      expect(v.content()).toBe("baz bar foo");
+      expect(v.mode()).toBe("normal");
+      expect(v.statusMessage()).toContain("1 substitution");
     });
 
     it(":s/old/new/g replaces all matches on current line", () => {
-      const buffer = new TextBuffer("foo bar foo baz foo");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      pressKeys([...":", ..."s/foo/x/g", "Enter"], ctx, buffer);
-      expect(buffer.getContent()).toBe("x bar x baz x");
+      const v = vim("foo bar foo baz foo");
+      v.type(":s/foo/x/g<Enter>");
+      expect(v.content()).toBe("x bar x baz x");
     });
 
     it(":%s/old/new/g replaces all matches in entire file", () => {
-      const buffer = new TextBuffer("foo\nbar\nfoo\nbaz");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys([...":", ..."%s/foo/replaced/g", "Enter"], ctx, buffer);
-      expect(buffer.getContent()).toBe("replaced\nbar\nreplaced\nbaz");
-      expect(result.statusMessage).toContain("2 substitutions on 2 lines");
+      const v = vim("foo\nbar\nfoo\nbaz");
+      v.type(":%s/foo/replaced/g<Enter>");
+      expect(v.content()).toBe("replaced\nbar\nreplaced\nbaz");
+      expect(v.statusMessage()).toContain("2 substitutions on 2 lines");
     });
 
     it(":1,3s/x/y/g replaces in line range", () => {
-      const buffer = new TextBuffer("x\nx\nx\nx");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      pressKeys([...":", ..."1,3s/x/y/g", "Enter"], ctx, buffer);
-      expect(buffer.getContent()).toBe("y\ny\ny\nx");
+      const v = vim("x\nx\nx\nx");
+      v.type(":1,3s/x/y/g<Enter>");
+      expect(v.content()).toBe("y\ny\ny\nx");
     });
 
     it(":.,$s/a/b/g replaces from current line to end", () => {
-      const buffer = new TextBuffer("aaa\naaa\naaa\naaa");
-      const ctx = createInitialContext({ line: 1, col: 0 });
-      pressKeys([...":", ...".,", "$", ..."s/a/b/g", "Enter"], ctx, buffer);
-      expect(buffer.getContent()).toBe("aaa\nbbb\nbbb\nbbb");
+      const v = vim("aaa\naaa\naaa\naaa", { cursor: [1, 0] });
+      v.type(":.,");
+      v.type("$");
+      v.type("s/a/b/g<Enter>");
+      expect(v.content()).toBe("aaa\nbbb\nbbb\nbbb");
     });
 
     it(":s with no match shows error", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys([...":", ..."s/xyz/abc/", "Enter"], ctx, buffer);
-      expect(buffer.getContent()).toBe("hello world");
-      expect(result.statusMessage).toContain("Pattern not found");
+      const v = vim("hello world");
+      v.type(":s/xyz/abc/<Enter>");
+      expect(v.content()).toBe("hello world");
+      expect(v.statusMessage()).toContain("Pattern not found");
     });
 
     it(":s can be undone", () => {
-      const buffer = new TextBuffer("foo bar");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      const { ctx: afterSub } = pressKeys([...":", ..."s/foo/baz/", "Enter"], ctx, buffer);
-      expect(buffer.getContent()).toBe("baz bar");
-      pressKeys(["u"], afterSub, buffer);
-      expect(buffer.getContent()).toBe("foo bar");
+      const v = vim("foo bar");
+      v.type(":s/foo/baz/<Enter>");
+      expect(v.content()).toBe("baz bar");
+      v.type("u");
+      expect(v.content()).toBe("foo bar");
     });
 
     it(":s/old/new/i does case-insensitive match", () => {
-      const buffer = new TextBuffer("Hello hello HELLO");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      pressKeys([...":", ..."s/hello/x/gi", "Enter"], ctx, buffer);
-      expect(buffer.getContent()).toBe("x x x");
+      const v = vim("Hello hello HELLO");
+      v.type(":s/hello/x/gi<Enter>");
+      expect(v.content()).toBe("x x x");
     });
 
     it(":%s with alternate delimiter works", () => {
-      const buffer = new TextBuffer("/usr/bin/sh");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      pressKeys([...":", ..."%s#/usr/bin#/usr/local/bin#g", "Enter"], ctx, buffer);
-      expect(buffer.getContent()).toBe("/usr/local/bin/sh");
+      const v = vim("/usr/bin/sh");
+      v.type(":%s#/usr/bin#/usr/local/bin#g<Enter>");
+      expect(v.content()).toBe("/usr/local/bin/sh");
     });
 
     it(":s/old/new works without trailing delimiter", () => {
-      const buffer = new TextBuffer("foo bar foo");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      pressKeys([...":", ..."s/foo/baz", "Enter"], ctx, buffer);
-      expect(buffer.getContent()).toBe("baz bar foo");
+      const v = vim("foo bar foo");
+      v.type(":s/foo/baz<Enter>");
+      expect(v.content()).toBe("baz bar foo");
     });
 
     it(":%s/old/new works without trailing delimiter", () => {
-      const buffer = new TextBuffer("foo\nfoo");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      pressKeys([...":", ..."%s/foo/bar", "Enter"], ctx, buffer);
-      expect(buffer.getContent()).toBe("bar\nbar");
+      const v = vim("foo\nfoo");
+      v.type(":%s/foo/bar<Enter>");
+      expect(v.content()).toBe("bar\nbar");
     });
 
     it(":s with invalid regex pattern shows error", () => {
-      const buffer = new TextBuffer("hello world");
-      const ctx = createInitialContext({ line: 0, col: 0 });
-      const { ctx: result } = pressKeys(
-        [...":", ..."s/[invalid/replacement/", "Enter"],
-        ctx,
-        buffer,
-      );
-      expect(buffer.getContent()).toBe("hello world");
-      expect(result.mode).toBe("normal");
-      expect(result.statusMessage).toContain("Invalid pattern");
+      const v = vim("hello world");
+      v.type(":s/[invalid/replacement/<Enter>");
+      expect(v.content()).toBe("hello world");
+      expect(v.mode()).toBe("normal");
+      expect(v.statusMessage()).toContain("Invalid pattern");
     });
   });
 
@@ -464,7 +388,13 @@ describe("Command-line mode", () => {
   describe("Substitute with single line range", () => {
     it(":2s/foo/bar/ substitutes only on line 2 (rangeEnd undefined → endLine = startLine)", () => {
       const buffer = new TextBuffer("foo\nfoo\nfoo");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
+      const ctx: VimContext = {
+        ...createInitialContext({ line: 0, col: 0 }),
+        mode: "command-line",
+        commandType: ":",
+        commandBuffer: "",
+        statusMessage: ":",
+      };
       // Type "2s/foo/bar/" and press Enter
       const keys = [..."2s/foo/bar/", "Enter"];
       let current: VimContext = ctx;
@@ -488,7 +418,13 @@ describe("Command-line mode", () => {
   describe("Substitute with global flag exercises match counting", () => {
     it(":%s/o/0/g replaces all occurrences globally", () => {
       const buffer = new TextBuffer("foo boo");
-      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
+      const ctx: VimContext = {
+        ...createInitialContext({ line: 0, col: 0 }),
+        mode: "command-line",
+        commandType: ":",
+        commandBuffer: "",
+        statusMessage: ":",
+      };
       const keys = [..."%s/o/0/g", "Enter"];
       let current: VimContext = ctx;
       for (const key of keys) {

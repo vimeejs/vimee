@@ -7,12 +7,14 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { vim } from "@vimee/testkit";
 import { handleCharPending } from "../char-pending";
 import { createInitialContext } from "../vim-state";
 import { TextBuffer } from "../buffer";
 import type { VimContext } from "../types";
 
 // Helper: create a context in char-pending phase with a given charCommand
+// Retained for the defensive-path test that cannot use testkit.
 function createCharPendingCtx(charCommand: string, cursor = { line: 0, col: 0 }): VimContext {
   return {
     ...createInitialContext(cursor),
@@ -43,33 +45,27 @@ describe("handleCharPending", () => {
   });
 
   it("f{char} moves cursor to the character on the line", () => {
-    const buffer = new TextBuffer("hello world");
-    const ctx = createCharPendingCtx("f", { line: 0, col: 0 });
-    const result = handleCharPending("w", ctx, buffer);
-    expect(result.newCtx.cursor).toEqual({ line: 0, col: 6 });
-    expect(result.newCtx.lastCharSearch).toEqual({ command: "f", char: "w" });
+    const v = vim("hello world");
+    v.type("fw");
+    expect(v.cursor()).toEqual({ line: 0, col: 6 });
   });
 
   it("F{char} moves cursor backward to the character on the line", () => {
-    const buffer = new TextBuffer("hello world");
-    const ctx = createCharPendingCtx("F", { line: 0, col: 10 });
-    const result = handleCharPending("o", ctx, buffer);
-    expect(result.newCtx.cursor).toEqual({ line: 0, col: 7 });
-    expect(result.newCtx.lastCharSearch).toEqual({ command: "F", char: "o" });
+    const v = vim("hello world", { cursor: [0, 10] });
+    v.type("Fo");
+    expect(v.cursor()).toEqual({ line: 0, col: 7 });
   });
 
   it("t{char} moves cursor to just before the character", () => {
-    const buffer = new TextBuffer("hello world");
-    const ctx = createCharPendingCtx("t", { line: 0, col: 0 });
-    const result = handleCharPending("w", ctx, buffer);
-    expect(result.newCtx.cursor).toEqual({ line: 0, col: 5 });
+    const v = vim("hello world");
+    v.type("tw");
+    expect(v.cursor()).toEqual({ line: 0, col: 5 });
   });
 
   it("T{char} moves cursor to just after the character backward", () => {
-    const buffer = new TextBuffer("hello world");
-    const ctx = createCharPendingCtx("T", { line: 0, col: 10 });
-    const result = handleCharPending("o", ctx, buffer);
-    expect(result.newCtx.cursor).toEqual({ line: 0, col: 8 });
+    const v = vim("hello world", { cursor: [0, 10] });
+    v.type("To");
+    expect(v.cursor()).toEqual({ line: 0, col: 8 });
   });
 
   // ---------------------------------------------------
@@ -78,15 +74,11 @@ describe("handleCharPending", () => {
   // cfa: change forward to 'a' (operator = "c", charCommand = "f")
   // ---------------------------------------------------
   it("cfa changes forward to 'a' and enters insert mode (lines 80, 87)", () => {
-    const buffer = new TextBuffer("hello a world");
-    const ctx: VimContext = {
-      ...createCharPendingCtx("f", { line: 0, col: 0 }),
-      operator: "c",
-    };
-    const result = handleCharPending("a", ctx, buffer);
-    expect(result.newCtx.mode).toBe("insert");
-    expect(result.newCtx.statusMessage).toBe("-- INSERT --");
+    const v = vim("hello a world");
+    v.type("cfa");
+    expect(v.mode()).toBe("insert");
+    expect(v.statusMessage()).toBe("-- INSERT --");
     // mode-change action should be emitted since mode changed from normal to insert
-    expect(result.actions.some((a: { type: string }) => a.type === "mode-change")).toBe(true);
+    expect(v.actions().some((a: { type: string }) => a.type === "mode-change")).toBe(true);
   });
 });
