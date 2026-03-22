@@ -771,3 +771,63 @@ describe("resolveMotion: edge cases", () => {
     expect(result!.cursor.line).toBe(10);
   });
 });
+
+// ---------- Paragraph motions: } and { ----------
+
+describe("resolveMotion: } (paragraph forward)", () => {
+  it("moves forward to the next blank line", () => {
+    const b = buf(["hello", "world", "", "foo"]);
+    const result = resolveMotion("}", cur(0, 0), b, 1, false);
+    expect(result).not.toBeNull();
+    expect(result!.cursor).toEqual(cur(2, 0));
+  });
+
+  it("moves forward with count=2", () => {
+    const b = buf(["hello", "", "foo", "bar", "", "baz"]);
+    const result = resolveMotion("}", cur(0, 0), b, 2, false);
+    expect(result).not.toBeNull();
+    expect(result!.cursor).toEqual(cur(4, 0));
+  });
+
+  it("stops at end of buffer when no more blank lines", () => {
+    const b = buf(["hello", "world"]);
+    const result = resolveMotion("}", cur(0, 0), b, 1, false);
+    expect(result).not.toBeNull();
+    expect(result!.cursor.line).toBe(1);
+  });
+
+  it("returns linewise range", () => {
+    const b = buf(["hello", "", "world"]);
+    const result = resolveMotion("}", cur(0, 0), b, 1, false);
+    expect(result!.range.linewise).toBe(true);
+  });
+});
+
+describe("resolveMotion: { (paragraph backward)", () => {
+  it("moves backward to the previous blank line", () => {
+    const b = buf(["foo", "", "hello", "world"]);
+    const result = resolveMotion("{", cur(3, 0), b, 1, false);
+    expect(result).not.toBeNull();
+    expect(result!.cursor).toEqual(cur(1, 0));
+  });
+
+  it("moves backward with count=2", () => {
+    const b = buf(["baz", "", "foo", "bar", "", "hello"]);
+    const result = resolveMotion("{", cur(5, 0), b, 2, false);
+    expect(result).not.toBeNull();
+    expect(result!.cursor).toEqual(cur(1, 0));
+  });
+
+  it("stops at beginning of buffer when no more blank lines", () => {
+    const b = buf(["hello", "world"]);
+    const result = resolveMotion("{", cur(1, 0), b, 1, false);
+    expect(result).not.toBeNull();
+    expect(result!.cursor.line).toBe(0);
+  });
+
+  it("returns linewise range", () => {
+    const b = buf(["hello", "", "world"]);
+    const result = resolveMotion("{", cur(2, 0), b, 1, false);
+    expect(result!.range.linewise).toBe(true);
+  });
+});

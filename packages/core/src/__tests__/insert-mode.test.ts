@@ -384,6 +384,76 @@ describe("Insert mode", () => {
   });
 
   // ---------------------------------------------------
+  // Tab with tab indentStyle (covers line 233 "\t" branch)
+  // ---------------------------------------------------
+  describe("Tab with tab indentStyle", () => {
+    it("inserts a tab character when indentStyle is 'tab'", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createInsertContext({ line: 0, col: 0 }, {
+        indentStyle: "tab",
+        indentWidth: 4,
+      });
+      const { ctx: result } = pressKeys(["Tab"], ctx, buffer);
+      expect(buffer.getContent()).toBe("\thello");
+      expect(result.cursor.col).toBe(1);
+    });
+
+    it("inserts a tab character in the middle of a line when indentStyle is 'tab'", () => {
+      const buffer = new TextBuffer("helloworld");
+      const ctx = createInsertContext({ line: 0, col: 5 }, {
+        indentStyle: "tab",
+        indentWidth: 4,
+      });
+      const { ctx: result } = pressKeys(["Tab"], ctx, buffer);
+      expect(buffer.getContent()).toBe("hello\tworld");
+      expect(result.cursor.col).toBe(6);
+    });
+  });
+
+  // ---------------------------------------------------
+  // Ctrl-W with punctuation (covers line 268 branch)
+  // ---------------------------------------------------
+  describe("Ctrl-W with punctuation characters", () => {
+    it("deletes backward through punctuation when cursor is after punctuation", () => {
+      // Cursor right after "!!!", should delete the punctuation group
+      const buffer = new TextBuffer("hello!!!world");
+      const ctx = createInsertContext({ line: 0, col: 8 });
+      const { ctx: result } = pressKeys(
+        [{ key: "w", ctrlKey: true }],
+        ctx,
+        buffer,
+      );
+      expect(buffer.getContent()).toBe("helloworld");
+      expect(result.cursor).toEqual({ line: 0, col: 5 });
+    });
+
+    it("deletes backward through mixed punctuation", () => {
+      const buffer = new TextBuffer("foo@#$bar");
+      const ctx = createInsertContext({ line: 0, col: 6 });
+      const { ctx: result } = pressKeys(
+        [{ key: "w", ctrlKey: true }],
+        ctx,
+        buffer,
+      );
+      expect(buffer.getContent()).toBe("foobar");
+      expect(result.cursor).toEqual({ line: 0, col: 3 });
+    });
+  });
+
+  // ---------------------------------------------------
+  // Enter on empty line (covers line 291 getLineIndent match branch)
+  // ---------------------------------------------------
+  describe("Enter on empty line (getLineIndent empty match)", () => {
+    it("pressing Enter on an empty line produces no indentation", () => {
+      const buffer = new TextBuffer("");
+      const ctx = createInsertContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["Enter"], ctx, buffer);
+      expect(buffer.getContent()).toBe("\n");
+      expect(result.cursor).toEqual({ line: 1, col: 0 });
+    });
+  });
+
+  // ---------------------------------------------------
   // Ctrl key (ignored in insert mode)
   // ---------------------------------------------------
   describe("Ctrl key (ignored in insert mode)", () => {

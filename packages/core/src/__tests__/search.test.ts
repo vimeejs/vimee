@@ -197,4 +197,40 @@ describe("Search functionality", () => {
       expect(result).toEqual({ line: 1, col: 3 });
     });
   });
+
+  // ---------------------------------------------------
+  // Branch coverage: m.index ?? 0 fallback (lines 94, 100)
+  //
+  // The `?? 0` fallback for `m.index` in searchBackward is a TypeScript
+  // defensive pattern. In practice, `RegExpMatchArray.index` is always
+  // defined when the match comes from `String.prototype.matchAll()`,
+  // so the nullish coalescing fallback branch (`?? 0` returning 0
+  // instead of `m.index`) is never actually taken at runtime.
+  // These branches are inherently uncoverable in V8 branch coverage.
+  //
+  // The tests below exercise the backward search paths that use these
+  // lines, confirming the `m.index` value is always present and correct.
+  // ---------------------------------------------------
+  describe("Backward search m.index coverage", () => {
+    it("backward search filter uses m.index on the cursor line (line 94)", () => {
+      const buffer = new TextBuffer("aaa bbb ccc");
+      // Cursor at col 8, backward search for "bbb" should find it at col 4
+      const result = searchInBuffer(buffer, "bbb", { line: 0, col: 8 }, "backward");
+      expect(result).toEqual({ line: 0, col: 4 });
+    });
+
+    it("backward search returns last.index for matches on non-cursor lines (line 100)", () => {
+      const buffer = new TextBuffer("foo bar\nbaz qux");
+      // Cursor on line 1, backward search for "bar" wraps to line 0
+      const result = searchInBuffer(buffer, "bar", { line: 1, col: 0 }, "backward");
+      expect(result).toEqual({ line: 0, col: 4 });
+    });
+
+    it("backward search with multiple matches returns closest before cursor", () => {
+      const buffer = new TextBuffer("aa bb aa bb aa");
+      // Cursor at col 12, backward search for "bb" should return col 9
+      const result = searchInBuffer(buffer, "bb", { line: 0, col: 12 }, "backward");
+      expect(result).toEqual({ line: 0, col: 9 });
+    });
+  });
 });

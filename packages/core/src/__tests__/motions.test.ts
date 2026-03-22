@@ -1013,6 +1013,28 @@ describe("Edge cases", () => {
     expect(result.cursor).toEqual(cur(0, 0));
   });
 
+  it("motionBigW: advances to next line when col >= text.length", () => {
+    const b = buf(["hi", "world"]);
+    // col=5 is past the end of "hi" (length 2)
+    const result = motionBigW(cur(0, 5), b, 1);
+    expect(result.cursor).toEqual(cur(1, 0));
+  });
+
+  it("motionBigW: clamps col when col >= text.length on last line", () => {
+    const b = buf(["hi"]);
+    // col=5 is past the end of "hi" and there's no next line
+    // The cursor col gets clamped to lineLen - 1 = 1
+    const result = motionBigW(cur(0, 5), b, 1);
+    expect(result.cursor).toEqual(cur(0, 1));
+  });
+
+  it("motionBigW: col exactly at text.length advances to next line", () => {
+    const b = buf(["ab", "cd"]);
+    // col=2 equals text.length of "ab"
+    const result = motionBigW(cur(0, 2), b, 1);
+    expect(result.cursor).toEqual(cur(1, 0));
+  });
+
   // --- motionBigB ---
   it("motionBigB: skips punctuation as part of the WORD backwards", () => {
     const b = buf(["foo.bar baz"]);

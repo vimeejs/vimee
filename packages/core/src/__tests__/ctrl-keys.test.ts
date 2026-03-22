@@ -201,6 +201,31 @@ describe("Ctrl key combinations", () => {
       const result = processKeystroke("v", ctx, buffer, true);
       expect(result.newCtx.mode).toBe("visual-block");
     });
+
+    it("creates a new anchor from cursor when entering visual-block from normal mode (visualAnchor is null)", () => {
+      const buffer = new TextBuffer("hello\nworld\nfoo");
+      const ctx = createInitialContext({ line: 1, col: 3 });
+      // In normal mode, visualAnchor is null
+      expect(ctx.visualAnchor).toBeNull();
+      const result = processKeystroke("v", ctx, buffer, true);
+      expect(result.newCtx.mode).toBe("visual-block");
+      // The anchor should be a copy of the cursor, not null
+      expect(result.newCtx.visualAnchor).toEqual({ line: 1, col: 3 });
+    });
+
+    it("uses cursor as fallback anchor when visual mode has null visualAnchor", () => {
+      const buffer = new TextBuffer("hello\nworld");
+      // Simulate visual mode with null visualAnchor (edge case for ?? operator)
+      const ctx: VimContext = {
+        ...createInitialContext({ line: 0, col: 2 }),
+        mode: "visual",
+        visualAnchor: null,
+      };
+      const result = processKeystroke("v", ctx, buffer, true);
+      expect(result.newCtx.mode).toBe("visual-block");
+      // When visualAnchor is null in visual mode, the ?? fallback creates anchor from cursor
+      expect(result.newCtx.visualAnchor).toEqual({ line: 0, col: 2 });
+    });
   });
 
   // ---------------------------------------------------

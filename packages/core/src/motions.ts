@@ -40,11 +40,6 @@ function clampCol(col: number, line: number, buffer: TextBuffer): number {
   return Math.max(0, Math.min(col, maxCol));
 }
 
-function clampColInsert(col: number, line: number, buffer: TextBuffer): number {
-  const maxCol = buffer.getLineLength(line);
-  return Math.max(0, Math.min(col, maxCol));
-}
-
 function firstNonBlank(line: string): number {
   const match = line.match(/\S/);
   return match ? match.index! : 0;

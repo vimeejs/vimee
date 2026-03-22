@@ -365,6 +365,68 @@ describe("resolveTextObject", () => {
   });
 
   // ---------------------------------------------------
+  // Bracket pair backward search (covers line 355: depth-- in backward search)
+  // ---------------------------------------------------
+  describe("findBracketPair backward search", () => {
+    it("finds opening bracket by backward search when cursor is inside brackets (not on bracket char)", () => {
+      // Cursor on 'x' (col 4), which is neither ( nor )
+      // The backward search should find ( at col 1
+      const b = buf(["a(bxd)e"]);
+      const range = resolveTextObject("i", "(", cur(0, 3), b);
+      expect(range).not.toBeNull();
+      expect(range!.start).toEqual(cur(0, 2));
+      expect(range!.end).toEqual(cur(0, 4));
+    });
+
+    it("backward search skips nested closing brackets (depth-- branch)", () => {
+      // "a( b(c) d )" - cursor on 'd' (col 8)
+      // Backward search from 'd' encounters ) at col 6 (depth++),
+      // then ( at col 4 (depth-- to 0), then continues to ( at col 1 (depth==0, found)
+      const b = buf(["a( b(c) d )"]);
+      const range = resolveTextObject("i", "(", cur(0, 8), b);
+      expect(range).not.toBeNull();
+      // Inner of outer parens: from col 2 to col 9
+      expect(range!.start).toEqual(cur(0, 2));
+      expect(range!.end).toEqual(cur(0, 9));
+    });
+  });
+
+  // ---------------------------------------------------
+  // Deeply nested brackets (covers line 382: depth-- in forward search)
+  // ---------------------------------------------------
+  describe("findBracketPair forward search with nested brackets", () => {
+    it("forward search skips nested open brackets (depth-- in forward search)", () => {
+      // "(a(b)c)" - cursor on 'a' (col 1)
+      // Forward search from ( at col 0 encounters ( at col 2 (depth++),
+      // then ) at col 4 (depth-- to 0), then ) at col 6 (depth==0, found)
+      const b = buf(["(a(b)c)"]);
+      const range = resolveTextObject("i", "(", cur(0, 1), b);
+      expect(range).not.toBeNull();
+      expect(range!.start).toEqual(cur(0, 1));
+      expect(range!.end).toEqual(cur(0, 5));
+    });
+
+    it("handles multiple levels of nesting in forward search", () => {
+      // "(a(b(c)d)e)" - cursor on 'a'
+      // Forward search from outermost ( must skip two levels of nesting
+      const b = buf(["(a(b(c)d)e)"]);
+      const range = resolveTextObject("i", "(", cur(0, 1), b);
+      expect(range).not.toBeNull();
+      expect(range!.start).toEqual(cur(0, 1));
+      expect(range!.end).toEqual(cur(0, 9));
+    });
+
+    it("handles nested brackets across multiple lines in forward search", () => {
+      const b = buf(["(", "  (inner)", "  text", ")"]);
+      const range = resolveTextObject("i", "(", cur(2, 2), b);
+      expect(range).not.toBeNull();
+      // Should find outer parens
+      expect(range!.start.line).toBe(0);
+      expect(range!.end.line).toBe(3);
+    });
+  });
+
+  // ---------------------------------------------------
   // Edge cases
   // ---------------------------------------------------
   describe("edge cases", () => {

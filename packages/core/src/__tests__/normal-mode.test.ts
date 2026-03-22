@@ -762,6 +762,36 @@ describe("Normal mode", () => {
       expect(result.cursor.col).toBe(0);
     });
 
+    it("repeats t with ; (exercises resolveCharSearchRepeat case t)", () => {
+      // Use t to set lastCharSearch, then ; to repeat it
+      // "hello world" - 'o' at col 4 and col 7
+      const buffer = new TextBuffer("hello world");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: afterT } = pressKeys(["t", "o"], ctx, buffer);
+      // t finds 'o' at col 4, stops at col 3
+      expect(afterT.cursor.col).toBe(3);
+      expect(afterT.lastCharSearch).toEqual({ command: "t", char: "o" });
+      // ; repeats t/o: from col 3, fChar starts at 4, finds 'o' at 4, t stops at 3 (no movement)
+      // Since cursor doesn't move, the repeat is a no-op but the code path IS exercised
+      const { ctx: afterSemicolon } = pressKeys([";"], afterT, buffer);
+      // Cursor stays at 3 (stuck because next 'o' is at col 4, t goes to 3)
+      expect(afterSemicolon.cursor.col).toBe(3);
+    });
+
+    it("repeats T with ; (exercises resolveCharSearchRepeat case T)", () => {
+      // Use T to set lastCharSearch, then ; to repeat it
+      const buffer = new TextBuffer("hello world");
+      const ctx = createTestContext({ line: 0, col: 10 });
+      const { ctx: afterT } = pressKeys(["T", "o"], ctx, buffer);
+      // T searches backward: 'o' at col 7, T stops at col 8
+      expect(afterT.cursor.col).toBe(8);
+      expect(afterT.lastCharSearch).toEqual({ command: "T", char: "o" });
+      // ; repeats T/o: from col 8, FCharBack starts at 7, finds 'o' at 7, T goes to 8 (no movement)
+      const { ctx: afterSemicolon } = pressKeys([";"], afterT, buffer);
+      // Cursor stays at 8 (same stuck behavior as t)
+      expect(afterSemicolon.cursor.col).toBe(8);
+    });
+
     it("works with operator: d; deletes to next match (inclusive)", () => {
       const buffer = new TextBuffer("one.two.three");
       const ctx = createTestContext({ line: 0, col: 0 });
@@ -1799,6 +1829,330 @@ describe("Normal mode", () => {
       // Deletes lines 10..20 = 11 lines
       expect(buffer.getLineCount()).toBe(89);
       expect(result.statusMessage).toBe("11 fewer lines");
+    });
+  });
+
+  // ---------------------------------------------------
+  // Coverage: withRegisterInfo with named register + status message
+  // ---------------------------------------------------
+  describe("withRegisterInfo (named register + status message)", () => {
+    it('"a3dd shows status message with register info', () => {
+      const buffer = new TextBuffer("line1\nline2\nline3\nline4\nline5");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(
+        ['"', "a", "3", "d", "d"],
+        ctx,
+        buffer,
+      );
+      expect(buffer.getContent()).toBe("line4\nline5");
+      expect(result.registers.a).toBe("line1\nline2\nline3\n");
+      // statusMessage should include register info
+      expect(result.statusMessage).toContain('"a');
+    });
+  });
+
+  // ---------------------------------------------------
+  // Coverage: handleTextObjectPending with invalid text object key
+  // ---------------------------------------------------
+  describe("handleTextObjectPending with invalid text object", () => {
+    it("resets when resolveTextObject returns null (e.g., diQ)", () => {
+      const buffer = new TextBuffer("hello world");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      // d -> operator-pending, i -> text-object-pending, Q -> invalid text object
+      const { ctx: result } = pressKeys(["d", "i", "Q"], ctx, buffer);
+      expect(result.phase).toBe("idle");
+      expect(result.operator).toBeNull();
+      expect(buffer.getContent()).toBe("hello world"); // no change
+    });
+  });
+
+  // ---------------------------------------------------
+  // Coverage: handleTextObjectPending without operator (defensive)
+  // ---------------------------------------------------
+  describe("handleTextObjectPending without operator", () => {
+    it("resets gracefully when text-object-pending state has no operator", () => {
+      const buffer = new TextBuffer("hello world");
+      // Manually construct a context in text-object-pending state without an operator
+      const ctx = createTestContext({ line: 0, col: 0 }, {
+        phase: "text-object-pending" as const,
+        textObjectModifier: "i",
+        operator: null,
+      });
+      // Press 'w' to trigger the text-object-pending handler with a valid text object but no operator
+      const result = processKeystroke("w", ctx, buffer);
+      expect(result.newCtx.phase).toBe("idle");
+      expect(result.newCtx.operator).toBeNull();
+      expect(buffer.getContent()).toBe("hello world"); // no change
+    });
+  });
+
+  // ---------------------------------------------------
+  // Coverage: Count input during operator-pending state
+  // ---------------------------------------------------
+  describe("Count input during operator-pending", () => {
+    it("d2w deletes 2 words via count during operator-pending", () => {
+      const buffer = new TextBuffer("one two three four");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      // d -> operator-pending, 2 -> count accumulation, w -> motion with count=2
+      const { ctx: result } = pressKeys(["d", "2", "w"], ctx, buffer);
+      expect(buffer.getContent()).toBe("three four");
+      expect(result.phase).toBe("idle");
+      expect(result.operator).toBeNull();
+    });
+
+    it("c3w changes 3 words and enters insert mode", () => {
+      const buffer = new TextBuffer("one two three four five");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["c", "3", "w"], ctx, buffer);
+      expect(buffer.getContent()).toBe("four five");
+      expect(result.mode).toBe("insert");
+    });
+
+    it("y2w yanks 2 words without changing buffer", () => {
+      const buffer = new TextBuffer("one two three four");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["y", "2", "w"], ctx, buffer);
+      expect(buffer.getContent()).toBe("one two three four");
+      expect(result.register).toBe("one two ");
+    });
+  });
+
+  // ---------------------------------------------------
+  // Coverage: Motion returns null during operator-pending (invalid key)
+  // ---------------------------------------------------
+  describe("Invalid key during operator-pending cancels operator", () => {
+    it("dQ cancels operator (Q is not a motion)", () => {
+      const buffer = new TextBuffer("hello world");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["d", "Q"], ctx, buffer);
+      expect(result.phase).toBe("idle");
+      expect(result.operator).toBeNull();
+      expect(buffer.getContent()).toBe("hello world"); // no change
+    });
+
+    it("yZ cancels operator (Z is not a motion)", () => {
+      const buffer = new TextBuffer("hello world");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["y", "Z"], ctx, buffer);
+      expect(result.phase).toBe("idle");
+      expect(result.operator).toBeNull();
+      expect(result.register).toBe(""); // nothing yanked
+    });
+  });
+
+  // ---------------------------------------------------
+  // Coverage: Pattern not found during * / # word search
+  // ---------------------------------------------------
+  describe("Pattern not found during * / # word search", () => {
+    it("* shows 'Pattern not found' when word has no other occurrence", () => {
+      // Single line, single occurrence: search wraps but doesn't find another match
+      const buffer = new TextBuffer("uniqueword");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["*"], ctx, buffer);
+      expect(result.statusMessage).toContain("Pattern not found");
+    });
+
+    it("# shows 'Pattern not found' when word has no other occurrence", () => {
+      const buffer = new TextBuffer("uniqueword");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["#"], ctx, buffer);
+      expect(result.statusMessage).toContain("Pattern not found");
+    });
+  });
+
+  // ---------------------------------------------------
+  // Coverage: Invalid mark key (non-lowercase after m)
+  // ---------------------------------------------------
+  describe("Invalid mark key", () => {
+    it("m1 resets (1 is not a valid mark key)", () => {
+      const buffer = new TextBuffer("hello world");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["m", "1"], ctx, buffer);
+      expect(result.phase).toBe("idle");
+      // No mark should be set
+      expect(result.marks["1"]).toBeUndefined();
+    });
+
+    it("mM resets (uppercase M is not a valid mark key)", () => {
+      const buffer = new TextBuffer("hello world");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["m", "M"], ctx, buffer);
+      expect(result.phase).toBe("idle");
+      expect(result.marks["M"]).toBeUndefined();
+    });
+
+    it("m! resets (special character is not a valid mark key)", () => {
+      const buffer = new TextBuffer("hello world");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["m", "!"], ctx, buffer);
+      expect(result.phase).toBe("idle");
+    });
+  });
+
+  // ---------------------------------------------------
+  // Coverage: Invalid jump mark key (non-lowercase after `)
+  // ---------------------------------------------------
+  describe("Invalid jump mark key", () => {
+    it("`1 resets (1 is not a valid jump mark key)", () => {
+      const buffer = new TextBuffer("hello world");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["`", "1"], ctx, buffer);
+      expect(result.phase).toBe("idle");
+      // Cursor should not change
+      expect(result.cursor).toEqual({ line: 0, col: 0 });
+    });
+
+    it("`M resets (uppercase M is not a valid jump mark key)", () => {
+      const buffer = new TextBuffer("hello world");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["`", "M"], ctx, buffer);
+      expect(result.phase).toBe("idle");
+    });
+
+    it("'1 resets (1 is not a valid jump mark key via ')", () => {
+      const buffer = new TextBuffer("hello world");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["'", "1"], ctx, buffer);
+      expect(result.phase).toBe("idle");
+    });
+  });
+
+  // ---------------------------------------------------
+  // Coverage: d; when char search repeat does not move cursor (line 514)
+  // ---------------------------------------------------
+  describe("Operator + char search repeat that does not move", () => {
+    it("d; does nothing when ; repeat finds no match", () => {
+      const buffer = new TextBuffer("abcdef");
+      const ctx = createTestContext({ line: 0, col: 5 }); // cursor at 'f' (end)
+      // First, do fa to set lastCharSearch (finds 'a' but we're already past it going forward)
+      // Use Fa to go backward to 'a', then go to end, then d; forward should not move
+      const { ctx: afterFa } = pressKeys(["f", "z"], ctx, buffer);
+      // fz didn't move (no z in line), but set lastCharSearch to f/z
+      expect(afterFa.lastCharSearch).toEqual({ command: "f", char: "z" });
+      // Now d; should try to repeat fz, find nothing, and cancel
+      const { ctx: result } = pressKeys(["d", ";"], afterFa, buffer);
+      expect(result.phase).toBe("idle");
+      expect(result.operator).toBeNull();
+      expect(buffer.getContent()).toBe("abcdef"); // no change
+    });
+
+    it("d, does nothing when , repeat finds no match", () => {
+      const buffer = new TextBuffer("abcdef");
+      const ctx = createTestContext({ line: 0, col: 0 }); // cursor at 'a'
+      // Fz backward search for 'z' - doesn't move but sets lastCharSearch
+      const { ctx: afterFz } = pressKeys(["F", "z"], ctx, buffer);
+      expect(afterFz.lastCharSearch).toEqual({ command: "F", char: "z" });
+      // d, reverses to forward fz, no match → cancel
+      const { ctx: result } = pressKeys(["d", ","], afterFz, buffer);
+      expect(result.phase).toBe("idle");
+      expect(buffer.getContent()).toBe("abcdef");
+    });
+  });
+
+  // ---------------------------------------------------
+  // Branch coverage: line 72 branch 1
+  // Paste from a named register that has NOT been set yet.
+  // ctx.registers[ctx.selectedRegister] ?? "" → hits the ?? fallback
+  // ---------------------------------------------------
+  describe("Paste from unset named register", () => {
+    it('"ap does nothing when register a has never been set', () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      // "ap → select register a, then paste. Register a is undefined → getRegisterText returns ""
+      const { ctx: result } = pressKeys(['"', "a", "p"], ctx, buffer);
+      expect(buffer.getContent()).toBe("hello"); // no change
+      expect(result.cursor).toEqual({ line: 0, col: 0 });
+    });
+  });
+
+  // ---------------------------------------------------
+  // Branch coverage: lines 356/358
+  // handleTextObjectPending with 'c' operator → insert mode
+  // ---------------------------------------------------
+  describe("ciw enters insert mode via text object", () => {
+    it("ciw changes inner word and enters insert mode", () => {
+      const buffer = new TextBuffer("hello world");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result, allActions } = pressKeys(["c", "i", "w"], ctx, buffer);
+      expect(result.mode).toBe("insert");
+      expect(result.statusMessage).toBe("-- INSERT --");
+      expect(allActions.some((a) => a.type === "mode-change" && a.mode === "insert")).toBe(true);
+    });
+  });
+
+  // ---------------------------------------------------
+  // Branch coverage: line 404 branch 0
+  // handleGPending with operator → mode change (cgg enters insert mode)
+  // ---------------------------------------------------
+  describe("cgg enters insert mode", () => {
+    it("cgg changes from cursor to beginning of file and enters insert mode", () => {
+      const buffer = new TextBuffer("line1\nline2\nline3");
+      const ctx = createTestContext({ line: 2, col: 0 });
+      const { ctx: result, allActions } = pressKeys(["c", "g", "g"], ctx, buffer);
+      expect(result.mode).toBe("insert");
+      // mode-change action is emitted because opResult.newMode (insert) !== ctx.mode (normal)
+      expect(allActions.some((a) => a.type === "mode-change" && a.mode === "insert")).toBe(true);
+    });
+  });
+
+  // ---------------------------------------------------
+  // Branch coverage: line 615 branch 1
+  // I on an all-whitespace line → lineText.match(/\S/)?.index ?? 0 hits ?? fallback
+  // ---------------------------------------------------
+  describe("I on an all-whitespace line", () => {
+    it("I moves to column 0 on an all-whitespace line", () => {
+      const buffer = new TextBuffer("   ");
+      const ctx = createTestContext({ line: 0, col: 2 });
+      const { ctx: result } = pressKeys(["I"], ctx, buffer);
+      expect(result.mode).toBe("insert");
+      expect(result.cursor.col).toBe(0);
+    });
+  });
+
+  // ---------------------------------------------------
+  // Branch coverage: line 893
+  // P (paste before) with empty register → early return
+  // ---------------------------------------------------
+  describe("P with empty register", () => {
+    it("P does nothing when register is empty", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx = createTestContext({ line: 0, col: 0 }, { register: "" });
+      const { ctx: result } = pressKeys(["P"], ctx, buffer);
+      expect(buffer.getContent()).toBe("hello");
+      expect(result.cursor).toEqual({ line: 0, col: 0 });
+    });
+  });
+
+  // ---------------------------------------------------
+  // Branch coverage: line 1082
+  // N with backward searchDirection → reverses to forward
+  // ---------------------------------------------------
+  describe("N with backward searchDirection", () => {
+    it("N reverses backward search to forward", () => {
+      const buffer = new TextBuffer("foo bar foo baz foo");
+      const ctx = createTestContext(
+        { line: 0, col: 0 },
+        { lastSearch: "foo", searchDirection: "backward" },
+      );
+      const { ctx: result } = pressKeys(["N"], ctx, buffer);
+      // N reverses backward → forward, so it finds the next "foo" forward from col 0
+      expect(result.cursor.col).toBe(8);
+    });
+  });
+
+  // ---------------------------------------------------
+  // Branch coverage: line 1234
+  // getLeadingWhitespace on a line with no leading whitespace (exercises the function)
+  // Pressing 'o' on an empty line
+  // ---------------------------------------------------
+  describe("o on an empty line exercises getLeadingWhitespace", () => {
+    it("o on an empty line opens a new line with no indent", () => {
+      const buffer = new TextBuffer("");
+      const ctx = createTestContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(["o"], ctx, buffer);
+      expect(result.mode).toBe("insert");
+      expect(result.cursor).toEqual({ line: 1, col: 0 });
+      expect(buffer.getContent()).toBe("\n");
     });
   });
 });

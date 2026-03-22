@@ -433,10 +433,8 @@ function handleOperatorPending(
   ctx: VimContext,
   buffer: TextBuffer,
 ): KeystrokeResult {
-  // Count input
-  if (isCountKey(key, ctx)) {
-    return accumulateCount(key, ctx);
-  }
+  // Note: Count input is handled by the top-level isCountKey check in processNormalMode
+  // before this function is called, so no count check is needed here.
 
   // Same operator key -> line operation (dd, yy, cc)
   if (key === ctx.operator) {
@@ -1135,8 +1133,6 @@ function resolveCharSearchRepeat(
       return motionTChar(ctx.cursor, buffer, char, count);
     case "T":
       return motionTCharBack(ctx.cursor, buffer, char, count);
-    default:
-      return null;
   }
 }
 

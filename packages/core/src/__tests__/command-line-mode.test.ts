@@ -8,6 +8,7 @@
 import { describe, it, expect } from "vitest";
 import type { VimContext, CursorPosition } from "../types";
 import { processKeystroke, createInitialContext } from "../vim-state";
+import { processCommandLineMode } from "../command-line-mode";
 import { TextBuffer } from "../buffer";
 
 // =====================
@@ -482,6 +483,116 @@ describe("Command-line mode", () => {
       const ctx = createInitialContext({ line: 0, col: 0 });
       pressKeys([...":", ..."%s/foo/bar", "Enter"], ctx, buffer);
       expect(buffer.getContent()).toBe("bar\nbar");
+    });
+
+    it(":s with invalid regex pattern shows error", () => {
+      const buffer = new TextBuffer("hello world");
+      const ctx = createInitialContext({ line: 0, col: 0 });
+      const { ctx: result } = pressKeys(
+        [...":", ..."s/[invalid/replacement/", "Enter"],
+        ctx,
+        buffer,
+      );
+      expect(buffer.getContent()).toBe("hello world");
+      expect(result.mode).toBe("normal");
+      expect(result.statusMessage).toContain("Invalid pattern");
+    });
+  });
+
+  // ---------------------------------------------------
+  // executeCommand with null commandType (defensive)
+  // ---------------------------------------------------
+  describe("executeCommand with null commandType", () => {
+    it("exits command-line mode when commandType is null and Enter is pressed", () => {
+      const buffer = new TextBuffer("hello");
+      // Manually construct a context where mode is "command-line" but commandType is null
+      const ctx: VimContext = {
+        ...createInitialContext({ line: 0, col: 0 }),
+        mode: "command-line",
+        commandType: null,
+        commandBuffer: "test",
+      };
+      const result = processCommandLineMode("Enter", ctx, buffer);
+      expect(result.newCtx.mode).toBe("normal");
+      expect(result.newCtx.commandBuffer).toBe("");
+      expect(result.newCtx.commandType).toBeNull();
+    });
+  });
+
+  // ---------------------------------------------------
+  // Branch coverage: line 265 branch 1
+  // :substitute with only a start range (rangeEnd is undefined) → endLine = startLine
+  // ---------------------------------------------------
+  describe("Substitute with single line range", () => {
+    it(":2s/foo/bar/ substitutes only on line 2 (rangeEnd undefined → endLine = startLine)", () => {
+      const buffer = new TextBuffer("foo\nfoo\nfoo");
+      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
+      // Type "2s/foo/bar/" and press Enter
+      const keys = [..."2s/foo/bar/", "Enter"];
+      let current: VimContext = ctx;
+      for (const key of keys) {
+        const result = processCommandLineMode(key, current, buffer);
+        current = result.newCtx;
+      }
+      // Only line 2 (index 1) should be changed
+      expect(buffer.getLine(0)).toBe("foo");
+      expect(buffer.getLine(1)).toBe("bar");
+      expect(buffer.getLine(2)).toBe("foo");
+    });
+  });
+
+  // ---------------------------------------------------
+  // Branch coverage: line 309 branch 1
+  // :s with /g flag where individual match count returns null from .match()
+  // This is hard to trigger directly since replaced !== original implies a match exists.
+  // We cover the normal global replacement path which exercises the matches branch.
+  // ---------------------------------------------------
+  describe("Substitute with global flag exercises match counting", () => {
+    it(":%s/o/0/g replaces all occurrences globally", () => {
+      const buffer = new TextBuffer("foo boo");
+      const ctx = createCommandLineContext({ line: 0, col: 0 }, ":");
+      const keys = [..."%s/o/0/g", "Enter"];
+      let current: VimContext = ctx;
+      for (const key of keys) {
+        const result = processCommandLineMode(key, current, buffer);
+        current = result.newCtx;
+      }
+      expect(buffer.getLine(0)).toBe("f00 b00");
+      expect(current.statusMessage).toContain("4");
+    });
+  });
+
+  // ---------------------------------------------------
+  // Branch coverage: lines 364 branch 1, 379 branch 1
+  // handleBackspace and appendChar when commandType is null → (ctx.commandType ?? "") uses fallback
+  // ---------------------------------------------------
+  describe("Backspace and append with null commandType", () => {
+    it("Backspace with null commandType uses empty prefix in statusMessage", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx: VimContext = {
+        ...createInitialContext({ line: 0, col: 0 }),
+        mode: "command-line",
+        commandType: null,
+        commandBuffer: "abc",
+      };
+      const result = processCommandLineMode("Backspace", ctx, buffer);
+      // commandType is null → statusMessage = "" + "ab" = "ab"
+      expect(result.newCtx.commandBuffer).toBe("ab");
+      expect(result.newCtx.statusMessage).toBe("ab");
+    });
+
+    it("appendChar with null commandType uses empty prefix in statusMessage", () => {
+      const buffer = new TextBuffer("hello");
+      const ctx: VimContext = {
+        ...createInitialContext({ line: 0, col: 0 }),
+        mode: "command-line",
+        commandType: null,
+        commandBuffer: "ab",
+      };
+      const result = processCommandLineMode("c", ctx, buffer);
+      // commandType is null → statusMessage = "" + "abc" = "abc"
+      expect(result.newCtx.commandBuffer).toBe("abc");
+      expect(result.newCtx.statusMessage).toBe("abc");
     });
   });
 });

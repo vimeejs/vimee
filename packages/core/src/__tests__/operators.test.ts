@@ -586,4 +586,93 @@ describe("Operators", () => {
       expect(buffer.getContent()).toBe("aaa\nbbb\nccc\nddd");
     });
   });
+
+  // ---------------------------------------------------
+  // Character-wise delete: statusMessage branch for linesRemoved < 2
+  // Covers branch at line 194 where linesRemoved is 0 or 1
+  // ---------------------------------------------------
+  describe("Character-wise delete statusMessage branch", () => {
+    it("returns empty statusMessage when deleting within a single line (0 lines removed)", () => {
+      const buffer = new TextBuffer("hello world");
+      const range: MotionRange = {
+        start: { line: 0, col: 0 },
+        end: { line: 0, col: 5 },
+        linewise: false,
+        inclusive: false,
+      };
+      const result = executeOperatorOnRange(
+        "d",
+        range,
+        buffer,
+        { line: 0, col: 0 },
+      );
+      expect(buffer.getContent()).toBe(" world");
+      expect(result.statusMessage).toBe("");
+    });
+
+    it("returns empty statusMessage when charwise delete removes exactly 1 line", () => {
+      // "hello\nworld" -> delete from col 3 on line 0 to col 2 on line 1
+      // This merges two lines into one, removing exactly 1 line
+      const buffer = new TextBuffer("hello\nworld");
+      const range: MotionRange = {
+        start: { line: 0, col: 3 },
+        end: { line: 1, col: 3 },
+        linewise: false,
+        inclusive: false,
+      };
+      const result = executeOperatorOnRange(
+        "d",
+        range,
+        buffer,
+        { line: 0, col: 3 },
+      );
+      // "hel" + "ld" = "helld"
+      expect(buffer.getLineCount()).toBe(1);
+      expect(result.statusMessage).toBe("");
+    });
+  });
+
+  // ---------------------------------------------------
+  // Dedent (<) with fewer leading spaces than indent width
+  // Covers branch at line 249 (leadingSpaces regex match)
+  // ---------------------------------------------------
+  describe("Dedent (<) with partial leading spaces", () => {
+    it("removes fewer leading spaces than indent width (e.g. 1 space with width=4)", () => {
+      const buffer = new TextBuffer(" hello");
+      const range: MotionRange = {
+        start: { line: 0, col: 0 },
+        end: { line: 0, col: 0 },
+        linewise: true,
+        inclusive: true,
+      };
+      executeOperatorOnRange(
+        "<",
+        range,
+        buffer,
+        { line: 0, col: 0 },
+        { style: "space", width: 4 },
+      );
+      // Line has 1 leading space, indent width is 4, so removes 1 space
+      expect(buffer.getLine(0)).toBe("hello");
+    });
+
+    it("removes 3 leading spaces when indent width is 4", () => {
+      const buffer = new TextBuffer("   hello");
+      const range: MotionRange = {
+        start: { line: 0, col: 0 },
+        end: { line: 0, col: 0 },
+        linewise: true,
+        inclusive: true,
+      };
+      executeOperatorOnRange(
+        "<",
+        range,
+        buffer,
+        { line: 0, col: 0 },
+        { style: "space", width: 4 },
+      );
+      // 3 leading spaces < indent width 4, so removes all 3
+      expect(buffer.getLine(0)).toBe("hello");
+    });
+  });
 });
