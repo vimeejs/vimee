@@ -14,6 +14,10 @@
  * --sv-gutter-bg: Line number background color
  * --sv-statusline-bg: Status line background color
  * --sv-statusline-fg: Status line text color
+ * --sv-mode-insert-color: Insert mode indicator color
+ * --sv-mode-visual-color: Visual mode indicator color
+ * --sv-status-error-color: Error message text color
+ * --sv-status-error-bg: Error message background color
  */
 
 /* =====================
@@ -155,19 +159,19 @@
 }
 
 .sv-mode-insert {
-  color: #98c379;
+  color: var(--sv-mode-insert-color, #98c379);
 }
 
 .sv-mode-visual,
 .sv-mode-visual-line,
 .sv-mode-visual-block {
-  color: #c678dd;
+  color: var(--sv-mode-visual-color, #c678dd);
 }
 
 /* Error message */
 .sv-status-error {
-  color: #ffffff;
-  background-color: #e06c75;
+  color: var(--sv-status-error-color, #ffffff);
+  background-color: var(--sv-status-error-bg, #e06c75);
   width: fit-content;
 }
 

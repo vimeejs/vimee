@@ -83,6 +83,10 @@ Import the base styles and override CSS variables:
   --sv-statusline-bg: #252526;
   --sv-statusline-fg: #cccccc;
   --sv-focus-color: #007acc;
+  --sv-mode-insert-color: #98c379;
+  --sv-mode-visual-color: #c678dd;
+  --sv-status-error-color: #ffffff;
+  --sv-status-error-bg: #e06c75;
 }
 ```
 
