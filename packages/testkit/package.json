@@ -1,6 +1,6 @@
 {
   "name": "@vimee/testkit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Test utilities for writing @vimee/core vim operation tests",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -13,7 +13,9 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsgo --noEmit",
@@ -21,7 +23,12 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
-  "keywords": ["vim", "testing", "vitest", "testkit"],
+  "keywords": [
+    "vim",
+    "testing",
+    "vitest",
+    "testkit"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
