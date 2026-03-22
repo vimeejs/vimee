@@ -157,6 +157,27 @@ bun run changeset:gen          # auto-detect from commits
 bun run changeset:gen major    # force major bump
 ```
 
+## Playground
+
+A live playground app is included as a [git submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules).
+
+```bash
+# Clone with playground
+git clone --recursive https://github.com/vimeejs/vimee.git
+
+# Or, if you already cloned without --recursive
+git submodule update --init
+
+# Install dependencies (includes playground)
+bun install
+
+# Build all packages, then start the playground
+bun run build
+cd playground && bun run dev
+```
+
+The playground uses `workspace:*` to reference local packages, so any changes you build in `packages/*` are reflected immediately.
+
 ## Monorepo Structure
 
 ```
@@ -165,6 +186,7 @@ packages/
 ├── react/             # @vimee/react — React useVim hook
 ├── plugin-textarea/   # @vimee/plugin-textarea — vim for any textarea
 └── shiki-editor/      # @vimee/shiki-editor — editor component with Shiki
+playground/            # Live demo app (git submodule)
 ```
 
 Built with [Bun](https://bun.sh) workspaces, [tsup](https://tsup.egoist.dev/) for bundling, and [Vitest](https://vitest.dev/) for testing.

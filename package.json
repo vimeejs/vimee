@@ -2,7 +2,7 @@
   "name": "vimee",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*"],
+  "workspaces": ["packages/*", "playground"],
   "scripts": {
     "build": "bun run --filter @vimee/core build && bun run --filter @vimee/react build && bun run --filter @vimee/plugin-textarea build && bun run --filter @vimee/shiki-editor build",
     "test": "vitest run",
