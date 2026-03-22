@@ -2,10 +2,9 @@ import { bench, describe } from "vitest";
 import { TextBuffer } from "../buffer";
 import { createInitialContext, processKeystroke } from "../vim-state";
 
-const DOC = Array.from(
-  { length: 100 },
-  (_, i) => `Line ${i}: const value = "hello world";`,
-).join("\n");
+const DOC = Array.from({ length: 100 }, (_, i) => `Line ${i}: const value = "hello world";`).join(
+  "\n",
+);
 
 function freshState() {
   const buffer = new TextBuffer(DOC);

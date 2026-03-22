@@ -71,6 +71,13 @@ jobs:
         with:
           config: packages/shiki-editor/.octocov.yml
 
+      - name: Test with coverage (@vimee/plugin-monaco)
+        run: bun run --filter @vimee/plugin-monaco test:coverage
+
+      - uses: k1LoW/octocov-action@v1
+        with:
+          config: packages/plugin-monaco/.octocov.yml
+
       - name: Test with coverage (@vimee/testkit)
         run: bun run --filter @vimee/testkit test:coverage
 

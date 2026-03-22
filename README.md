@@ -25,6 +25,7 @@ vimee is a **framework-agnostic, pure-function Vim engine** that you can plug in
 | [`@vimee/core`](./packages/core)                       | Headless vim engine with pure function API          | [![npm](https://img.shields.io/npm/v/@vimee/core)](https://www.npmjs.com/package/@vimee/core)                       | [![bundle](https://img.shields.io/bundlephobia/minzip/@vimee/core)](https://bundlephobia.com/package/@vimee/core)                           |
 | [`@vimee/react`](./packages/react)                     | React `useVim` hook                                 | [![npm](https://img.shields.io/npm/v/@vimee/react)](https://www.npmjs.com/package/@vimee/react)                     | [![bundle](https://img.shields.io/bundlephobia/minzip/@vimee/react)](https://bundlephobia.com/package/@vimee/react)                         |
 | [`@vimee/plugin-textarea`](./packages/plugin-textarea) | Attach vim to any textarea                          | [![npm](https://img.shields.io/npm/v/@vimee/plugin-textarea)](https://www.npmjs.com/package/@vimee/plugin-textarea) | [![bundle](https://img.shields.io/bundlephobia/minzip/@vimee/plugin-textarea)](https://bundlephobia.com/package/@vimee/plugin-textarea)     |
+| [`@vimee/plugin-monaco`](./packages/plugin-monaco)     | Attach vim to any Monaco Editor                     | [![npm](https://img.shields.io/npm/v/@vimee/plugin-monaco)](https://www.npmjs.com/package/@vimee/plugin-monaco)     | [![bundle](https://img.shields.io/bundlephobia/minzip/@vimee/plugin-monaco)](https://bundlephobia.com/package/@vimee/plugin-monaco)         |
 | [`@vimee/shiki-editor`](./packages/shiki-editor)       | Vim editor component with Shiki syntax highlighting | [![npm](https://img.shields.io/npm/v/@vimee/shiki-editor)](https://www.npmjs.com/package/@vimee/shiki-editor)       | [![bundle](https://img.shields.io/bundlephobia/minzip/@vimee/shiki-editor)](https://bundlephobia.com/package/@vimee/shiki-editor)           |
 | [`@vimee/testkit`](./packages/testkit)                 | Test utilities for Vim operations                   | [![npm](https://img.shields.io/npm/v/@vimee/testkit)](https://www.npmjs.com/package/@vimee/testkit)                 | [![bundle](https://img.shields.io/bundlephobia/minzip/@vimee/testkit)](https://bundlephobia.com/package/@vimee/testkit)                     |
 
@@ -85,6 +86,25 @@ function Editor() {
     </div>
   );
 }
+```
+
+### With Monaco Editor
+
+```bash
+npm install @vimee/core @vimee/plugin-monaco
+```
+
+```ts
+import { attach } from "@vimee/plugin-monaco";
+
+// Assumes `editor` is a monaco.editor.IStandaloneCodeEditor instance
+const vim = attach(editor, {
+  onChange: (value) => console.log("Changed:", value),
+  onModeChange: (mode) => console.log("Mode:", mode),
+});
+
+// Later...
+vim.destroy();
 ```
 
 ### Core engine only
@@ -189,6 +209,7 @@ packages/
 ├── core/              # @vimee/core — headless vim engine
 ├── react/             # @vimee/react — React useVim hook
 ├── plugin-textarea/   # @vimee/plugin-textarea — vim for any textarea
+├── plugin-monaco/     # @vimee/plugin-monaco — vim for any Monaco Editor
 ├── shiki-editor/      # @vimee/shiki-editor — editor component with Shiki
 └── testkit/           # @vimee/testkit — test utilities for Vim operations
 playground/            # Live demo app (git submodule)

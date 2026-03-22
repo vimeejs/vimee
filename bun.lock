@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "vimee",
@@ -19,6 +18,17 @@
     "packages/core": {
       "name": "@vimee/core",
       "version": "0.2.0",
+    },
+    "packages/plugin-monaco": {
+      "name": "@vimee/plugin-monaco",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@vimee/core": "workspace:*",
+        "happy-dom": "20.8.4",
+      },
+      "peerDependencies": {
+        "@vimee/core": "0.2.0",
+      },
     },
     "packages/plugin-textarea": {
       "name": "@vimee/plugin-textarea",
@@ -411,6 +421,8 @@
     "@ungap/structured-clone": ["@ungap/structured-clone@1.3.0", "", {}, "sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g=="],
 
     "@vimee/core": ["@vimee/core@workspace:packages/core"],
+
+    "@vimee/plugin-monaco": ["@vimee/plugin-monaco@workspace:packages/plugin-monaco"],
 
     "@vimee/plugin-textarea": ["@vimee/plugin-textarea@workspace:packages/plugin-textarea"],
 

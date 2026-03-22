@@ -9,6 +9,7 @@ vimee — headless Vim engine for the web. TypeScript monorepo (Bun workspaces).
 - `@vimee/core` — Vim engine (pure functions, no DOM)
 - `@vimee/react` — React useVim hook
 - `@vimee/plugin-textarea` — Textarea binding
+- `@vimee/plugin-monaco` — Monaco Editor binding
 - `@vimee/shiki-editor` — Shiki code editor component
 - `@vimee/testkit` — Test utilities for Vim operations
 
@@ -25,7 +26,7 @@ vimee — headless Vim engine for the web. TypeScript monorepo (Bun workspaces).
 `<type>(<scope>): <description>`
 
 - Types: `feat`, `fix`, `test`, `chore`, `ci`, `docs`
-- Scope: package name (`core`, `react`, `plugin-textarea`, `shiki-editor`, `testkit`) or omit for root
+- Scope: package name (`core`, `react`, `plugin-textarea`, `plugin-monaco`, `shiki-editor`, `testkit`) or omit for root
 - Examples: `feat(core): add mark jumping`, `chore: update deps`
 
 ## Before Committing

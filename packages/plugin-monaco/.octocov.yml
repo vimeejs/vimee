@@ -1,0 +1,25 @@
+repository: vimeejs/vimee/packages/plugin-monaco
+coverage:
+  paths:
+    - coverage/lcov.info
+  acceptable: current >= 60% && diff >= -5.0%
+codeToTestRatio:
+  code:
+    - "src/**/*.ts"
+    - "!src/**/*.test.ts"
+    - "!src/index.ts"
+  test:
+    - "src/**/*.test.ts"
+testExecutionTime:
+  acceptable: current < 1min && diff < 1min
+report:
+  if: is_default_branch
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}
+diff:
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}
+summary:
+  enable: true
+comment:
+  if: is_pull_request

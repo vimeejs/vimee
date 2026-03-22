@@ -10,6 +10,10 @@ C-plugin-textarea:
   - changed-files:
       - any-glob-to-any-file: packages/plugin-textarea/src/**
 
+C-plugin-monaco:
+  - changed-files:
+      - any-glob-to-any-file: packages/plugin-monaco/src/**
+
 C-shiki-editor:
   - changed-files:
       - any-glob-to-any-file: packages/shiki-editor/src/**
