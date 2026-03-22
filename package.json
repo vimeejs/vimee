@@ -4,7 +4,7 @@
   "type": "module",
   "workspaces": ["packages/*", "playground"],
   "scripts": {
-    "build": "bun run --filter '@vimee/*' build",
+    "build": "bun run --filter @vimee/core build && bun run --filter @vimee/react build && bun run --filter @vimee/plugin-textarea build && bun run --filter @vimee/shiki-editor build && bun run --filter @vimee/testkit build",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "bun run --filter '*' typecheck",
