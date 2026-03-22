@@ -1,5 +1,11 @@
 # @vimee/core
 
+## 0.2.0
+
+### Minor Changes
+
+- [`c66f1bc`](https://github.com/vimeejs/vimee/commit/c66f1bc5757614a95206bcea099a9d66e4797c61) Thanks [@konojunya](https://github.com/konojunya)! - Add paragraph navigation ({/}), auto-indent for o/O/Enter, insert-mode Ctrl-W word deletion, E492 error for unknown ex commands, and fix cursor behavior in command-line mode. Add CSS variables for mode indicator and error colors. Fix shiki highlighter type to use generics instead of HighlighterCore.
+
 ## 0.1.1
 
 ### Patch Changes
