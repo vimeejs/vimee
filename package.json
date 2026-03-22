@@ -2,7 +2,7 @@
   "name": "vimee",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*", "playground"],
+  "workspaces": ["packages/*"],
   "scripts": {
     "build": "turbo run build --filter='@vimee/*'",
     "test": "vitest run",
