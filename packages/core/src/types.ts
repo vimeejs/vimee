@@ -109,6 +109,8 @@ export type VimAction =
   | { type: "status-message"; message: string }
   | { type: "scroll"; direction: "up" | "down"; amount: number }
   | { type: "set-option"; option: string; value: boolean }
+  | { type: "register-write"; register: string; text: string }
+  | { type: "mark-set"; name: string; position: CursorPosition }
   | { type: "noop" };
 
 /**

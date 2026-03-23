@@ -43,3 +43,16 @@ export { searchInBuffer } from "./search";
 
 // Text objects
 export { resolveTextObject } from "./text-objects";
+
+// Custom keybindings
+export type {
+  ValidKeySequence,
+  KeybindCallbackDefinition,
+  KeybindRemapDefinition,
+  KeybindDefinition,
+  KeybindResolveResult,
+} from "./keybind";
+export { KeybindMap, createKeybindMap, parseKeySequence, normalizeKey } from "./keybind";
+
+// Action helpers
+export { actions } from "./actions";

@@ -16,11 +16,14 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { CursorPosition, VimMode, VimAction, VimContext } from "@vimee/core";
+import type { KeybindMap, ValidKeySequence, KeybindDefinition } from "@vimee/core";
 import {
   TextBuffer,
   createInitialContext,
   parseCursorPosition,
   processKeystroke,
+  createKeybindMap,
+  actions,
 } from "@vimee/core";
 
 /** Options for the useVim hook */
@@ -86,6 +89,34 @@ export interface UseVimReturn {
    * @param height - Number of visible lines
    */
   updateViewport: (topLine: number, height: number) => void;
+  /**
+   * Register a custom keybinding.
+   *
+   * @param mode - Vim mode this keybind applies to
+   * @param keys - Key sequence (e.g., "\\i", "<C-s>", "jj")
+   * @param definition - Callback or remap definition
+   *
+   * @example
+   * ```ts
+   * addKeybind("normal", "\\i", {
+   *   execute: (ctx, buffer) => {
+   *     monacoEditor.trigger("showHover");
+   *     return [];
+   *   },
+   * });
+   * addKeybind("insert", "jk", {
+   *   execute: () => [actions.modeChange("normal")],
+   * });
+   * addKeybind("normal", "Y", { keys: "y$" });
+   * ```
+   */
+  addKeybind: <T extends string>(
+    mode: VimMode,
+    keys: ValidKeySequence<T>,
+    definition: KeybindDefinition,
+  ) => void;
+  /** Action helper functions for building VimActions in keybind callbacks */
+  actions: typeof actions;
 }
 
 /**
@@ -133,6 +164,9 @@ export function useVim(options: UseVimOptions): UseVimReturn {
       indentWidth,
     }),
   );
+
+  // KeybindMap managed via ref (mutable, like TextBuffer)
+  const keybindMapRef = useRef<KeybindMap>(createKeybindMap());
 
   // Display-related state
   const [content, setContent] = useState(initialContent);
@@ -190,6 +224,14 @@ export function useVim(options: UseVimOptions): UseVimReturn {
             // Scroll is handled on the component side
             break;
 
+          case "register-write":
+            // Handled by core (ctx.registers updated), notify via onAction
+            break;
+
+          case "mark-set":
+            // Handled by core (ctx.marks updated), notify via onAction
+            break;
+
           case "noop":
             break;
         }
@@ -221,21 +263,36 @@ export function useVim(options: UseVimOptions): UseVimReturn {
       }
 
       // Process the keystroke
-      const { newCtx, actions } = processKeystroke(
+      const { newCtx, actions: resultActions } = processKeystroke(
         e.key,
         ctxRef.current,
         bufferRef.current,
         e.ctrlKey,
         readOnly,
+        keybindMapRef.current,
       );
 
       // Update context
       ctxRef.current = newCtx;
 
       // Process actions
-      processActions(actions, newCtx, e.key);
+      processActions(resultActions, newCtx, e.key);
     },
     [readOnly, processActions],
+  );
+
+  /**
+   * Register a custom keybinding.
+   */
+  const addKeybind = useCallback(
+    <T extends string>(
+      mode: VimMode,
+      keys: ValidKeySequence<T>,
+      definition: KeybindDefinition,
+    ): void => {
+      keybindMapRef.current.addKeybind(mode, keys, definition);
+    },
+    [],
   );
 
   /**
@@ -288,6 +345,8 @@ export function useVim(options: UseVimOptions): UseVimReturn {
     handleKeyDown,
     handleScroll,
     updateViewport,
+    addKeybind,
+    actions,
   };
 }
 

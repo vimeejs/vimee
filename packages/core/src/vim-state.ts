@@ -18,6 +18,8 @@ import { processNormalMode } from "./normal-mode";
 import { processInsertMode } from "./insert-mode";
 import { processVisualMode } from "./visual-mode";
 import { processCommandLineMode } from "./command-line-mode";
+import type { KeybindMap, KeybindCallbackDefinition } from "./keybind";
+import { parseKeySequence } from "./keybind";
 
 export type { KeystrokeResult } from "./key-utils";
 
@@ -91,6 +93,7 @@ export function parseCursorPosition(pos: string): CursorPosition {
  * @param buffer - The text buffer
  * @param ctrlKey - Whether the Ctrl key is pressed
  * @param readOnly - Read-only mode
+ * @param keybinds - Optional custom keybind map (highest priority)
  */
 export function processKeystroke(
   key: string,
@@ -98,11 +101,39 @@ export function processKeystroke(
   buffer: TextBuffer,
   ctrlKey: boolean = false,
   readOnly: boolean = false,
+  keybinds?: KeybindMap,
 ): KeystrokeResult {
   // Ignore modifier-only keys (Shift, Control, Alt, Meta).
   // These fire as separate keydown events and must not reset state (e.g. count).
   if (isModifierKey(key)) {
     return { newCtx: ctx, actions: [] };
+  }
+
+  // --- Custom keybind resolution (highest priority) ---
+  if (keybinds) {
+    // Escape cancels pending keybind sequence
+    if (key === "Escape" && keybinds.isPending()) {
+      keybinds.cancel();
+      return { newCtx: ctx, actions: [] };
+    }
+
+    const resolved = keybinds.resolve(key, ctx.mode, ctrlKey);
+
+    switch (resolved.status) {
+      case "matched": {
+        if ("execute" in resolved.definition) {
+          return executeKeybindCallback(resolved.definition, ctx, buffer);
+        }
+        // Remap: replay the target key sequence through the engine
+        return executeKeybindRemap(resolved.definition.keys, ctx, buffer, readOnly);
+      }
+      case "pending":
+        return {
+          newCtx: { ...ctx, statusMessage: resolved.display },
+          actions: [],
+        };
+      // "none" → fall through to normal processing
+    }
   }
 
   // --- Macro: stop recording with q in normal mode ---
@@ -444,4 +475,142 @@ function executeMacro(
     newCtx: current,
     actions: allActions,
   };
+}
+
+// =====================
+// Custom keybind execution
+// =====================
+
+/**
+ * Execute a callback-style keybind and apply the returned actions to the context.
+ *
+ * The callback receives a readonly view of ctx and buffer.
+ * Returned VimActions are applied safely by the engine:
+ * - cursor-move: updates ctx.cursor
+ * - mode-change: updates ctx.mode and resets phase to idle
+ * - register-write: updates ctx.registers
+ * - mark-set: updates ctx.marks
+ * - status-message: updates ctx.statusMessage
+ * - content-change: mutates buffer (via setContent)
+ * - Other actions are passed through to the host
+ */
+function executeKeybindCallback(
+  definition: KeybindCallbackDefinition,
+  ctx: VimContext,
+  buffer: TextBuffer,
+): KeystrokeResult {
+  const userActions = definition.execute(ctx, buffer);
+
+  let newCtx = { ...ctx };
+  const emittedActions: VimAction[] = [];
+
+  for (const action of userActions) {
+    switch (action.type) {
+      case "cursor-move":
+        newCtx = { ...newCtx, cursor: action.position };
+        emittedActions.push(action);
+        break;
+      case "mode-change":
+        newCtx = {
+          ...newCtx,
+          mode: action.mode,
+          phase: "idle",
+          count: 0,
+          operator: null,
+          statusMessage:
+            action.mode === "normal"
+              ? ""
+              : action.mode === "insert"
+                ? "-- INSERT --"
+                : newCtx.statusMessage,
+        };
+        emittedActions.push(action);
+        break;
+      case "content-change":
+        buffer.replaceContent(action.content);
+        emittedActions.push(action);
+        break;
+      case "register-write":
+        newCtx = {
+          ...newCtx,
+          registers: { ...newCtx.registers, [action.register]: action.text },
+        };
+        // Also update unnamed register if writing to unnamed
+        if (action.register === '"' || action.register === "") {
+          newCtx.register = action.text;
+        }
+        emittedActions.push(action);
+        break;
+      case "mark-set":
+        newCtx = {
+          ...newCtx,
+          marks: { ...newCtx.marks, [action.name]: action.position },
+        };
+        emittedActions.push(action);
+        break;
+      case "status-message":
+        newCtx = { ...newCtx, statusMessage: action.message, statusError: false };
+        emittedActions.push(action);
+        break;
+      default:
+        // yank, save, scroll, set-option, noop → pass through
+        emittedActions.push(action);
+        break;
+    }
+  }
+
+  return { newCtx, actions: emittedActions };
+}
+
+/**
+ * Execute a remap-style keybind by replaying the target key sequence.
+ */
+function executeKeybindRemap(
+  targetKeys: string,
+  ctx: VimContext,
+  buffer: TextBuffer,
+  readOnly: boolean,
+): KeystrokeResult {
+  const tokens = parseKeySequence(targetKeys);
+
+  let current = ctx;
+  const allActions: VimAction[] = [];
+
+  for (const k of tokens) {
+    // Convert special key tokens back to KeyboardEvent.key format
+    const { eventKey, ctrl } = tokenToEventKey(k);
+    const inner = processKeystrokeInner(eventKey, current, buffer, ctrl, readOnly);
+    const tracked = trackChange(eventKey, current, inner);
+    current = tracked.newCtx;
+    allActions.push(...tracked.actions);
+  }
+
+  return { newCtx: current, actions: allActions };
+}
+
+/**
+ * Convert a key token (e.g., "<C-r>", "<Esc>", "a") back to
+ * the format expected by processKeystrokeInner (KeyboardEvent.key + ctrlKey).
+ */
+function tokenToEventKey(token: string): { eventKey: string; ctrl: boolean } {
+  const ctrlMatch = token.match(/^<C-([a-z])>$/);
+  if (ctrlMatch) {
+    return { eventKey: ctrlMatch[1], ctrl: true };
+  }
+  switch (token) {
+    case "<Esc>":
+      return { eventKey: "Escape", ctrl: false };
+    case "<CR>":
+      return { eventKey: "Enter", ctrl: false };
+    case "<Tab>":
+      return { eventKey: "Tab", ctrl: false };
+    case "<BS>":
+      return { eventKey: "Backspace", ctrl: false };
+    case "<Del>":
+      return { eventKey: "Delete", ctrl: false };
+    case "<Space>":
+      return { eventKey: " ", ctrl: false };
+    default:
+      return { eventKey: token, ctrl: false };
+  }
 }
