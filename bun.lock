@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "vimee",
@@ -28,7 +29,7 @@
       },
       "peerDependencies": {
         "@vimee/core": "0.2.0",
-        "monaco-editor": ">=0.34.0",
+        "monaco-editor": "0.55.1",
       },
     },
     "packages/plugin-textarea": {

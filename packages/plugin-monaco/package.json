@@ -38,7 +38,7 @@
   },
   "peerDependencies": {
     "@vimee/core": "0.2.0",
-    "monaco-editor": ">=0.34.0"
+    "monaco-editor": "0.55.1"
   },
   "devDependencies": {
     "@vimee/core": "workspace:*",
