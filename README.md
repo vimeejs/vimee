@@ -14,7 +14,7 @@
 
 ---
 
-![vimee](https://github.com/user-attachments/assets/3e991eaa-1452-4d3a-8311-0dd212fa8fc0)
+<img src="./.github/vimee.gif" width="100%" alt="vimee gif" />
 
 vimee is a **framework-agnostic, pure-function Vim engine** that you can plug into any editor UI. The core engine has **zero runtime dependencies** — it takes a keystroke and returns state transitions. Framework bindings (React, etc.) are thin wrappers that turn those transitions into reactive state.
 
