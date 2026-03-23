@@ -1,5 +1,4 @@
-import type { CursorPosition } from "./types";
-import type { TextBuffer } from "./buffer";
+import type { CursorPosition, BufferReader } from "./types";
 
 /**
  * Range covered by a motion (used when combined with operators)
@@ -31,11 +30,11 @@ function isPunctuation(ch: string): boolean {
   return !isWordChar(ch) && ch !== " " && ch !== "\t" && ch !== "";
 }
 
-function clampLine(line: number, buffer: TextBuffer): number {
+function clampLine(line: number, buffer: BufferReader): number {
   return Math.max(0, Math.min(line, buffer.getLineCount() - 1));
 }
 
-function clampCol(col: number, line: number, buffer: TextBuffer): number {
+function clampCol(col: number, line: number, buffer: BufferReader): number {
   const maxCol = Math.max(0, buffer.getLineLength(line) - 1);
   return Math.max(0, Math.min(col, maxCol));
 }
@@ -47,7 +46,7 @@ function firstNonBlank(line: string): number {
 
 // --- Motion implementations ---
 
-export function motionH(cursor: CursorPosition, buffer: TextBuffer, count: number): MotionResult {
+export function motionH(cursor: CursorPosition, buffer: BufferReader, count: number): MotionResult {
   const newCol = Math.max(0, cursor.col - count);
   const newCursor = { line: cursor.line, col: newCol };
   return {
@@ -61,7 +60,7 @@ export function motionH(cursor: CursorPosition, buffer: TextBuffer, count: numbe
   };
 }
 
-export function motionL(cursor: CursorPosition, buffer: TextBuffer, count: number): MotionResult {
+export function motionL(cursor: CursorPosition, buffer: BufferReader, count: number): MotionResult {
   const maxCol = Math.max(0, buffer.getLineLength(cursor.line) - 1);
   const newCol = Math.min(maxCol, cursor.col + count);
   const newCursor = { line: cursor.line, col: newCol };
@@ -76,7 +75,7 @@ export function motionL(cursor: CursorPosition, buffer: TextBuffer, count: numbe
   };
 }
 
-export function motionJ(cursor: CursorPosition, buffer: TextBuffer, count: number): MotionResult {
+export function motionJ(cursor: CursorPosition, buffer: BufferReader, count: number): MotionResult {
   const newLine = clampLine(cursor.line + count, buffer);
   const newCol = clampCol(cursor.col, newLine, buffer);
   const newCursor = { line: newLine, col: newCol };
@@ -91,7 +90,7 @@ export function motionJ(cursor: CursorPosition, buffer: TextBuffer, count: numbe
   };
 }
 
-export function motionK(cursor: CursorPosition, buffer: TextBuffer, count: number): MotionResult {
+export function motionK(cursor: CursorPosition, buffer: BufferReader, count: number): MotionResult {
   const newLine = clampLine(cursor.line - count, buffer);
   const newCol = clampCol(cursor.col, newLine, buffer);
   const newCursor = { line: newLine, col: newCol };
@@ -106,7 +105,7 @@ export function motionK(cursor: CursorPosition, buffer: TextBuffer, count: numbe
   };
 }
 
-export function motionW(cursor: CursorPosition, buffer: TextBuffer, count: number): MotionResult {
+export function motionW(cursor: CursorPosition, buffer: BufferReader, count: number): MotionResult {
   let { line, col } = cursor;
 
   for (let i = 0; i < count; i++) {
@@ -167,7 +166,7 @@ export function motionW(cursor: CursorPosition, buffer: TextBuffer, count: numbe
   };
 }
 
-export function motionE(cursor: CursorPosition, buffer: TextBuffer, count: number): MotionResult {
+export function motionE(cursor: CursorPosition, buffer: BufferReader, count: number): MotionResult {
   let { line, col } = cursor;
 
   for (let i = 0; i < count; i++) {
@@ -213,7 +212,7 @@ export function motionE(cursor: CursorPosition, buffer: TextBuffer, count: numbe
   };
 }
 
-export function motionB(cursor: CursorPosition, buffer: TextBuffer, count: number): MotionResult {
+export function motionB(cursor: CursorPosition, buffer: BufferReader, count: number): MotionResult {
   let { line, col } = cursor;
 
   for (let i = 0; i < count; i++) {
@@ -264,7 +263,7 @@ export function motionB(cursor: CursorPosition, buffer: TextBuffer, count: numbe
  */
 export function motionBigW(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   count: number,
 ): MotionResult {
   let { line, col } = cursor;
@@ -321,7 +320,7 @@ export function motionBigW(
  */
 export function motionBigB(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   count: number,
 ): MotionResult {
   let { line, col } = cursor;
@@ -364,7 +363,7 @@ export function motionBigB(
 
 export function motionZero(
   cursor: CursorPosition,
-  _buffer: TextBuffer,
+  _buffer: BufferReader,
   _count: number,
 ): MotionResult {
   const newCursor = { line: cursor.line, col: 0 };
@@ -381,7 +380,7 @@ export function motionZero(
 
 export function motionCaret(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   _count: number,
 ): MotionResult {
   const line = buffer.getLine(cursor.line);
@@ -400,7 +399,7 @@ export function motionCaret(
 
 export function motionDollar(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   _count: number,
 ): MotionResult {
   const lineLen = buffer.getLineLength(cursor.line);
@@ -419,7 +418,7 @@ export function motionDollar(
 
 export function motionGG(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   count: number | null,
 ): MotionResult {
   const targetLine = count !== null ? clampLine(count - 1, buffer) : 0;
@@ -438,7 +437,7 @@ export function motionGG(
 
 export function motionG(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   count: number | null,
 ): MotionResult {
   const targetLine = count !== null ? clampLine(count - 1, buffer) : buffer.getLineCount() - 1;
@@ -460,7 +459,7 @@ export function motionG(
  */
 export function motionBigH(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   count: number,
   viewportTopLine: number,
 ): MotionResult {
@@ -484,7 +483,7 @@ export function motionBigH(
  */
 export function motionBigM(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   viewportTopLine: number,
   viewportHeight: number,
 ): MotionResult {
@@ -507,7 +506,7 @@ export function motionBigM(
  */
 export function motionBigL(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   count: number,
   viewportTopLine: number,
   viewportHeight: number,
@@ -530,7 +529,7 @@ export function motionBigL(
 
 export function motionFChar(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   char: string,
   count: number,
 ): MotionResult {
@@ -560,7 +559,7 @@ export function motionFChar(
 
 export function motionFCharBack(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   char: string,
   count: number,
 ): MotionResult {
@@ -590,7 +589,7 @@ export function motionFCharBack(
 
 export function motionTChar(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   char: string,
   count: number,
 ): MotionResult {
@@ -604,7 +603,7 @@ export function motionTChar(
 
 export function motionTCharBack(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   char: string,
   count: number,
 ): MotionResult {
@@ -621,7 +620,7 @@ export function motionTCharBack(
  */
 export function motionParagraphForward(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   count: number,
 ): MotionResult {
   let line = cursor.line;
@@ -652,7 +651,7 @@ export function motionParagraphForward(
  */
 export function motionParagraphBackward(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   count: number,
 ): MotionResult {
   let line = cursor.line;
@@ -682,7 +681,7 @@ export function motionParagraphBackward(
  */
 export function motionMatchBracket(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   _count: number,
 ): MotionResult {
   const pairs: Record<string, string> = {

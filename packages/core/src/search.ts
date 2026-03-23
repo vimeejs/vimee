@@ -6,8 +6,7 @@
  * Search patterns are interpreted as JavaScript regular expressions.
  */
 
-import type { CursorPosition } from "./types";
-import type { TextBuffer } from "./buffer";
+import type { CursorPosition, BufferReader } from "./types";
 
 /**
  * Search within the buffer and return the position of the first match.
@@ -22,7 +21,7 @@ import type { TextBuffer } from "./buffer";
  * @returns The matched position, or null if not found
  */
 export function searchInBuffer(
-  buffer: TextBuffer,
+  buffer: BufferReader,
   pattern: string,
   cursor: CursorPosition,
   direction: "forward" | "backward",
@@ -48,7 +47,7 @@ export function searchInBuffer(
  * Forward search (from the position after the cursor toward the end, with wraparound)
  */
 function searchForward(
-  buffer: TextBuffer,
+  buffer: BufferReader,
   regex: RegExp,
   cursor: CursorPosition,
   lineCount: number,
@@ -76,7 +75,7 @@ function searchForward(
  * Backward search (from the position before the cursor toward the beginning, with wraparound)
  */
 function searchBackward(
-  buffer: TextBuffer,
+  buffer: BufferReader,
   regex: RegExp,
   cursor: CursorPosition,
   lineCount: number,

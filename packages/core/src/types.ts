@@ -114,6 +114,25 @@ export type VimAction =
   | { type: "noop" };
 
 /**
+ * Read-only view of a text buffer.
+ * Used by motions, text objects, search, and other pure query operations.
+ * Host environments (e.g., VS Code) can implement this interface
+ * to provide their own buffer without depending on TextBuffer.
+ */
+export interface BufferReader {
+  /** Returns the text content of a line (0-based index). Returns "" for out-of-range. */
+  getLine(lineIndex: number): string;
+  /** Returns the character count of a line. */
+  getLineLength(lineIndex: number): number;
+  /** Returns the total number of lines. */
+  getLineCount(): number;
+  /** Returns the full document content (lines joined by \n). */
+  getContent(): string;
+  /** Returns a read-only array of all lines. */
+  getLines(): readonly string[];
+}
+
+/**
  * Undo entry for buffer history
  */
 export interface UndoEntry {

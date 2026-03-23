@@ -9,8 +9,7 @@
  * - KeybindMap class for managing custom keybindings
  */
 
-import type { VimMode, VimAction, VimContext } from "./types";
-import type { TextBuffer } from "./buffer";
+import type { VimMode, VimAction, VimContext, BufferReader } from "./types";
 
 // =====================
 // Types
@@ -36,7 +35,7 @@ export type ValidKeySequence<T extends string> = T extends ""
  * and returns an array of VimActions for the engine to process.
  */
 export interface KeybindCallbackDefinition {
-  execute: (ctx: Readonly<VimContext>, buffer: Readonly<TextBuffer>) => VimAction[];
+  execute: (ctx: Readonly<VimContext>, buffer: BufferReader) => VimAction[];
 }
 
 /**

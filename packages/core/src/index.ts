@@ -8,6 +8,7 @@ export type {
   VimContext,
   VimAction,
   UndoEntry,
+  BufferReader,
 } from "./types";
 
 export type { KeystrokeResult } from "./key-utils";

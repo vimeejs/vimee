@@ -1,10 +1,15 @@
-import type { CursorPosition, UndoEntry } from "./types";
+import type { CursorPosition, UndoEntry, BufferReader } from "./types";
 
 /**
  * Text buffer that manages the document content as an array of lines.
  * Provides mutation methods and undo/redo support.
+ *
+ * Implements BufferReader so that read-only consumers (motions, search,
+ * text-objects) can depend on the interface rather than the concrete class.
+ * This allows host environments like VS Code to supply their own
+ * TextDocument-backed BufferReader without depending on this implementation.
  */
-export class TextBuffer {
+export class TextBuffer implements BufferReader {
   private lines: string[];
   private undoStack: UndoEntry[] = [];
   private redoStack: UndoEntry[] = [];
