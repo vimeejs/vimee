@@ -10,6 +10,7 @@
     "typecheck": "bun run --filter '*' typecheck",
     "lint": "bunx oxlint packages/*/src",
     "fmt": "bunx oxfmt --write packages/*/src",
+    "benchmark": "vitest bench --config vitest.bench.config.ts",
     "changeset": "changeset",
     "changeset:gen": "bash scripts/gen-changeset.sh",
     "release": "changeset publish"

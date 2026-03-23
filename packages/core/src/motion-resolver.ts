@@ -6,8 +6,7 @@
  * and resolves the appropriate motion from a single key.
  */
 
-import type { CursorPosition, VimContext } from "./types";
-import type { TextBuffer } from "./buffer";
+import type { CursorPosition, VimContext, BufferReader } from "./types";
 import type { MotionResult } from "./motions";
 import {
   motionH,
@@ -45,7 +44,7 @@ import {
 export function resolveMotion(
   key: string,
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   count: number,
   countExplicit: boolean,
   ctx?: VimContext,

@@ -14,8 +14,7 @@
  * - i< / a< / i> / a>: inner/a angle brackets
  */
 
-import type { CursorPosition } from "./types";
-import type { TextBuffer } from "./buffer";
+import type { CursorPosition, BufferReader } from "./types";
 import type { MotionRange } from "./motions";
 
 function isWordChar(ch: string): boolean {
@@ -30,7 +29,7 @@ export function resolveTextObject(
   modifier: "i" | "a",
   key: string,
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
 ): MotionRange | null {
   switch (key) {
     case "w":
@@ -68,7 +67,7 @@ export function resolveTextObject(
 
 // --- Word text objects ---
 
-function innerWord(cursor: CursorPosition, buffer: TextBuffer): MotionRange | null {
+function innerWord(cursor: CursorPosition, buffer: BufferReader): MotionRange | null {
   const line = buffer.getLine(cursor.line);
   if (line.length === 0) return null;
 
@@ -110,7 +109,7 @@ function innerWord(cursor: CursorPosition, buffer: TextBuffer): MotionRange | nu
   };
 }
 
-function aWord(cursor: CursorPosition, buffer: TextBuffer): MotionRange | null {
+function aWord(cursor: CursorPosition, buffer: BufferReader): MotionRange | null {
   const range = innerWord(cursor, buffer);
   if (!range) return null;
 
@@ -138,7 +137,7 @@ function aWord(cursor: CursorPosition, buffer: TextBuffer): MotionRange | null {
 
 // --- WORD text objects ---
 
-function innerBigWord(cursor: CursorPosition, buffer: TextBuffer): MotionRange | null {
+function innerBigWord(cursor: CursorPosition, buffer: BufferReader): MotionRange | null {
   const line = buffer.getLine(cursor.line);
   if (line.length === 0) return null;
 
@@ -164,7 +163,7 @@ function innerBigWord(cursor: CursorPosition, buffer: TextBuffer): MotionRange |
   };
 }
 
-function aBigWord(cursor: CursorPosition, buffer: TextBuffer): MotionRange | null {
+function aBigWord(cursor: CursorPosition, buffer: BufferReader): MotionRange | null {
   const range = innerBigWord(cursor, buffer);
   if (!range) return null;
 
@@ -190,7 +189,7 @@ function aBigWord(cursor: CursorPosition, buffer: TextBuffer): MotionRange | nul
 
 // --- Quote text objects ---
 
-function innerQuote(cursor: CursorPosition, buffer: TextBuffer, quote: string): MotionRange | null {
+function innerQuote(cursor: CursorPosition, buffer: BufferReader, quote: string): MotionRange | null {
   const line = buffer.getLine(cursor.line);
   const col = cursor.col;
 
@@ -246,7 +245,7 @@ function innerQuote(cursor: CursorPosition, buffer: TextBuffer, quote: string): 
   };
 }
 
-function aQuote(cursor: CursorPosition, buffer: TextBuffer, quote: string): MotionRange | null {
+function aQuote(cursor: CursorPosition, buffer: BufferReader, quote: string): MotionRange | null {
   const inner = innerQuote(cursor, buffer, quote);
   if (!inner) return null;
 
@@ -263,7 +262,7 @@ function aQuote(cursor: CursorPosition, buffer: TextBuffer, quote: string): Moti
 
 function innerPair(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   open: string,
   close: string,
 ): MotionRange | null {
@@ -294,7 +293,7 @@ function innerPair(
 
 function aPair(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   open: string,
   close: string,
 ): MotionRange | null {
@@ -314,7 +313,7 @@ function aPair(
  */
 function findMatchingPair(
   cursor: CursorPosition,
-  buffer: TextBuffer,
+  buffer: BufferReader,
   open: string,
   close: string,
 ): { open: CursorPosition; close: CursorPosition } | null {
