@@ -24,7 +24,7 @@ function createMockEditor(value = "", visibleRanges?: IRange[]): MockEditorResul
   let content = value;
   let position = { lineNumber: 1, column: 1 };
   let cursorStyle = 1; // Line
-  let decorations: IModelDeltaDecoration[] = [];
+  const decorationCollections: IModelDeltaDecoration[][] = [];
   const revealedLines: number[] = [];
 
   const keyDownListeners: ((e: IKeyboardEvent) => void)[] = [];
@@ -86,14 +86,19 @@ function createMockEditor(value = "", visibleRanges?: IRange[]): MockEditorResul
         },
       };
     },
-    createDecorationsCollection: () => ({
-      set: (d: IModelDeltaDecoration[]) => {
-        decorations = d;
-      },
-      clear: () => {
-        decorations = [];
-      },
-    }),
+    createDecorationsCollection: () => {
+      const col: IModelDeltaDecoration[] = [];
+      decorationCollections.push(col);
+      return {
+        set: (d: IModelDeltaDecoration[]) => {
+          col.length = 0;
+          col.push(...d);
+        },
+        clear: () => {
+          col.length = 0;
+        },
+      };
+    },
     getVisibleRanges: () => defaultVisibleRanges,
     revealLine: (lineNumber: number) => {
       revealedLines.push(lineNumber);
@@ -145,7 +150,7 @@ function createMockEditor(value = "", visibleRanges?: IRange[]): MockEditorResul
     triggerCompositionStart,
     triggerCompositionEnd,
     getCursorStyle: () => cursorStyle,
-    getDecorations: () => decorations,
+    getDecorations: () => decorationCollections.flat(),
     getRevealedLines: () => revealedLines,
   };
 }
@@ -600,5 +605,79 @@ describe("attach", () => {
     mock.pressKey("x");
     // The content in the mock doesn't change because no listener processed the key
     expect(mock.editor.getValue()).toBe(contentBefore);
+  });
+
+  it("visual-block creates per-line decorations", () => {
+    const mock = createMockEditor("abcde\nfghij\nklmno");
+    const vim = attach(mock.editor);
+
+    mock.pressKey("l"); // col 1
+    mock.pressKey("v", { ctrlKey: true }); // Ctrl-V → visual-block
+    expect(vim.getMode()).toBe("visual-block");
+
+    mock.pressKey("j"); // extend to line 1
+    mock.pressKey("l"); // extend to col 2
+
+    const decorations = mock.getDecorations().filter(
+      (d) => d.options.className === "vimee-visual-selection",
+    );
+
+    // Should have 2 decorations (one per line)
+    expect(decorations).toHaveLength(2);
+
+    // Line 1: cols 1-2 (1-based: columns 2-3)
+    expect(decorations[0].range.startLineNumber).toBe(1);
+    expect(decorations[0].range.startColumn).toBe(2);
+    expect(decorations[0].range.endColumn).toBe(4);
+
+    // Line 2: cols 1-2 (1-based: columns 2-3)
+    expect(decorations[1].range.startLineNumber).toBe(2);
+    expect(decorations[1].range.startColumn).toBe(2);
+    expect(decorations[1].range.endColumn).toBe(4);
+
+    vim.destroy();
+  });
+
+  it("shows search decorations while typing /query", () => {
+    const mock = createMockEditor("hello world hello");
+    const vim = attach(mock.editor);
+
+    mock.pressKey("/");
+    mock.pressKey("h");
+    mock.pressKey("e");
+    mock.pressKey("l");
+
+    const searchDecorations = mock.getDecorations().filter(
+      (d) => d.options.className === "vimee-search-match",
+    );
+
+    // "hel" should match twice: "hello" at col 0 and "hello" at col 12
+    expect(searchDecorations).toHaveLength(2);
+    expect(searchDecorations[0].range.startColumn).toBe(1); // 1-based
+    expect(searchDecorations[0].range.endColumn).toBe(4);
+    expect(searchDecorations[1].range.startColumn).toBe(13);
+    expect(searchDecorations[1].range.endColumn).toBe(16);
+
+    vim.destroy();
+  });
+
+  it("clears search decorations on Enter", () => {
+    const mock = createMockEditor("hello world hello");
+    const vim = attach(mock.editor);
+
+    mock.pressKey("/");
+    mock.pressKey("h");
+    mock.pressKey("e");
+    mock.pressKey("l");
+
+    // Confirm search
+    mock.pressKey("Enter");
+
+    const searchDecorations = mock.getDecorations().filter(
+      (d) => d.options.className === "vimee-search-match",
+    );
+    expect(searchDecorations).toHaveLength(0);
+
+    vim.destroy();
   });
 });

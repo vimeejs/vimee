@@ -592,4 +592,46 @@ describe("attach", () => {
 
     vim.destroy();
   });
+
+  it("dispatches search highlight effect while typing /query", () => {
+    const mock = createMockView("hello world hello");
+    const dispatchSpy = vi.spyOn(mock.view, "dispatch");
+    const vim = attach(mock.view);
+
+    dispatchSpy.mockClear();
+
+    mock.pressKey("/");
+    mock.pressKey("h");
+
+    // dispatch should have been called with an effects property
+    const effectCalls = dispatchSpy.mock.calls.filter(
+      (args) => args[0] && typeof args[0] === "object" && "effects" in args[0],
+    );
+    expect(effectCalls.length).toBeGreaterThan(0);
+
+    vim.destroy();
+  });
+
+  it("clears search highlight effect on Enter after /query", () => {
+    const mock = createMockView("hello world hello");
+    const dispatchSpy = vi.spyOn(mock.view, "dispatch");
+    const vim = attach(mock.view);
+
+    mock.pressKey("/");
+    mock.pressKey("h");
+    mock.pressKey("e");
+    mock.pressKey("l");
+
+    dispatchSpy.mockClear();
+
+    mock.pressKey("Enter");
+
+    // After confirming search, an effect with empty pattern should be dispatched
+    const effectCalls = dispatchSpy.mock.calls.filter(
+      (args) => args[0] && typeof args[0] === "object" && "effects" in args[0],
+    );
+    expect(effectCalls.length).toBeGreaterThan(0);
+
+    vim.destroy();
+  });
 });
