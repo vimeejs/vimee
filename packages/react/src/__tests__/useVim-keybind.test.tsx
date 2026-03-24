@@ -5,17 +5,11 @@
 /**
  * useVim-keybind.test.tsx
  *
- * Integration tests for addKeybind and actions exposed by useVim.
+ * Integration tests for declarative keybinds and commands props in useVim.
  * Tests real-world usage patterns from the React hook perspective:
- * - addKeybind returns from useVim
- * - actions returns from useVim
- * - Single-key custom keybind
- * - Multi-key leader-style keybind
- * - Insert mode jj/jk escape
- * - Override built-in keys
- * - Empty actions (external hook)
- * - Remap keybinds (Y -> y$)
- * - onAction receives custom keybind actions
+ * - keybinds prop (single-key, multi-key, insert mode, override, remap, Ctrl)
+ * - commands prop (user-defined ex commands)
+ * - onAction receives custom keybind/command actions
  */
 
 import { describe, it, expect, vi } from "vitest";
@@ -23,6 +17,8 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { useVim } from "../useVim";
+import type { KeybindEntry, CommandEntry } from "../useVim";
+import { actions } from "@vimee/core";
 
 // =====================
 // Custom renderHook implementation
@@ -93,37 +89,13 @@ function createKeyEvent(
 // =====================
 
 describe("useVim keybind integration", () => {
-  // --- Hook exposes addKeybind and actions ---
-
-  it("exposes addKeybind function", () => {
-    const { result } = renderHook(() => useVim({ content: "test" }));
-    expect(typeof result.current.addKeybind).toBe("function");
-  });
-
-  it("exposes actions object with helpers", () => {
-    const { result } = renderHook(() => useVim({ content: "test" }));
-    const { actions } = result.current;
-    expect(typeof actions.cursorMove).toBe("function");
-    expect(typeof actions.modeChange).toBe("function");
-    expect(typeof actions.statusMessage).toBe("function");
-    expect(typeof actions.registerWrite).toBe("function");
-    expect(typeof actions.markSet).toBe("function");
-    expect(typeof actions.contentChange).toBe("function");
-    expect(typeof actions.cursorRelative).toBe("function");
-    expect(typeof actions.yank).toBe("function");
-    expect(typeof actions.noop).toBe("function");
-  });
-
   // --- Single-key keybind ---
 
   it("executes a single-key custom keybind and updates status", () => {
-    const { result } = renderHook(() => useVim({ content: "hello" }));
-
-    act(() => {
-      result.current.addKeybind("normal", "Z", {
-        execute: () => [result.current.actions.statusMessage("custom Z!")],
-      });
-    });
+    const keybinds: KeybindEntry[] = [
+      { mode: "normal", keys: "Z", execute: () => [actions.statusMessage("custom Z!")] },
+    ];
+    const { result } = renderHook(() => useVim({ content: "hello", keybinds }));
 
     act(() => {
       result.current.handleKeyDown(createKeyEvent("Z"));
@@ -136,16 +108,17 @@ describe("useVim keybind integration", () => {
 
   it("resolves a multi-key leader-style keybind", () => {
     const externalCallback = vi.fn();
-    const { result } = renderHook(() => useVim({ content: "const x = 1;" }));
-
-    act(() => {
-      result.current.addKeybind("normal", "\\i", {
+    const keybinds: KeybindEntry[] = [
+      {
+        mode: "normal",
+        keys: "\\i",
         execute: () => {
           externalCallback("show type info");
-          return [result.current.actions.statusMessage("type: number")];
+          return [actions.statusMessage("type: number")];
         },
-      });
-    });
+      },
+    ];
+    const { result } = renderHook(() => useVim({ content: "const x = 1;", keybinds }));
 
     // First key: pending
     act(() => {
@@ -164,13 +137,10 @@ describe("useVim keybind integration", () => {
   // --- Insert mode: jj to escape ---
 
   it("supports jj in insert mode to return to normal mode", () => {
-    const { result } = renderHook(() => useVim({ content: "test" }));
-
-    act(() => {
-      result.current.addKeybind("insert", "jj", {
-        execute: () => [result.current.actions.modeChange("normal")],
-      });
-    });
+    const keybinds: KeybindEntry[] = [
+      { mode: "insert", keys: "jj", execute: () => [actions.modeChange("normal")] },
+    ];
+    const { result } = renderHook(() => useVim({ content: "test", keybinds }));
 
     // Enter insert mode first
     act(() => {
@@ -193,13 +163,10 @@ describe("useVim keybind integration", () => {
   // --- Insert mode: jk to escape ---
 
   it("supports jk in insert mode to return to normal mode", () => {
-    const { result } = renderHook(() => useVim({ content: "test" }));
-
-    act(() => {
-      result.current.addKeybind("insert", "jk", {
-        execute: () => [result.current.actions.modeChange("normal")],
-      });
-    });
+    const keybinds: KeybindEntry[] = [
+      { mode: "insert", keys: "jk", execute: () => [actions.modeChange("normal")] },
+    ];
+    const { result } = renderHook(() => useVim({ content: "test", keybinds }));
 
     // Enter insert mode
     act(() => {
@@ -220,13 +187,10 @@ describe("useVim keybind integration", () => {
   // --- Override built-in ---
 
   it("overrides built-in x with custom keybind", () => {
-    const { result } = renderHook(() => useVim({ content: "hello" }));
-
-    act(() => {
-      result.current.addKeybind("normal", "x", {
-        execute: () => [result.current.actions.statusMessage("custom x!")],
-      });
-    });
+    const keybinds: KeybindEntry[] = [
+      { mode: "normal", keys: "x", execute: () => [actions.statusMessage("custom x!")] },
+    ];
+    const { result } = renderHook(() => useVim({ content: "hello", keybinds }));
 
     act(() => {
       result.current.handleKeyDown(createKeyEvent("x"));
@@ -241,16 +205,17 @@ describe("useVim keybind integration", () => {
 
   it("supports empty action array for external-only hooks", () => {
     const externalFn = vi.fn();
-    const { result } = renderHook(() => useVim({ content: "test" }));
-
-    act(() => {
-      result.current.addKeybind("normal", "\\h", {
+    const keybinds: KeybindEntry[] = [
+      {
+        mode: "normal",
+        keys: "\\h",
         execute: () => {
           externalFn("hover triggered");
           return [];
         },
-      });
-    });
+      },
+    ];
+    const { result } = renderHook(() => useVim({ content: "test", keybinds }));
 
     act(() => {
       result.current.handleKeyDown(createKeyEvent("\\"));
@@ -266,11 +231,8 @@ describe("useVim keybind integration", () => {
 
   it("cancels pending keybind on Escape", () => {
     const executeFn = vi.fn(() => []);
-    const { result } = renderHook(() => useVim({ content: "test" }));
-
-    act(() => {
-      result.current.addKeybind("normal", "\\i", { execute: executeFn });
-    });
+    const keybinds: KeybindEntry[] = [{ mode: "normal", keys: "\\i", execute: executeFn }];
+    const { result } = renderHook(() => useVim({ content: "test", keybinds }));
 
     // Enter pending state
     act(() => {
@@ -289,13 +251,10 @@ describe("useVim keybind integration", () => {
 
   it("onAction callback receives actions from custom keybinds", () => {
     const onAction = vi.fn();
-    const { result } = renderHook(() => useVim({ content: "test", onAction }));
-
-    act(() => {
-      result.current.addKeybind("normal", "Z", {
-        execute: () => [result.current.actions.statusMessage("hello")],
-      });
-    });
+    const keybinds: KeybindEntry[] = [
+      { mode: "normal", keys: "Z", execute: () => [actions.statusMessage("hello")] },
+    ];
+    const { result } = renderHook(() => useVim({ content: "test", onAction, keybinds }));
 
     act(() => {
       result.current.handleKeyDown(createKeyEvent("Z"));
@@ -308,13 +267,10 @@ describe("useVim keybind integration", () => {
 
   it("remaps Y to y$ and triggers yank", () => {
     const onYank = vi.fn();
+    const keybinds: KeybindEntry[] = [{ mode: "normal", keys: "Y", remap: "y$" }];
     const { result } = renderHook(() =>
-      useVim({ content: "hello world", cursorPosition: "1:3", onYank }),
+      useVim({ content: "hello world", cursorPosition: "1:3", onYank, keybinds }),
     );
-
-    act(() => {
-      result.current.addKeybind("normal", "Y", { keys: "y$" });
-    });
 
     act(() => {
       result.current.handleKeyDown(createKeyEvent("Y"));
@@ -327,16 +283,17 @@ describe("useVim keybind integration", () => {
 
   it("resolves Ctrl+s keybind", () => {
     const saveFn = vi.fn();
-    const { result } = renderHook(() => useVim({ content: "test" }));
-
-    act(() => {
-      result.current.addKeybind("normal", "<C-s>", {
+    const keybinds: KeybindEntry[] = [
+      {
+        mode: "normal",
+        keys: "<C-s>",
         execute: () => {
           saveFn();
-          return [result.current.actions.statusMessage("saved")];
+          return [actions.statusMessage("saved")];
         },
-      });
-    });
+      },
+    ];
+    const { result } = renderHook(() => useVim({ content: "test", keybinds }));
 
     act(() => {
       result.current.handleKeyDown(createKeyEvent("s", { ctrlKey: true }));
@@ -350,13 +307,10 @@ describe("useVim keybind integration", () => {
 
   it("mode-change action from keybind updates React mode state", () => {
     const onModeChange = vi.fn();
-    const { result } = renderHook(() => useVim({ content: "test", onModeChange }));
-
-    act(() => {
-      result.current.addKeybind("normal", "\\e", {
-        execute: () => [result.current.actions.modeChange("insert")],
-      });
-    });
+    const keybinds: KeybindEntry[] = [
+      { mode: "normal", keys: "\\e", execute: () => [actions.modeChange("insert")] },
+    ];
+    const { result } = renderHook(() => useVim({ content: "test", onModeChange, keybinds }));
 
     act(() => {
       result.current.handleKeyDown(createKeyEvent("\\"));

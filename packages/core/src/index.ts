@@ -55,5 +55,12 @@ export type {
 } from "./keybind";
 export { KeybindMap, createKeybindMap, parseKeySequence, normalizeKey } from "./keybind";
 
+// Custom commands
+export type { CommandDefinition } from "./command";
+export { CommandMap, createCommandMap } from "./command";
+
 // Action helpers
 export { actions } from "./actions";
+
+// Shared action applicator
+export { applyUserActions } from "./apply-actions";

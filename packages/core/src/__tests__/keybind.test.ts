@@ -322,4 +322,47 @@ describe("KeybindMap", () => {
       expect(result.definition).toEqual({ execute: second });
     }
   });
+
+  // --- replaceAll ---
+
+  describe("replaceAll", () => {
+    it("clears all bindings and registers new ones", () => {
+      const map = createKeybindMap();
+      map.addKeybind("normal", "Y", { keys: "y$" });
+      expect(map.resolve("Y", "normal").status).toBe("matched");
+
+      const newExec = () => [{ type: "noop" as const }];
+      map.replaceAll([{ mode: "normal", keys: "Z", definition: { execute: newExec } }]);
+
+      // Old binding is gone
+      expect(map.resolve("Y", "normal").status).toBe("none");
+      // New binding works
+      expect(map.resolve("Z", "normal").status).toBe("matched");
+    });
+
+    it("preserves pendingKeys state during rebuild", () => {
+      const map = createKeybindMap();
+      map.addKeybind("normal", "\\i", { execute: () => [] });
+
+      // Start a multi-key sequence
+      map.resolve("\\", "normal");
+      expect(map.isPending()).toBe(true);
+
+      // Replace bindings — pendingKeys should survive
+      map.replaceAll([{ mode: "normal", keys: "\\i", definition: { execute: () => [] } }]);
+      expect(map.isPending()).toBe(true);
+
+      // Complete the sequence — should still resolve
+      const result = map.resolve("i", "normal");
+      expect(result.status).toBe("matched");
+    });
+
+    it("replaceAll with empty array clears all bindings", () => {
+      const map = createKeybindMap();
+      map.addKeybind("normal", "Y", { keys: "y$" });
+      map.replaceAll([]);
+      expect(map.resolve("Y", "normal").status).toBe("none");
+      expect(map.hasKeybinds("normal")).toBe(false);
+    });
+  });
 });
