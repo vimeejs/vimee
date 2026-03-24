@@ -37,8 +37,8 @@
     "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
-    "@vimee/core": "0.2.0",
-    "react": "19.2.4"
+    "@vimee/core": "^0.2.0",
+    "react": "^19.0.0"
   },
   "devDependencies": {
     "@testing-library/react": "16.3.2",

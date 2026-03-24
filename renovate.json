@@ -8,6 +8,10 @@
     {
       "matchUpdateTypes": ["major"],
       "minimumReleaseAge": "7 days"
+    },
+    {
+      "matchDepTypes": ["peerDependencies"],
+      "rangeStrategy": "widen"
     }
   ],
   "labels": ["renovate"],
