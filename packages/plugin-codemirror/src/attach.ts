@@ -232,6 +232,7 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
       const scroll = scrollKeys[e.key];
       if (scroll) {
         e.preventDefault();
+        e.stopPropagation();
         handleScroll(scroll.direction, scroll.amount);
         return;
       }
@@ -239,6 +240,7 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
 
     if (shouldPreventDefault(e)) {
       e.preventDefault();
+      e.stopPropagation();
     }
 
     const { newCtx, actions } = processKeystroke(e.key, ctx, buffer, e.ctrlKey, readOnly);
@@ -258,7 +260,7 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
 
   // --- Attach event listeners ---
   const target = view.contentDOM;
-  target.addEventListener("keydown", onKeyDown);
+  target.addEventListener("keydown", onKeyDown, { capture: true });
   target.addEventListener("compositionstart", onCompositionStart);
   target.addEventListener("compositionend", onCompositionEnd);
 
@@ -271,7 +273,7 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
     getCursor: () => ({ ...ctx.cursor }),
     getContent: () => buffer.getContent(),
     destroy: () => {
-      target.removeEventListener("keydown", onKeyDown);
+      target.removeEventListener("keydown", onKeyDown, { capture: true });
       target.removeEventListener("compositionstart", onCompositionStart);
       target.removeEventListener("compositionend", onCompositionEnd);
     },
