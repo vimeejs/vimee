@@ -2,7 +2,7 @@
   "name": "vimee",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*"],
+  "workspaces": ["packages/*", "debug", "e2e"],
   "scripts": {
     "build": "turbo run build --filter='@vimee/*'",
     "test": "vitest run",
@@ -13,7 +13,9 @@
     "benchmark": "vitest bench --config vitest.bench.config.ts",
     "changeset": "changeset",
     "changeset:gen": "bash scripts/gen-changeset.sh",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "e2e": "cd e2e && npx playwright test",
+    "debug": "bun run --cwd debug dev"
   },
   "devDependencies": {
     "@changesets/changelog-github": "0.6.0",
