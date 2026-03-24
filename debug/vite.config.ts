@@ -4,6 +4,9 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    dedupe: ["@codemirror/state"],
+  },
   build: {
     rollupOptions: {
       input: {
