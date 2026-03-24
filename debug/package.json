@@ -17,7 +17,7 @@
     "@monaco-editor/react": "4.7.0",
     "monaco-editor": "0.52.2",
     "codemirror": "6.0.1",
-    "@codemirror/lang-javascript": "6.2.3",
+    "@codemirror/lang-javascript": "6.2.5",
     "shiki": "4.0.2",
     "react": "19.2.4",
     "react-dom": "19.2.4"
