@@ -10,30 +10,30 @@ Create a changeset by analyzing commits since the last release tag.
 
 ## Workflow
 
-### 1. Identify the last release tag and gather commits
+### 1. Identify the last release tag for each package
+
+List all release tags sorted by version:
 
 ```bash
-git describe --tags --abbrev=0
+git tag --list '@vimee/*' --sort=-version:refname
 ```
 
-Then collect all commits since that tag:
+From this output, extract the **latest** (highest version) tag for each package name. Tags follow the format `@vimee/<name>@<version>`. For each unique package name, take the first (highest) tag.
+
+### 2. Determine affected packages per-package
+
+For **each** package, use its latest tag from step 1 to compare against HEAD. Only check `src/` directories to focus on source changes:
 
 ```bash
-git log <last-tag>..HEAD --oneline
+# For each package, substitute <LATEST_TAG> with the actual latest tag found in step 1.
+# Example: if the latest tag for core is @vimee/core@0.3.0, run:
+#   git log '@vimee/core@0.3.0..HEAD' --oneline -- packages/core/src
+git log '<LATEST_TAG>..HEAD' --oneline -- packages/<name>/src
 ```
 
-### 2. Determine affected packages
+Do this for every package that has at least one release tag. If a package has no release tag yet, skip it or ask the user.
 
-For each commit, check which `packages/*` directories were touched:
-
-```bash
-git diff --name-only <last-tag>..HEAD -- packages/core
-git diff --name-only <last-tag>..HEAD -- packages/react
-git diff --name-only <last-tag>..HEAD -- packages/shiki-editor
-git diff --name-only <last-tag>..HEAD -- packages/plugin-textarea
-```
-
-Only include packages that have actual source changes (ignore CI-only or docs-only changes outside `packages/`).
+Only include packages that have actual source changes (ignore CI-only or docs-only changes outside `packages/*/src`).
 
 ### 3. Determine bump type for each package
 
@@ -52,15 +52,14 @@ If the bump type is ambiguous or could be interpreted as either minor or major, 
 
 ### 4. Confirm with user
 
-Present the plan before creating the changeset:
+Present the plan before creating the changeset, showing per-package comparisons:
 
 ```
-Commits since <tag>:
-- <commit list>
+<package> (since <its-latest-tag>):
+- <commit list for that package>
 
 Changeset:
-- @vimee/shiki-editor: patch
-- @vimee/core: minor
+- @vimee/<pkg>: <bump>
   ...
 
 Summary: <one-line description>
