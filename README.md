@@ -170,20 +170,141 @@ The engine is a **pure function** — no side effects, no DOM, no framework depe
 
 ## Supported Vim Features
 
-- **Modes**: Normal, Insert, Visual, Visual-Line, Visual-Block, Command-Line
-- **Motions**: `h` `j` `k` `l` `w` `W` `b` `B` `e` `E` `0` `$` `^` `gg` `G` `f` `F` `t` `T` `;` `,` `H` `M` `L` `{` `}`
-- **Operators**: `d` `y` `c` `>` `<` with motions and text objects
-- **Text Objects**: `iw` `aw` `i"` `a"` `i'` `a'` `i(` `a(` `i[` `a[` `i{` `a{` `i<` `a<` `` i` `` `` a` ``
-- **Search**: `/pattern` `?pattern` `n` `N` `*` `#`
-- **Command-Line**: `:w` `:q` `:wq` `:{number}` `:set` `:s/pattern/replace/flags`
-- **Editing**: `x` `X` `r` `s` `S` `J` `o` `O` `~` `.` `u` `Ctrl-R`
-- **Registers**: `"a`–`"z` named registers, unnamed register
-- **Macros**: `q{a-z}` record, `@{a-z}` playback, `@@` repeat last
-- **Marks**: `m{a-z}` set mark, `'{a-z}` jump to mark
-- **Counts**: `3dd`, `5j`, `2dw`, etc.
-- **Visual Block**: `Ctrl-V`, block `I`/`A` insert
-- **Scroll**: `Ctrl-U` `Ctrl-D` `Ctrl-B` `Ctrl-F`
-- **Indent**: `>>` `<<` with configurable style/width
+**Modes**: Normal, Insert, Visual, Visual-Line, Visual-Block, Command-Line
+
+### Motions
+
+| Key | Description |
+|---|---|
+| `h` `j` `k` `l` | Left / Down / Up / Right |
+| `w` `W` | Word forward (word / WORD) |
+| `b` `B` | Word backward (word / WORD) |
+| `e` `E` | Word end forward (word / WORD) |
+| `0` | Start of line |
+| `^` | First non-blank character |
+| `$` | End of line |
+| `gg` | First line |
+| `G` | Last line (or `{count}G` to jump) |
+| `H` `M` `L` | Screen top / middle / bottom |
+| `f{char}` `F{char}` | Find char forward / backward |
+| `t{char}` `T{char}` | Till char forward / backward |
+| `;` `,` | Repeat / reverse last `f` / `F` / `t` / `T` |
+| `{` `}` | Paragraph backward / forward |
+| `*` `#` | Search word under cursor forward / backward |
+
+### Operators
+
+All operators work with motions, text objects, counts, and visual selections.
+
+| Key | Description |
+|---|---|
+| `d` | Delete |
+| `y` | Yank (copy) |
+| `c` | Change (delete and enter insert mode) |
+| `>` | Indent right |
+| `<` | Indent left |
+
+### Text Objects
+
+Used after an operator or in visual mode (e.g. `diw`, `ca"`).
+
+| Key | Description |
+|---|---|
+| `iw` `aw` | Inner / around word |
+| `i"` `a"` | Inner / around double quotes |
+| `i'` `a'` | Inner / around single quotes |
+| `` i` `` `` a` `` | Inner / around backticks |
+| `i(` `a(` | Inner / around parentheses |
+| `i[` `a[` | Inner / around square brackets |
+| `i{` `a{` | Inner / around curly braces |
+| `i<` `a<` | Inner / around angle brackets |
+
+### Editing
+
+| Key | Description |
+|---|---|
+| `x` | Delete character under cursor |
+| `X` | Delete character before cursor |
+| `r{char}` | Replace character under cursor |
+| `s` | Substitute character (delete and enter insert mode) |
+| `S` | Substitute line |
+| `J` | Join lines |
+| `o` `O` | Open new line below / above |
+| `~` | Toggle case |
+| `p` `P` | Paste after / before cursor |
+| `.` | Repeat last change |
+| `u` | Undo |
+| `Ctrl-R` | Redo |
+| `Ctrl-W` | Delete word backward (insert mode) |
+
+### Search
+
+| Key | Description |
+|---|---|
+| `/pattern` | Forward search |
+| `?pattern` | Backward search |
+| `n` | Repeat search in same direction |
+| `N` | Repeat search in opposite direction |
+
+### Command-Line
+
+| Command | Description | Action |
+|---|---|---|
+| `:w` | Save | `{ type: "save", content }` |
+| `:q` | Quit | `{ type: "quit", force: false }` |
+| `:q!` | Force quit | `{ type: "quit", force: true }` |
+| `:wq` / `:x` | Save and quit | `save` + `quit` |
+| `:noh` / `:nohlsearch` | Clear search highlight | `mode-change` |
+| `:set number` / `:set nu` | Show line numbers | `{ type: "set-option", option: "number", value: true }` |
+| `:set nonumber` / `:set nonu` | Hide line numbers | `{ type: "set-option", option: "number", value: false }` |
+| `:{number}` | Jump to line | `cursor-move` |
+| `:s/old/new/[gi]` | Substitute (current line) | `content-change` |
+| `:%s/old/new/[gi]` | Substitute (all lines) | `content-change` |
+| `:N,Ms/old/new/[gi]` | Substitute (line range) | `content-change` |
+
+### Macros
+
+| Key | Description |
+|---|---|
+| `q{a-z}` | Start recording macro into register |
+| `q` | Stop recording (while recording) |
+| `@{a-z}` | Playback macro from register |
+| `@@` | Repeat last macro |
+
+### Marks
+
+| Key | Description |
+|---|---|
+| `m{a-z}` | Set mark |
+| `'{a-z}` | Jump to mark |
+
+### Registers
+
+| Key | Description |
+|---|---|
+| `"a` – `"z` | Named registers |
+| `""` | Unnamed register (default) |
+
+### Visual Block
+
+| Key | Description |
+|---|---|
+| `Ctrl-V` | Enter visual block mode |
+| `I` | Block insert (prepend to each line) |
+| `A` | Block append (append to each line) |
+
+### Scroll
+
+| Key | Description |
+|---|---|
+| `Ctrl-U` | Half page up |
+| `Ctrl-D` | Half page down |
+| `Ctrl-B` | Full page up |
+| `Ctrl-F` | Full page down |
+
+### Counts
+
+All motions, operators, and editing commands support count prefixes (e.g. `3dd`, `5j`, `2dw`).
 
 ## Development
 
