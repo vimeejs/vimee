@@ -15,7 +15,7 @@
     "@vimee/plugin-codemirror": "workspace:*",
     "@vimee/shiki-editor": "workspace:*",
     "@monaco-editor/react": "4.7.0",
-    "monaco-editor": "0.52.2",
+    "monaco-editor": "0.55.1",
     "codemirror": "6.0.2",
     "@codemirror/lang-javascript": "6.2.5",
     "shiki": "4.0.2",
