@@ -1,6 +1,6 @@
 {
   "name": "@vimee/react",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "React hooks for the vimee headless vim engine",
   "type": "module",
   "main": "./dist/index.cjs",
