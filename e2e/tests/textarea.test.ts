@@ -83,4 +83,186 @@ test.describe("textarea", () => {
     await page.keyboard.press(":");
     await expect(page.getByTestId("mode")).toHaveText("command-line");
   });
+
+  // --- Insert mode variants ---
+
+  test("a appends after cursor", async ({ page }) => {
+    await page.keyboard.press("a");
+    await expect(page.getByTestId("mode")).toHaveText("insert");
+    await page.keyboard.type("Z");
+    await page.keyboard.press("Escape");
+
+    const content = await page.getByTestId("content").textContent();
+    // 'a' appends after first char, so "H" + "Z" + "ello..."
+    expect(content).toMatch(/^HZ/);
+  });
+
+  test("A appends at end of line", async ({ page }) => {
+    await page.keyboard.press("A");
+    await expect(page.getByTestId("mode")).toHaveText("insert");
+    await page.keyboard.type("END");
+    await page.keyboard.press("Escape");
+
+    const content = await page.getByTestId("content").textContent();
+    const firstLine = content!.split("\n")[0];
+    expect(firstLine).toMatch(/END$/);
+  });
+
+  test("I inserts at beginning of line", async ({ page }) => {
+    // Move to middle of line first
+    await page.keyboard.press("l");
+    await page.keyboard.press("l");
+    await page.keyboard.press("I");
+    await expect(page.getByTestId("mode")).toHaveText("insert");
+    await page.keyboard.type("START");
+    await page.keyboard.press("Escape");
+
+    const content = await page.getByTestId("content").textContent();
+    expect(content).toMatch(/^START/);
+  });
+
+  test("O opens new line above", async ({ page }) => {
+    await page.keyboard.press("j"); // go to line 2
+    await page.keyboard.press("O");
+    await expect(page.getByTestId("mode")).toHaveText("insert");
+    await page.keyboard.type("above");
+    await page.keyboard.press("Escape");
+
+    const content = await page.getByTestId("content").textContent();
+    const lines = content!.split("\n");
+    expect(lines[1]).toBe("above");
+  });
+
+  // --- Deletion variants ---
+
+  test("x deletes character at cursor", async ({ page }) => {
+    await page.keyboard.press("x");
+
+    const content = await page.getByTestId("content").textContent();
+    expect(content).toMatch(/^ello, vimee!/);
+  });
+
+  test("D deletes to end of line", async ({ page }) => {
+    await page.keyboard.press("l"); // move to 'e'
+    await page.keyboard.press("D");
+
+    const content = await page.getByTestId("content").textContent();
+    const firstLine = content!.split("\n")[0];
+    expect(firstLine).toBe("H");
+  });
+
+  // --- Change ---
+
+  test("cc changes entire line", async ({ page }) => {
+    await page.keyboard.press("c");
+    await page.keyboard.press("c");
+    await expect(page.getByTestId("mode")).toHaveText("insert");
+    await page.keyboard.type("replaced");
+    await page.keyboard.press("Escape");
+
+    const content = await page.getByTestId("content").textContent();
+    const firstLine = content!.split("\n")[0];
+    expect(firstLine).toBe("replaced");
+  });
+
+  // --- Undo ---
+
+  test("u undoes last change", async ({ page }) => {
+    const before = await page.getByTestId("content").textContent();
+
+    await page.keyboard.press("d");
+    await page.keyboard.press("d");
+
+    const afterDelete = await page.getByTestId("content").textContent();
+    expect(afterDelete).not.toBe(before);
+
+    await page.keyboard.press("u");
+
+    const afterUndo = await page.getByTestId("content").textContent();
+    expect(afterUndo).toBe(before);
+  });
+
+  // --- Visual mode ---
+
+  test("v enters visual mode", async ({ page }) => {
+    await page.keyboard.press("v");
+    await expect(page.getByTestId("mode")).toHaveText("visual");
+  });
+
+  test("V enters visual-line mode", async ({ page }) => {
+    await page.keyboard.press("V");
+    await expect(page.getByTestId("mode")).toHaveText("visual-line");
+  });
+
+  test("visual mode delete removes selected text", async ({ page }) => {
+    await page.keyboard.press("v");
+    await page.keyboard.press("l");
+    await page.keyboard.press("l");
+    await page.keyboard.press("l");
+    await page.keyboard.press("l");
+    await page.keyboard.press("d");
+
+    await expect(page.getByTestId("mode")).toHaveText("normal");
+    const content = await page.getByTestId("content").textContent();
+    // "Hello" (5 chars) should be deleted
+    expect(content).toMatch(/^, vimee!/);
+  });
+
+  // --- Replace ---
+
+  test("r replaces character under cursor", async ({ page }) => {
+    await page.keyboard.press("r");
+    await page.keyboard.press("Z");
+
+    const content = await page.getByTestId("content").textContent();
+    expect(content).toMatch(/^Zello/);
+    await expect(page.getByTestId("mode")).toHaveText("normal");
+  });
+
+  // --- Join lines ---
+
+  test("J joins current line with next", async ({ page }) => {
+    const before = await page.getByTestId("content").textContent();
+    const linesBefore = before!.split("\n").length;
+
+    await page.keyboard.press("J");
+
+    const after = await page.getByTestId("content").textContent();
+    const linesAfter = after!.split("\n").length;
+    expect(linesAfter).toBe(linesBefore - 1);
+    // First two lines should be joined with a space
+    expect(after).toMatch(/vimee! This is/);
+  });
+
+  // --- Search ---
+
+  test("search with / finds text", async ({ page }) => {
+    await page.keyboard.press("/");
+    await expect(page.getByTestId("mode")).toHaveText("command-line");
+    await page.keyboard.type("line 2");
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("mode")).toHaveText("normal");
+  });
+
+  // --- Line motions ---
+
+  test("$ moves to end of line, 0 moves to start", async ({ page }) => {
+    await page.keyboard.press("$");
+    await page.keyboard.press("a");
+    await page.keyboard.type("!");
+    await page.keyboard.press("Escape");
+
+    const content = await page.getByTestId("content").textContent();
+    const firstLine = content!.split("\n")[0];
+    expect(firstLine).toMatch(/!$/);
+
+    // Now go back to start with 0
+    await page.keyboard.press("0");
+    await page.keyboard.press("i");
+    await page.keyboard.type(">");
+    await page.keyboard.press("Escape");
+
+    const content2 = await page.getByTestId("content").textContent();
+    expect(content2).toMatch(/^>/);
+  });
 });
