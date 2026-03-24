@@ -1,6 +1,6 @@
 {
   "name": "@vimee/shiki-editor",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "A vim-powered code editor component with Shiki syntax highlighting",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -39,8 +39,8 @@
     "directory": "packages/shiki-editor"
   },
   "peerDependencies": {
-    "@vimee/core": "^0.2.0",
-    "@vimee/react": "^0.2.0",
+    "@vimee/core": "^0.3.0",
+    "@vimee/react": "^1.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "shiki": "^4.0.0"

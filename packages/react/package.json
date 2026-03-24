@@ -1,6 +1,6 @@
 {
   "name": "@vimee/react",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "React hooks for the vimee headless vim engine",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -37,7 +37,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
-    "@vimee/core": "^0.2.0",
+    "@vimee/core": "^0.3.0",
     "react": "^19.0.0"
   },
   "devDependencies": {
