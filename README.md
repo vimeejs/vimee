@@ -26,6 +26,7 @@ vimee is a **framework-agnostic, pure-function Vim engine** that you can plug in
 | [`@vimee/react`](./packages/react)                     | React `useVim` hook                                 | [![npm](https://img.shields.io/npm/v/@vimee/react)](https://www.npmjs.com/package/@vimee/react)                     | [![bundle](https://img.shields.io/bundlephobia/minzip/@vimee/react)](https://bundlephobia.com/package/@vimee/react)                     |
 | [`@vimee/plugin-textarea`](./packages/plugin-textarea) | Attach vim to any textarea                          | [![npm](https://img.shields.io/npm/v/@vimee/plugin-textarea)](https://www.npmjs.com/package/@vimee/plugin-textarea) | [![bundle](https://img.shields.io/bundlephobia/minzip/@vimee/plugin-textarea)](https://bundlephobia.com/package/@vimee/plugin-textarea) |
 | [`@vimee/plugin-monaco`](./packages/plugin-monaco)     | Attach vim to any Monaco Editor                     | [![npm](https://img.shields.io/npm/v/@vimee/plugin-monaco)](https://www.npmjs.com/package/@vimee/plugin-monaco)     | [![bundle](https://img.shields.io/bundlephobia/minzip/@vimee/plugin-monaco)](https://bundlephobia.com/package/@vimee/plugin-monaco)     |
+| [`@vimee/plugin-codemirror`](./packages/plugin-codemirror) | Attach vim to any CodeMirror 6 editor           | [![npm](https://img.shields.io/npm/v/@vimee/plugin-codemirror)](https://www.npmjs.com/package/@vimee/plugin-codemirror) | [![bundle](https://img.shields.io/bundlephobia/minzip/@vimee/plugin-codemirror)](https://bundlephobia.com/package/@vimee/plugin-codemirror) |
 | [`@vimee/shiki-editor`](./packages/shiki-editor)       | Vim editor component with Shiki syntax highlighting | [![npm](https://img.shields.io/npm/v/@vimee/shiki-editor)](https://www.npmjs.com/package/@vimee/shiki-editor)       | [![bundle](https://img.shields.io/bundlephobia/minzip/@vimee/shiki-editor)](https://bundlephobia.com/package/@vimee/shiki-editor)       |
 | [`@vimee/testkit`](./packages/testkit)                 | Test utilities for Vim operations                   | [![npm](https://img.shields.io/npm/v/@vimee/testkit)](https://www.npmjs.com/package/@vimee/testkit)                 | [![bundle](https://img.shields.io/bundlephobia/minzip/@vimee/testkit)](https://bundlephobia.com/package/@vimee/testkit)                 |
 
@@ -99,6 +100,32 @@ import { attach } from "@vimee/plugin-monaco";
 
 // Assumes `editor` is a monaco.editor.IStandaloneCodeEditor instance
 const vim = attach(editor, {
+  onChange: (value) => console.log("Changed:", value),
+  onModeChange: (mode) => console.log("Mode:", mode),
+});
+
+// Later...
+vim.destroy();
+```
+
+### With CodeMirror 6
+
+```bash
+npm install @vimee/core @vimee/plugin-codemirror
+```
+
+```ts
+import { EditorView, basicSetup } from "codemirror";
+import { javascript } from "@codemirror/lang-javascript";
+import { attach } from "@vimee/plugin-codemirror";
+
+const view = new EditorView({
+  doc: 'console.log("Hello, vim!");',
+  extensions: [basicSetup, javascript()],
+  parent: document.getElementById("editor")!,
+});
+
+const vim = attach(view, {
   onChange: (value) => console.log("Changed:", value),
   onModeChange: (mode) => console.log("Mode:", mode),
 });
@@ -181,26 +208,16 @@ bun run changeset:gen          # auto-detect from commits
 bun run changeset:gen major    # force major bump
 ```
 
-## Playground
+## Debug App
 
-A live playground app is included as a [git submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules).
+A debug app is included for local development and E2E testing. It provides a minimal page for each plugin.
 
 ```bash
-# Clone with playground
-git clone --recursive https://github.com/vimeejs/vimee.git
-
-# Or, if you already cloned without --recursive
-git submodule update --init
-
-# Install dependencies (includes playground)
-bun install
-
-# Build all packages, then start the playground
-bun run build
-cd playground && bun run dev
+# Start the debug app dev server
+bun run debug
 ```
 
-The playground uses `workspace:*` to reference local packages, so any changes you build in `packages/*` are reflected immediately.
+The debug app uses `workspace:*` to reference local packages, so any changes you build in `packages/*` are reflected immediately.
 
 ## Monorepo Structure
 
@@ -210,9 +227,11 @@ packages/
 ├── react/             # @vimee/react — React useVim hook
 ├── plugin-textarea/   # @vimee/plugin-textarea — vim for any textarea
 ├── plugin-monaco/     # @vimee/plugin-monaco — vim for any Monaco Editor
+├── plugin-codemirror/ # @vimee/plugin-codemirror — vim for any CodeMirror 6 editor
 ├── shiki-editor/      # @vimee/shiki-editor — editor component with Shiki
 └── testkit/           # @vimee/testkit — test utilities for Vim operations
-playground/            # Live demo app (git submodule)
+debug/                 # Debug app for local development (Vite MPA)
+e2e/                   # Playwright E2E tests
 ```
 
 Built with [Bun](https://bun.sh) workspaces, [tsup](https://tsup.egoist.dev/) for bundling, and [Vitest](https://vitest.dev/) for testing.
