@@ -1,4 +1,0 @@
-[submodule "playground"]
-	path = playground
-	url = https://github.com/vimeejs/playground.git
-	ignore = dirty
