@@ -111,6 +111,7 @@ export type VimAction =
   | { type: "set-option"; option: string; value: boolean }
   | { type: "register-write"; register: string; text: string }
   | { type: "mark-set"; name: string; position: CursorPosition }
+  | { type: "quit"; force: boolean }
   | { type: "noop" };
 
 /**

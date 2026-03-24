@@ -20,6 +20,8 @@ import { processVisualMode } from "./visual-mode";
 import { processCommandLineMode } from "./command-line-mode";
 import type { KeybindMap, KeybindCallbackDefinition } from "./keybind";
 import { parseKeySequence } from "./keybind";
+import type { CommandMap } from "./command";
+import { applyUserActions } from "./apply-actions";
 
 export type { KeystrokeResult } from "./key-utils";
 
@@ -94,6 +96,7 @@ export function parseCursorPosition(pos: string): CursorPosition {
  * @param ctrlKey - Whether the Ctrl key is pressed
  * @param readOnly - Read-only mode
  * @param keybinds - Optional custom keybind map (highest priority)
+ * @param commands - Optional custom command map for : commands
  */
 export function processKeystroke(
   key: string,
@@ -102,6 +105,7 @@ export function processKeystroke(
   ctrlKey: boolean = false,
   readOnly: boolean = false,
   keybinds?: KeybindMap,
+  commands?: CommandMap,
 ): KeystrokeResult {
   // Ignore modifier-only keys (Shift, Control, Alt, Meta).
   // These fire as separate keydown events and must not reset state (e.g. count).
@@ -160,16 +164,16 @@ export function processKeystroke(
     };
   }
   if (ctx.phase === "macro-execute-pending") {
-    return executeMacro(key, ctx, buffer, readOnly);
+    return executeMacro(key, ctx, buffer, readOnly, commands);
   }
 
   // --- Dot repeat: replay the last change ---
   if (key === "." && ctx.mode === "normal" && ctx.phase === "idle" && ctx.lastChange.length > 0) {
-    const result = replayLastChange(ctx, buffer, readOnly);
+    const result = replayLastChange(ctx, buffer, readOnly, commands);
     return maybeCaptureKey(key, ctx, result);
   }
 
-  const result = processKeystrokeInner(key, ctx, buffer, ctrlKey, readOnly);
+  const result = processKeystrokeInner(key, ctx, buffer, ctrlKey, readOnly, commands);
   const tracked = trackChange(key, ctx, result);
   return maybeCaptureKey(key, ctx, tracked);
 }
@@ -183,6 +187,7 @@ function processKeystrokeInner(
   buffer: TextBuffer,
   ctrlKey: boolean,
   readOnly: boolean,
+  commands?: CommandMap,
 ): KeystrokeResult {
   switch (ctx.mode) {
     case "normal":
@@ -208,7 +213,7 @@ function processKeystrokeInner(
     case "visual-block":
       return processVisualMode(key, ctx, buffer, ctrlKey, readOnly);
     case "command-line":
-      return processCommandLineMode(key, ctx, buffer);
+      return processCommandLineMode(key, ctx, buffer, commands);
     default:
       return { newCtx: ctx, actions: [] };
   }
@@ -333,13 +338,18 @@ function trackChange(key: string, prevCtx: VimContext, result: KeystrokeResult):
 /**
  * Replay the last change key sequence.
  */
-function replayLastChange(ctx: VimContext, buffer: TextBuffer, readOnly: boolean): KeystrokeResult {
+function replayLastChange(
+  ctx: VimContext,
+  buffer: TextBuffer,
+  readOnly: boolean,
+  commands?: CommandMap,
+): KeystrokeResult {
   let current = { ...ctx, pendingChange: [] as string[] };
   const allActions: import("./types").VimAction[] = [];
 
   for (const k of ctx.lastChange) {
     const ctrlKey = false; // TODO: handle Ctrl in replay if needed
-    const inner = processKeystrokeInner(k, current, buffer, ctrlKey, readOnly);
+    const inner = processKeystrokeInner(k, current, buffer, ctrlKey, readOnly, commands);
     current = inner.newCtx;
     allActions.push(...inner.actions);
   }
@@ -440,6 +450,7 @@ function executeMacro(
   ctx: VimContext,
   buffer: TextBuffer,
   readOnly: boolean,
+  commands?: CommandMap,
 ): KeystrokeResult {
   let reg: string | null = null;
 
@@ -461,7 +472,7 @@ function executeMacro(
   const allActions: import("./types").VimAction[] = [];
 
   for (const k of keys) {
-    const inner = processKeystrokeInner(k, current, buffer, false, readOnly);
+    const inner = processKeystrokeInner(k, current, buffer, false, readOnly, commands);
     // Apply change tracking
     const tracked = trackChange(k, current, inner);
     current = tracked.newCtx;
@@ -483,16 +494,6 @@ function executeMacro(
 
 /**
  * Execute a callback-style keybind and apply the returned actions to the context.
- *
- * The callback receives a readonly view of ctx and buffer.
- * Returned VimActions are applied safely by the engine:
- * - cursor-move: updates ctx.cursor
- * - mode-change: updates ctx.mode and resets phase to idle
- * - register-write: updates ctx.registers
- * - mark-set: updates ctx.marks
- * - status-message: updates ctx.statusMessage
- * - content-change: mutates buffer (via setContent)
- * - Other actions are passed through to the host
  */
 function executeKeybindCallback(
   definition: KeybindCallbackDefinition,
@@ -500,66 +501,7 @@ function executeKeybindCallback(
   buffer: TextBuffer,
 ): KeystrokeResult {
   const userActions = definition.execute(ctx, buffer);
-
-  let newCtx = { ...ctx };
-  const emittedActions: VimAction[] = [];
-
-  for (const action of userActions) {
-    switch (action.type) {
-      case "cursor-move":
-        newCtx = { ...newCtx, cursor: action.position };
-        emittedActions.push(action);
-        break;
-      case "mode-change":
-        newCtx = {
-          ...newCtx,
-          mode: action.mode,
-          phase: "idle",
-          count: 0,
-          operator: null,
-          statusMessage:
-            action.mode === "normal"
-              ? ""
-              : action.mode === "insert"
-                ? "-- INSERT --"
-                : newCtx.statusMessage,
-        };
-        emittedActions.push(action);
-        break;
-      case "content-change":
-        buffer.replaceContent(action.content);
-        emittedActions.push(action);
-        break;
-      case "register-write":
-        newCtx = {
-          ...newCtx,
-          registers: { ...newCtx.registers, [action.register]: action.text },
-        };
-        // Also update unnamed register if writing to unnamed
-        if (action.register === '"' || action.register === "") {
-          newCtx.register = action.text;
-        }
-        emittedActions.push(action);
-        break;
-      case "mark-set":
-        newCtx = {
-          ...newCtx,
-          marks: { ...newCtx.marks, [action.name]: action.position },
-        };
-        emittedActions.push(action);
-        break;
-      case "status-message":
-        newCtx = { ...newCtx, statusMessage: action.message, statusError: false };
-        emittedActions.push(action);
-        break;
-      default:
-        // yank, save, scroll, set-option, noop → pass through
-        emittedActions.push(action);
-        break;
-    }
-  }
-
-  return { newCtx, actions: emittedActions };
+  return applyUserActions(userActions, ctx, buffer);
 }
 
 /**

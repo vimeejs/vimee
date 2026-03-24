@@ -4,22 +4,28 @@
  * Command-line mode processing.
  * Handles command input initiated by :, /, or ?.
  *
- * Supported commands:
+ * Built-in commands:
  * - :w -> Save (invokes onSave callback)
+ * - :q -> Quit (emits quit action)
+ * - :q! -> Force quit
+ * - :wq / :x -> Save and quit
+ * - :noh / :nohlsearch -> Clear search highlight
+ * - :set number / :set nonumber -> Toggle line numbers
+ * - :{number} -> Jump to specified line
+ * - :s/old/new/[flags] -> Substitution
  * - /pattern -> Forward search
  * - ?pattern -> Backward search
  *
- * TODO:
- * - :q -> Quit
- * - :wq -> Save and quit
- * - :{number} -> Jump to specified line
- * - :s/old/new/ -> Substitution
+ * User-defined commands are resolved after built-in commands
+ * via the optional CommandMap parameter.
  */
 
 import type { VimContext, VimAction } from "./types";
 import type { TextBuffer } from "./buffer";
 import type { KeystrokeResult } from "./key-utils";
+import type { CommandMap } from "./command";
 import { searchInBuffer } from "./search";
+import { applyUserActions } from "./apply-actions";
 
 /**
  * Main handler for command-line mode.
@@ -28,6 +34,7 @@ export function processCommandLineMode(
   key: string,
   ctx: VimContext,
   buffer: TextBuffer,
+  commands?: CommandMap,
 ): KeystrokeResult {
   // --- Escape -> return to normal mode ---
   if (key === "Escape") {
@@ -36,7 +43,7 @@ export function processCommandLineMode(
 
   // --- Enter -> execute command ---
   if (key === "Enter") {
-    return executeCommand(ctx, buffer);
+    return executeCommand(ctx, buffer, commands);
   }
 
   // --- Backspace ---
@@ -73,11 +80,15 @@ function exitCommandLine(ctx: VimContext): KeystrokeResult {
  * Enter: Execute the command.
  * Execution behavior depends on the commandType.
  */
-function executeCommand(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
+function executeCommand(
+  ctx: VimContext,
+  buffer: TextBuffer,
+  commands?: CommandMap,
+): KeystrokeResult {
   const cmd = ctx.commandBuffer;
 
   if (ctx.commandType === ":") {
-    return executeExCommand(cmd, ctx, buffer);
+    return executeExCommand(cmd, ctx, buffer, commands);
   }
 
   if (ctx.commandType === "/" || ctx.commandType === "?") {
@@ -89,15 +100,55 @@ function executeCommand(ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
 
 /**
  * Execute an Ex command (a command starting with :).
+ * Resolution order: built-in → substitution → line jump → user commands → E492 error.
  */
-function executeExCommand(cmd: string, ctx: VimContext, buffer: TextBuffer): KeystrokeResult {
+function executeExCommand(
+  cmd: string,
+  ctx: VimContext,
+  buffer: TextBuffer,
+  commands?: CommandMap,
+): KeystrokeResult {
   const actions: VimAction[] = [];
+  const trimmed = cmd.trim();
 
-  switch (cmd.trim()) {
+  switch (trimmed) {
     case "w":
       // :w -> save
       actions.push({ type: "save", content: buffer.getContent() });
       break;
+
+    case "q":
+      // :q -> quit
+      actions.push({ type: "quit", force: false });
+      break;
+
+    case "q!":
+      // :q! -> force quit
+      actions.push({ type: "quit", force: true });
+      break;
+
+    case "wq":
+    case "x":
+      // :wq / :x -> save and quit
+      actions.push({ type: "save", content: buffer.getContent() });
+      actions.push({ type: "quit", force: false });
+      break;
+
+    case "noh":
+    case "nohlsearch":
+      // :noh -> clear search highlight
+      return {
+        newCtx: {
+          ...ctx,
+          mode: "normal",
+          commandBuffer: "",
+          commandType: null,
+          lastSearch: "",
+          statusMessage: "",
+          statusError: false,
+        },
+        actions: [{ type: "mode-change", mode: "normal" }],
+      };
 
     case "set number":
     case "set nu":
@@ -111,11 +162,11 @@ function executeExCommand(cmd: string, ctx: VimContext, buffer: TextBuffer): Key
 
     default: {
       // Substitution: [range]s/old/new/[g]
-      const subResult = trySubstitute(cmd.trim(), ctx, buffer);
+      const subResult = trySubstitute(trimmed, ctx, buffer);
       if (subResult) return subResult;
 
       // If numeric, jump to that line
-      const lineNum = Number.parseInt(cmd.trim(), 10);
+      const lineNum = Number.parseInt(trimmed, 10);
       if (!Number.isNaN(lineNum)) {
         const targetLine = Math.max(0, Math.min(lineNum - 1, buffer.getLineCount() - 1));
         const newCursor = { line: targetLine, col: 0 };
@@ -136,6 +187,30 @@ function executeExCommand(cmd: string, ctx: VimContext, buffer: TextBuffer): Key
         };
       }
 
+      // User-defined commands
+      if (commands) {
+        const resolved = commands.resolve(trimmed);
+        if (resolved) {
+          const exitCtx: VimContext = {
+            ...ctx,
+            mode: "normal",
+            commandBuffer: "",
+            commandType: null,
+            statusMessage: "",
+            statusError: false,
+          };
+          const result = applyUserActions(
+            resolved.definition.execute(resolved.args, ctx, buffer),
+            exitCtx,
+            buffer,
+          );
+          return {
+            newCtx: result.newCtx,
+            actions: [{ type: "mode-change", mode: "normal" }, ...result.actions],
+          };
+        }
+      }
+
       // Unknown command
       return {
         newCtx: {
@@ -143,12 +218,12 @@ function executeExCommand(cmd: string, ctx: VimContext, buffer: TextBuffer): Key
           mode: "normal",
           commandBuffer: "",
           commandType: null,
-          statusMessage: `E492: Not an editor command: ${cmd.trim()}`,
+          statusMessage: `E492: Not an editor command: ${trimmed}`,
           statusError: true,
         },
         actions: [
           { type: "mode-change", mode: "normal" },
-          { type: "status-message", message: `E492: Not an editor command: ${cmd.trim()}` },
+          { type: "status-message", message: `E492: Not an editor command: ${trimmed}` },
         ],
       };
     }

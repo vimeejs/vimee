@@ -276,6 +276,31 @@ export class KeybindMap {
     const root = this.tries.get(mode);
     return root !== undefined && root.children.size > 0;
   }
+
+  /**
+   * Clear all bindings and re-register from an array.
+   * Preserves pendingKeys state so multi-key sequences survive rebuilds.
+   * Used by React hooks to sync declarative props to the map.
+   */
+  replaceAll(entries: Array<{ mode: VimMode; keys: string; definition: KeybindDefinition }>): void {
+    this.tries.clear();
+    // pendingKeys is NOT cleared — preserves mid-sequence state across rebuilds
+    for (const entry of entries) {
+      const tokens = parseKeySequence(entry.keys);
+      if (!this.tries.has(entry.mode)) {
+        this.tries.set(entry.mode, createTrieNode());
+      }
+      const root = this.tries.get(entry.mode)!;
+      let node = root;
+      for (const token of tokens) {
+        if (!node.children.has(token)) {
+          node.children.set(token, createTrieNode());
+        }
+        node = node.children.get(token)!;
+      }
+      node.definition = entry.definition;
+    }
+  }
 }
 
 /**

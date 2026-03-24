@@ -12,19 +12,42 @@
  * - Callback invocation (onChange, onYank, onSave, onModeChange, onAction)
  * - Scroll handling (Ctrl-U/D/B/F)
  * - Viewport info for H/M/L motions
+ * - Declarative keybinds and commands props
  */
 
 import { useCallback, useRef, useState } from "react";
-import type { CursorPosition, VimMode, VimAction, VimContext } from "@vimee/core";
-import type { KeybindMap, ValidKeySequence, KeybindDefinition } from "@vimee/core";
+import type { CursorPosition, VimMode, VimAction, VimContext, BufferReader } from "@vimee/core";
+import type { KeybindMap } from "@vimee/core";
+import type { CommandMap } from "@vimee/core";
 import {
   TextBuffer,
   createInitialContext,
   parseCursorPosition,
   processKeystroke,
   createKeybindMap,
+  createCommandMap,
   actions,
 } from "@vimee/core";
+
+/** Declarative keybind entry for useVim props */
+export interface KeybindEntry {
+  /** Vim mode this keybind applies to */
+  mode: VimMode;
+  /** Key sequence (e.g., "\\i", "<C-s>", "jk") */
+  keys: string;
+  /** Callback that returns VimActions (mutually exclusive with remap) */
+  execute?: (ctx: Readonly<VimContext>, buffer: BufferReader) => VimAction[];
+  /** Remap to another key sequence (mutually exclusive with execute) */
+  remap?: string;
+}
+
+/** Declarative command entry for useVim props */
+export interface CommandEntry {
+  /** Command name (matched exactly when user types :name) */
+  name: string;
+  /** Callback that receives args and returns VimActions */
+  execute: (args: string, ctx: Readonly<VimContext>, buffer: BufferReader) => VimAction[];
+}
 
 /** Options for the useVim hook */
 export interface UseVimOptions {
@@ -48,6 +71,32 @@ export interface UseVimOptions {
   indentStyle?: "space" | "tab";
   /** Number of spaces (or tab width) per indent level (default: 2) */
   indentWidth?: number;
+  /**
+   * Custom keybindings (declarative).
+   * Rebuilt only when the array reference changes.
+   *
+   * @example
+   * ```ts
+   * const keybinds = useMemo(() => [
+   *   { mode: "normal", keys: "\\i", execute: (ctx, buf) => [actions.statusMessage("info")] },
+   *   { mode: "normal", keys: "Y", remap: "y$" },
+   *   { mode: "insert", keys: "jk", execute: () => [actions.modeChange("normal")] },
+   * ], []);
+   * ```
+   */
+  keybinds?: KeybindEntry[];
+  /**
+   * Custom ex commands (declarative).
+   * Rebuilt only when the array reference changes.
+   *
+   * @example
+   * ```ts
+   * const commands = useMemo(() => [
+   *   { name: "greet", execute: (args) => [actions.statusMessage("Hello " + args)] },
+   * ], []);
+   * ```
+   */
+  commands?: CommandEntry[];
 }
 
 /** Return value of the useVim hook */
@@ -89,34 +138,6 @@ export interface UseVimReturn {
    * @param height - Number of visible lines
    */
   updateViewport: (topLine: number, height: number) => void;
-  /**
-   * Register a custom keybinding.
-   *
-   * @param mode - Vim mode this keybind applies to
-   * @param keys - Key sequence (e.g., "\\i", "<C-s>", "jj")
-   * @param definition - Callback or remap definition
-   *
-   * @example
-   * ```ts
-   * addKeybind("normal", "\\i", {
-   *   execute: (ctx, buffer) => {
-   *     monacoEditor.trigger("showHover");
-   *     return [];
-   *   },
-   * });
-   * addKeybind("insert", "jk", {
-   *   execute: () => [actions.modeChange("normal")],
-   * });
-   * addKeybind("normal", "Y", { keys: "y$" });
-   * ```
-   */
-  addKeybind: <T extends string>(
-    mode: VimMode,
-    keys: ValidKeySequence<T>,
-    definition: KeybindDefinition,
-  ) => void;
-  /** Action helper functions for building VimActions in keybind callbacks */
-  actions: typeof actions;
 }
 
 /**
@@ -131,6 +152,12 @@ export interface UseVimReturn {
  * const { content, cursor, mode, handleKeyDown } = useVim({
  *   content: "Hello, vim!",
  *   onChange: (c) => console.log("Changed:", c),
+ *   keybinds: [
+ *     { mode: "normal", keys: "Y", remap: "y$" },
+ *   ],
+ *   commands: [
+ *     { name: "greet", execute: (args) => [actions.statusMessage("Hello " + args)] },
+ *   ],
  * });
  *
  * return (
@@ -152,6 +179,8 @@ export function useVim(options: UseVimOptions): UseVimReturn {
     onAction,
     indentStyle,
     indentWidth,
+    keybinds,
+    commands,
   } = options;
 
   // TextBuffer managed via ref (frequent mutations, no need for re-render)
@@ -165,8 +194,16 @@ export function useVim(options: UseVimOptions): UseVimReturn {
     }),
   );
 
-  // KeybindMap managed via ref (mutable, like TextBuffer)
+  // Stable map refs — bindings are swapped via replaceAll, refs never replaced
   const keybindMapRef = useRef<KeybindMap>(createKeybindMap());
+  const commandMapRef = useRef<CommandMap>(createCommandMap());
+
+  // Track previous prop references for lazy sync.
+  // Use a symbol sentinel so the first syncMaps() call always triggers,
+  // even when keybinds/commands are undefined.
+  const UNINITIALIZED = useRef(Symbol("uninitialized")).current;
+  const prevKeybindsRef = useRef<KeybindEntry[] | undefined | symbol>(UNINITIALIZED);
+  const prevCommandsRef = useRef<CommandEntry[] | undefined | symbol>(UNINITIALIZED);
 
   // Display-related state
   const [content, setContent] = useState(initialContent);
@@ -179,11 +216,37 @@ export function useVim(options: UseVimOptions): UseVimReturn {
   const [vimOptions, setVimOptions] = useState<Record<string, boolean>>({});
 
   /**
+   * Sync keybinds/commands props to internal maps.
+   * Only rebuilds when the array reference changes (lazy, no useEffect).
+   */
+  const syncMaps = useCallback(() => {
+    if (prevKeybindsRef.current !== keybinds) {
+      prevKeybindsRef.current = keybinds;
+      keybindMapRef.current.replaceAll(
+        (keybinds ?? []).map((kb) => ({
+          mode: kb.mode,
+          keys: kb.keys,
+          definition: kb.remap != null ? { keys: kb.remap } : { execute: kb.execute! },
+        })),
+      );
+    }
+    if (prevCommandsRef.current !== commands) {
+      prevCommandsRef.current = commands;
+      commandMapRef.current.replaceAll(
+        (commands ?? []).map((cmd) => ({
+          name: cmd.name,
+          definition: { execute: cmd.execute },
+        })),
+      );
+    }
+  }, [keybinds, commands]);
+
+  /**
    * Process the action list and update React state and callbacks.
    */
   const processActions = useCallback(
-    (actions: VimAction[], newCtx: VimContext, key: string) => {
-      for (const action of actions) {
+    (actionList: VimAction[], newCtx: VimContext, key: string) => {
+      for (const action of actionList) {
         onAction?.(action, key);
 
         switch (action.type) {
@@ -232,6 +295,10 @@ export function useVim(options: UseVimOptions): UseVimReturn {
             // Handled by core (ctx.marks updated), notify via onAction
             break;
 
+          case "quit":
+            // Handled by host via onAction
+            break;
+
           case "noop":
             break;
         }
@@ -262,6 +329,9 @@ export function useVim(options: UseVimOptions): UseVimReturn {
         e.preventDefault();
       }
 
+      // Lazy sync: rebuild maps only when prop reference changes
+      syncMaps();
+
       // Process the keystroke
       const { newCtx, actions: resultActions } = processKeystroke(
         e.key,
@@ -270,6 +340,7 @@ export function useVim(options: UseVimOptions): UseVimReturn {
         e.ctrlKey,
         readOnly,
         keybindMapRef.current,
+        commandMapRef.current,
       );
 
       // Update context
@@ -278,21 +349,7 @@ export function useVim(options: UseVimOptions): UseVimReturn {
       // Process actions
       processActions(resultActions, newCtx, e.key);
     },
-    [readOnly, processActions],
-  );
-
-  /**
-   * Register a custom keybinding.
-   */
-  const addKeybind = useCallback(
-    <T extends string>(
-      mode: VimMode,
-      keys: ValidKeySequence<T>,
-      definition: KeybindDefinition,
-    ): void => {
-      keybindMapRef.current.addKeybind(mode, keys, definition);
-    },
-    [],
+    [readOnly, processActions, syncMaps],
   );
 
   /**
@@ -345,8 +402,6 @@ export function useVim(options: UseVimOptions): UseVimReturn {
     handleKeyDown,
     handleScroll,
     updateViewport,
-    addKeybind,
-    actions,
   };
 }
 

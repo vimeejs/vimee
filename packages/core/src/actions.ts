@@ -87,6 +87,13 @@ export function yank(text: string): VimAction {
 }
 
 /**
+ * Create a quit action (signals the host to close/quit).
+ */
+export function quit(force: boolean = false): VimAction {
+  return { type: "quit", force };
+}
+
+/**
  * Create a noop action (explicitly does nothing).
  */
 export function noop(): VimAction {
@@ -111,5 +118,6 @@ export const actions = {
   registerWrite,
   markSet,
   yank,
+  quit,
   noop,
 } as const;

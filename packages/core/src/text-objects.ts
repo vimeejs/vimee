@@ -189,7 +189,11 @@ function aBigWord(cursor: CursorPosition, buffer: BufferReader): MotionRange | n
 
 // --- Quote text objects ---
 
-function innerQuote(cursor: CursorPosition, buffer: BufferReader, quote: string): MotionRange | null {
+function innerQuote(
+  cursor: CursorPosition,
+  buffer: BufferReader,
+  quote: string,
+): MotionRange | null {
   const line = buffer.getLine(cursor.line);
   const col = cursor.col;
 

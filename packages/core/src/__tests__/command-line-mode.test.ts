@@ -10,6 +10,7 @@ import type { VimContext } from "../types";
 import { createInitialContext } from "../vim-state";
 import { processCommandLineMode } from "../command-line-mode";
 import { TextBuffer } from "../buffer";
+import { createCommandMap } from "../command";
 import { vim } from "@vimee/testkit";
 
 // =====================
@@ -467,6 +468,182 @@ describe("Command-line mode", () => {
       // commandType is null → statusMessage = "" + "abc" = "abc"
       expect(result.newCtx.commandBuffer).toBe("abc");
       expect(result.newCtx.statusMessage).toBe("abc");
+    });
+  });
+
+  // ---------------------------------------------------
+  // :noh / :nohlsearch (clear search highlight)
+  // ---------------------------------------------------
+  describe(":noh / :nohlsearch (clear search highlight)", () => {
+    it(":noh clears lastSearch and returns to normal mode", () => {
+      const v = vim("hello foo world");
+      v.type("/foo<Enter>"); // sets lastSearch
+      expect(v.raw().ctx.lastSearch).toBe("foo");
+      v.type(":noh<Enter>");
+      expect(v.mode()).toBe("normal");
+      expect(v.raw().ctx.lastSearch).toBe("");
+    });
+
+    it(":nohlsearch clears lastSearch same as :noh", () => {
+      const v = vim("hello bar world");
+      v.type("/bar<Enter>");
+      v.type(":nohlsearch<Enter>");
+      expect(v.raw().ctx.lastSearch).toBe("");
+    });
+  });
+
+  // ---------------------------------------------------
+  // :q / :q! / :wq / :x (quit commands)
+  // ---------------------------------------------------
+  describe(":q / :q! / :wq / :x (quit commands)", () => {
+    it(":q emits quit action with force: false", () => {
+      const v = vim("hello");
+      v.type(":q<Enter>");
+      expect(v.mode()).toBe("normal");
+      expect(v.allActions()).toContainEqual({ type: "quit", force: false });
+    });
+
+    it(":q! emits quit action with force: true", () => {
+      const v = vim("hello");
+      v.type(":q!<Enter>");
+      expect(v.mode()).toBe("normal");
+      expect(v.allActions()).toContainEqual({ type: "quit", force: true });
+    });
+
+    it(":wq emits save and quit actions", () => {
+      const v = vim("hello");
+      v.type(":wq<Enter>");
+      expect(v.mode()).toBe("normal");
+      expect(v.allActions()).toContainEqual({ type: "save", content: "hello" });
+      expect(v.allActions()).toContainEqual({ type: "quit", force: false });
+    });
+
+    it(":x emits save and quit actions (same as :wq)", () => {
+      const v = vim("hello");
+      v.type(":x<Enter>");
+      expect(v.allActions()).toContainEqual({ type: "save", content: "hello" });
+      expect(v.allActions()).toContainEqual({ type: "quit", force: false });
+    });
+  });
+
+  // ---------------------------------------------------
+  // User-defined commands via CommandMap
+  // ---------------------------------------------------
+  describe("User-defined commands", () => {
+    it("executes a registered user command", () => {
+      const commands = createCommandMap();
+      commands.addCommand("greet", {
+        execute: () => [{ type: "status-message", message: "Hello!" }],
+      });
+
+      const buffer = new TextBuffer("hello");
+      const ctx: VimContext = {
+        ...createInitialContext({ line: 0, col: 0 }),
+        mode: "command-line",
+        commandType: ":",
+        commandBuffer: "",
+      };
+
+      // Type "greet" and Enter
+      let current = ctx;
+      for (const key of [..."greet", "Enter"]) {
+        const result = processCommandLineMode(key, current, buffer, commands);
+        current = result.newCtx;
+      }
+
+      expect(current.mode).toBe("normal");
+      expect(current.statusMessage).toBe("Hello!");
+    });
+
+    it("passes args correctly to user command", () => {
+      let receivedArgs = "";
+      const commands = createCommandMap();
+      commands.addCommand("echo", {
+        execute: (args) => {
+          receivedArgs = args;
+          return [{ type: "status-message", message: args }];
+        },
+      });
+
+      const buffer = new TextBuffer("hello");
+      const ctx: VimContext = {
+        ...createInitialContext({ line: 0, col: 0 }),
+        mode: "command-line",
+        commandType: ":",
+        commandBuffer: "",
+      };
+
+      let current = ctx;
+      for (const key of [..."echo hello world", "Enter"]) {
+        const result = processCommandLineMode(key, current, buffer, commands);
+        current = result.newCtx;
+      }
+
+      expect(receivedArgs).toBe("hello world");
+      expect(current.statusMessage).toBe("hello world");
+    });
+
+    it("user command callback can change cursor position", () => {
+      const commands = createCommandMap();
+      commands.addCommand("goto", {
+        execute: () => [{ type: "cursor-move", position: { line: 2, col: 0 } }],
+      });
+
+      const buffer = new TextBuffer("line1\nline2\nline3");
+      const ctx: VimContext = {
+        ...createInitialContext({ line: 0, col: 0 }),
+        mode: "command-line",
+        commandType: ":",
+        commandBuffer: "",
+      };
+
+      let current = ctx;
+      for (const key of [..."goto", "Enter"]) {
+        const result = processCommandLineMode(key, current, buffer, commands);
+        current = result.newCtx;
+      }
+
+      expect(current.cursor).toEqual({ line: 2, col: 0 });
+    });
+
+    it("unknown commands still show E492 when no user command matches", () => {
+      const commands = createCommandMap();
+      commands.addCommand("greet", { execute: () => [] });
+
+      const v = vim("hello");
+      v.type(":unknown<Enter>");
+      expect(v.statusMessage()).toBe("E492: Not an editor command: unknown");
+    });
+
+    it("user commands do not override built-in commands", () => {
+      const commands = createCommandMap();
+      let called = false;
+      commands.addCommand("w", {
+        execute: () => {
+          called = true;
+          return [];
+        },
+      });
+
+      const buffer = new TextBuffer("hello");
+      const ctx: VimContext = {
+        ...createInitialContext({ line: 0, col: 0 }),
+        mode: "command-line",
+        commandType: ":",
+        commandBuffer: "",
+      };
+
+      let current = ctx;
+      let allActions: import("../types").VimAction[] = [];
+      for (const key of [..."w", "Enter"]) {
+        const result = processCommandLineMode(key, current, buffer, commands);
+        current = result.newCtx;
+        allActions.push(...result.actions);
+      }
+
+      // Built-in :w should have run (save action), not user command
+      expect(called).toBe(false);
+      expect(allActions).toContainEqual({ type: "save", content: "hello" });
     });
   });
 });
