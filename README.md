@@ -39,22 +39,25 @@ npm install @vimee/core @vimee/react @vimee/shiki-editor shiki
 ```
 
 ```tsx
+import { use } from "react";
 import { Vim } from "@vimee/shiki-editor";
 import "@vimee/shiki-editor/styles.css";
 import { createHighlighter } from "shiki";
 
-const highlighter = await createHighlighter({
-  themes: ["vitesse-dark"],
+const highlighterPromise = createHighlighter({
+  themes: ["catppuccin-mocha"],
   langs: ["typescript"],
 });
 
 function App() {
+  const highlighter = use(highlighterPromise);
+
   return (
     <Vim
       content={`const greeting = "Hello, vim!";`}
       highlighter={highlighter}
       lang="typescript"
-      theme="vitesse-dark"
+      theme="catppuccin-mocha"
       onChange={(c) => console.log("Changed:", c)}
       onSave={(c) => console.log("Saved:", c)}
     />
