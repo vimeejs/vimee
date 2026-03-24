@@ -1,6 +1,6 @@
 {
   "name": "@vimee/plugin-monaco",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Attach vim editing to a Monaco Editor instance",
   "type": "module",
   "main": "./dist/index.cjs",
