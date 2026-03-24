@@ -1,6 +1,6 @@
 {
   "name": "@vimee/testkit",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Test utilities for writing @vimee/core vim operation tests",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -36,7 +36,7 @@
     "directory": "packages/testkit"
   },
   "peerDependencies": {
-    "@vimee/core": "^0.2.0"
+    "@vimee/core": "^0.3.0"
   },
   "devDependencies": {
     "@vimee/core": "workspace:*"

@@ -1,5 +1,16 @@
 # @vimee/react
 
+## 1.0.0
+
+### Minor Changes
+
+- [#41](https://github.com/vimeejs/vimee/pull/41) [`009b41f`](https://github.com/vimeejs/vimee/commit/009b41f4ccb6d5d8d6e4d8a96250ce111ada8bc4) Thanks [@konojunya](https://github.com/konojunya)! - Add custom keybinding system, custom command system, and BufferReader interface for host-environment decoupling
+
+### Patch Changes
+
+- Updated dependencies [[`009b41f`](https://github.com/vimeejs/vimee/commit/009b41f4ccb6d5d8d6e4d8a96250ce111ada8bc4)]:
+  - @vimee/core@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
