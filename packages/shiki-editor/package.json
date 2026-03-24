@@ -39,11 +39,11 @@
     "directory": "packages/shiki-editor"
   },
   "peerDependencies": {
-    "@vimee/core": "0.2.0",
-    "@vimee/react": "0.2.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "shiki": "4.0.2"
+    "@vimee/core": "^0.2.0",
+    "@vimee/react": "^0.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "shiki": "^4.0.0"
   },
   "devDependencies": {
     "@types/react": "19.2.14",

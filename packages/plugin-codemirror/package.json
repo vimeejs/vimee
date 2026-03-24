@@ -37,9 +37,9 @@
     "directory": "packages/plugin-codemirror"
   },
   "peerDependencies": {
-    "@vimee/core": "0.2.0",
-    "@codemirror/view": "6.40.0",
-    "@codemirror/state": "6.6.0"
+    "@vimee/core": "^0.2.0",
+    "@codemirror/view": "^6.0.0",
+    "@codemirror/state": "^6.0.0"
   },
   "devDependencies": {
     "@vimee/core": "workspace:*",
