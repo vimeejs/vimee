@@ -7,6 +7,7 @@
 
 import type { VimContext, VimAction, CursorPosition } from "@vimee/core";
 import { TextBuffer, createInitialContext, processKeystroke } from "@vimee/core";
+import { EditorSelection } from "@codemirror/state";
 import type { AttachOptions, VimCodeMirror, CodeMirrorView } from "./types";
 import { cursorToOffset, offsetToCursor } from "./cursor";
 import { getTopLine, getVisibleLines } from "./viewport";
@@ -103,6 +104,31 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
         selection: { anchor: startOffset, head: endOffset },
         scrollIntoView: true,
       });
+    } else if (ctx.mode === "visual-block") {
+      // Block-wise visual mode: create a selection range per line
+      const startLine = Math.min(anchor.line, ctx.cursor.line);
+      const endLine = Math.max(anchor.line, ctx.cursor.line);
+      const startCol = Math.min(anchor.col, ctx.cursor.col);
+      const endCol = Math.max(anchor.col, ctx.cursor.col) + 1;
+
+      const lines = content.split("\n");
+      const ranges: { anchor: number; head: number }[] = [];
+      for (let line = startLine; line <= endLine; line++) {
+        const lineLen = lines[line]?.length ?? 0;
+        const from = cursorToOffset(content, { line, col: Math.min(startCol, lineLen) });
+        const to = cursorToOffset(content, { line, col: Math.min(endCol, lineLen) });
+        ranges.push({ anchor: from, head: to });
+      }
+
+      if (ranges.length > 0) {
+        view.dispatch({
+          selection: EditorSelection.create(
+            ranges.map((r) => EditorSelection.range(r.anchor, r.head)),
+            ranges.length - 1,
+          ),
+          scrollIntoView: true,
+        });
+      }
     } else {
       // Character-wise visual mode
       const anchorOffset = cursorToOffset(content, anchor);

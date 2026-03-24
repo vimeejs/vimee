@@ -46,7 +46,7 @@ export interface CodeMirrorState {
 /** Transaction spec for `EditorView.dispatch()`. */
 export interface CodeMirrorTransactionSpec {
   changes?: { from: number; to?: number; insert?: string };
-  selection?: { anchor: number; head?: number };
+  selection?: { anchor: number; head?: number } | { ranges: unknown; mainIndex?: number };
   scrollIntoView?: boolean;
 }
 
