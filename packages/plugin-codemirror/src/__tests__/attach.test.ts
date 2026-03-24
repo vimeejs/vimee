@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
+import { EditorSelection } from "@codemirror/state";
 import { attach } from "../attach";
 import type { CodeMirrorView, CodeMirrorTransactionSpec } from "../types";
 
@@ -10,17 +11,20 @@ import type { CodeMirrorView, CodeMirrorTransactionSpec } from "../types";
 // Mock CodeMirror View
 // ---------------------------------------------------------------------------
 
+// biome-ignore lint: test utility type
+type AnySelection = any;
+
 interface MockViewResult {
   view: CodeMirrorView;
   pressKey: (key: string, opts?: Partial<KeyboardEventInit>) => void;
   triggerCompositionStart: () => void;
   triggerCompositionEnd: () => void;
-  getLastSelection: () => { anchor: number; head?: number } | undefined;
+  getLastSelection: () => AnySelection;
 }
 
 function createMockView(value = "", viewportLines = 20): MockViewResult {
   let content = value;
-  let lastSelection: { anchor: number; head?: number } | undefined;
+  let lastSelection: AnySelection;
 
   // Real DOM element so addEventListener/removeEventListener work
   const contentDOM = document.createElement("div");
@@ -546,5 +550,46 @@ describe("attach", () => {
     const contentBefore = vim.getContent();
     mock.pressKey("x");
     expect(vim.getContent()).toBe(contentBefore);
+  });
+
+  it("visual-block creates per-line selection ranges", () => {
+    const mock = createMockView("abcde\nfghij\nklmno");
+    const vim = attach(mock.view);
+
+    // Move to col 1, then enter visual-block and select down+right
+    mock.pressKey("l"); // col 1
+    mock.pressKey("v", { ctrlKey: true }); // Ctrl-V → visual-block
+    expect(vim.getMode()).toBe("visual-block");
+
+    mock.pressKey("j"); // extend to line 1
+    mock.pressKey("l"); // extend to col 2
+
+    const sel = mock.getLastSelection();
+    expect(sel).toBeInstanceOf(EditorSelection);
+
+    // Should have 2 ranges (line 0 and line 1)
+    expect(sel.ranges).toHaveLength(2);
+
+    // Line 0: cols 1-2 → offsets 1..3
+    expect(sel.ranges[0].from).toBe(1);
+    expect(sel.ranges[0].to).toBe(3);
+
+    // Line 1: cols 1-2 → offsets 7..9 (6 for "abcde\n" + 1..3)
+    expect(sel.ranges[1].from).toBe(7);
+    expect(sel.ranges[1].to).toBe(9);
+
+    vim.destroy();
+  });
+
+  it("normal mode Enter does not modify content", () => {
+    const mock = createMockView("hello\nworld");
+    const vim = attach(mock.view);
+
+    mock.pressKey("Enter");
+
+    expect(vim.getContent()).toBe("hello\nworld");
+    expect(vim.getMode()).toBe("normal");
+
+    vim.destroy();
   });
 });
