@@ -920,7 +920,7 @@ function enterCommandLine(type: ":" | "/" | "?", ctx: VimContext): KeystrokeResu
         searchDirection: type === "/" ? ("forward" as const) : ("backward" as const),
       }),
     },
-    actions: [],
+    actions: [{ type: "mode-change", mode: "command-line" }],
   };
 }
 
