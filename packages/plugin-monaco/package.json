@@ -37,7 +37,7 @@
     "directory": "packages/plugin-monaco"
   },
   "peerDependencies": {
-    "@vimee/core": "^0.2.0",
+    "@vimee/core": ">=0.1.0 <1.0.0",
     "monaco-editor": ">=0.34.0"
   },
   "devDependencies": {

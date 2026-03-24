@@ -37,7 +37,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
-    "@vimee/core": "^0.2.0",
+    "@vimee/core": ">=0.1.0 <1.0.0",
     "react": "^19.0.0"
   },
   "devDependencies": {
