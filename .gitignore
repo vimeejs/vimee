@@ -8,3 +8,6 @@ coverage/
 !.env.example
 *.tgz
 .turbo/
+playwright-report/
+test-results/
+blob-report/

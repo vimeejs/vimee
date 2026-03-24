@@ -1,0 +1,31 @@
+{
+  "name": "debug",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vimee/core": "workspace:*",
+    "@vimee/react": "workspace:*",
+    "@vimee/plugin-textarea": "workspace:*",
+    "@vimee/plugin-monaco": "workspace:*",
+    "@vimee/plugin-codemirror": "workspace:*",
+    "@vimee/shiki-editor": "workspace:*",
+    "@monaco-editor/react": "4.7.0",
+    "monaco-editor": "0.52.2",
+    "codemirror": "6.0.1",
+    "@codemirror/lang-javascript": "6.2.3",
+    "shiki": "4.0.2",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.1",
+    "vite": "8.0.1"
+  }
+}
