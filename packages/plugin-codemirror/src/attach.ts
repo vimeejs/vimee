@@ -7,10 +7,69 @@
 
 import type { VimContext, VimAction, CursorPosition } from "@vimee/core";
 import { TextBuffer, createInitialContext, processKeystroke } from "@vimee/core";
-import { EditorSelection } from "@codemirror/state";
+import { EditorSelection, StateEffect, StateField, RangeSetBuilder } from "@codemirror/state";
+import { Decoration, type DecorationSet, EditorView } from "@codemirror/view";
 import type { AttachOptions, VimCodeMirror, CodeMirrorView } from "./types";
 import { cursorToOffset, offsetToCursor } from "./cursor";
 import { getTopLine, getVisibleLines } from "./viewport";
+
+// ---------------------------------------------------------------------------
+// Search highlight decorations
+// ---------------------------------------------------------------------------
+
+const setSearchPattern = StateEffect.define<string>();
+
+const searchMark = Decoration.mark({ class: "vimee-search-match" });
+
+function buildSearchDecorations(content: string, pattern: string): DecorationSet {
+  if (!pattern) return Decoration.none;
+  let regex: RegExp;
+  try {
+    regex = new RegExp(pattern, "gi");
+  } catch {
+    return Decoration.none;
+  }
+  const builder = new RangeSetBuilder<Decoration>();
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(content)) !== null) {
+    if (match[0].length === 0) {
+      regex.lastIndex++;
+      continue;
+    }
+    builder.add(match.index, match.index + match[0].length, searchMark);
+  }
+  return builder.finish();
+}
+
+const searchHighlightField = StateField.define<{ pattern: string; decorations: DecorationSet }>({
+  create() {
+    return { pattern: "", decorations: Decoration.none };
+  },
+  update(state, tr) {
+    let newPattern = state.pattern;
+    for (const e of tr.effects) {
+      if (e.is(setSearchPattern)) {
+        newPattern = e.value;
+      }
+    }
+    if (newPattern !== state.pattern || (tr.docChanged && newPattern)) {
+      return {
+        pattern: newPattern,
+        decorations: buildSearchDecorations(tr.state.doc.toString(), newPattern),
+      };
+    }
+    return state;
+  },
+  provide(field) {
+    return EditorView.decorations.from(field, (s) => s.decorations);
+  },
+});
+
+const searchHighlightTheme = EditorView.baseTheme({
+  ".vimee-search-match": {
+    backgroundColor: "rgba(255, 210, 0, 0.3)",
+  },
+});
 
 /**
  * Attach vim editing to a CodeMirror 6 EditorView.
@@ -49,6 +108,16 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
 
   // --- Track composing state (IME input) ---
   let isComposing = false;
+
+  // --- Track search pattern for highlight sync ---
+  let prevSearchHighlight = "";
+
+  // --- Inject search highlight extension ---
+  // Use the real CM dispatch to pass effects (bypasses our minimal type)
+  const cmDispatch = view.dispatch.bind(view) as (...specs: unknown[]) => void;
+  cmDispatch({
+    effects: StateEffect.appendConfig.of([searchHighlightField, searchHighlightTheme]),
+  });
 
   // --- Sync vimee buffer content to CodeMirror ---
   function syncContentToEditor(): void {
@@ -273,6 +342,14 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
 
     ctx = newCtx;
     processActions(actions, newCtx, e.key);
+
+    // Sync search highlight: show only while typing /query or ?query
+    const searchHighlight =
+      (ctx.commandType === "/" || ctx.commandType === "?") ? ctx.commandBuffer : "";
+    if (searchHighlight !== prevSearchHighlight) {
+      prevSearchHighlight = searchHighlight;
+      cmDispatch({ effects: setSearchPattern.of(searchHighlight) });
+    }
   }
 
   // --- IME composition handlers ---

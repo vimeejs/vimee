@@ -68,8 +68,58 @@ The `view` parameter accepts any object satisfying the `CodeMirrorView` interfac
 | `getContent()` | `string` | Current editor content |
 | `destroy()` | `void` | Detach all listeners and clean up |
 
+## Search Highlighting
+
+While typing a search pattern ( `/query` or `?query` ), the plugin highlights all matching ranges using a CodeMirror decoration with the CSS class `vimee-search-match` . The highlight is removed when the search is confirmed with `<CR>` .
+
+A default yellow background theme is included via `EditorView.baseTheme()` . To customize the style, add a higher-specificity rule or use a CodeMirror theme extension:
+
+```css
+/* Override via CSS */
+.cm-editor .vimee-search-match {
+  background-color: rgba(255, 120, 0, 0.4);
+}
+```
+
+```ts
+// Override via CodeMirror theme extension
+import { EditorView } from "@codemirror/view";
+
+const myTheme = EditorView.theme({
+  ".vimee-search-match": {
+    backgroundColor: "rgba(255, 120, 0, 0.4)",
+  },
+});
+
+const view = new EditorView({
+  extensions: [basicSetup, javascript(), myTheme],
+  // ...
+});
+```
+
+## Visual Mode
+
+The plugin uses CodeMirror's native selection for visual and visual-line mode. Visual-block mode creates per-line selection ranges for proper rectangular selection via `EditorSelection` .
+
+To customize the selection color, use a CodeMirror theme extension:
+
+```ts
+const myTheme = EditorView.theme({
+  "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
+    backgroundColor: "rgba(255, 165, 0, 0.3) !important",
+  },
+});
+
+const view = new EditorView({
+  extensions: [basicSetup, javascript(), myTheme],
+  // ...
+});
+```
+
 ## Features
 
+- Visual mode selection (including visual-block with per-line ranges)
+- Incremental search highlighting ( `/` / `?` )
 - H/M/L motions with viewport tracking
 - Ctrl-U/D/B/F page scrolling
 - IME composition support (CJK input)
