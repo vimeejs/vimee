@@ -7,9 +7,69 @@
 
 import type { VimContext, VimAction, CursorPosition } from "@vimee/core";
 import { TextBuffer, createInitialContext, processKeystroke } from "@vimee/core";
+import { EditorSelection, StateEffect, StateField, RangeSetBuilder } from "@codemirror/state";
+import { Decoration, type DecorationSet, EditorView } from "@codemirror/view";
 import type { AttachOptions, VimCodeMirror, CodeMirrorView } from "./types";
 import { cursorToOffset, offsetToCursor } from "./cursor";
 import { getTopLine, getVisibleLines } from "./viewport";
+
+// ---------------------------------------------------------------------------
+// Search highlight decorations
+// ---------------------------------------------------------------------------
+
+const setSearchPattern = StateEffect.define<string>();
+
+const searchMark = Decoration.mark({ class: "vimee-search-match" });
+
+function buildSearchDecorations(content: string, pattern: string): DecorationSet {
+  if (!pattern) return Decoration.none;
+  let regex: RegExp;
+  try {
+    regex = new RegExp(pattern, "gi");
+  } catch {
+    return Decoration.none;
+  }
+  const builder = new RangeSetBuilder<Decoration>();
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(content)) !== null) {
+    if (match[0].length === 0) {
+      regex.lastIndex++;
+      continue;
+    }
+    builder.add(match.index, match.index + match[0].length, searchMark);
+  }
+  return builder.finish();
+}
+
+const searchHighlightField = StateField.define<{ pattern: string; decorations: DecorationSet }>({
+  create() {
+    return { pattern: "", decorations: Decoration.none };
+  },
+  update(state, tr) {
+    let newPattern = state.pattern;
+    for (const e of tr.effects) {
+      if (e.is(setSearchPattern)) {
+        newPattern = e.value;
+      }
+    }
+    if (newPattern !== state.pattern || (tr.docChanged && newPattern)) {
+      return {
+        pattern: newPattern,
+        decorations: buildSearchDecorations(tr.state.doc.toString(), newPattern),
+      };
+    }
+    return state;
+  },
+  provide(field) {
+    return EditorView.decorations.from(field, (s) => s.decorations);
+  },
+});
+
+const searchHighlightTheme = EditorView.baseTheme({
+  ".vimee-search-match": {
+    backgroundColor: "rgba(255, 210, 0, 0.3)",
+  },
+});
 
 /**
  * Attach vim editing to a CodeMirror 6 EditorView.
@@ -48,6 +108,16 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
 
   // --- Track composing state (IME input) ---
   let isComposing = false;
+
+  // --- Track search pattern for highlight sync ---
+  let prevSearchHighlight = "";
+
+  // --- Inject search highlight extension ---
+  // Use the real CM dispatch to pass effects (bypasses our minimal type)
+  const cmDispatch = view.dispatch.bind(view) as (...specs: unknown[]) => void;
+  cmDispatch({
+    effects: StateEffect.appendConfig.of([searchHighlightField, searchHighlightTheme]),
+  });
 
   // --- Sync vimee buffer content to CodeMirror ---
   function syncContentToEditor(): void {
@@ -103,6 +173,31 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
         selection: { anchor: startOffset, head: endOffset },
         scrollIntoView: true,
       });
+    } else if (ctx.mode === "visual-block") {
+      // Block-wise visual mode: create a selection range per line
+      const startLine = Math.min(anchor.line, ctx.cursor.line);
+      const endLine = Math.max(anchor.line, ctx.cursor.line);
+      const startCol = Math.min(anchor.col, ctx.cursor.col);
+      const endCol = Math.max(anchor.col, ctx.cursor.col) + 1;
+
+      const lines = content.split("\n");
+      const ranges: { anchor: number; head: number }[] = [];
+      for (let line = startLine; line <= endLine; line++) {
+        const lineLen = lines[line]?.length ?? 0;
+        const from = cursorToOffset(content, { line, col: Math.min(startCol, lineLen) });
+        const to = cursorToOffset(content, { line, col: Math.min(endCol, lineLen) });
+        ranges.push({ anchor: from, head: to });
+      }
+
+      if (ranges.length > 0) {
+        view.dispatch({
+          selection: EditorSelection.create(
+            ranges.map((r) => EditorSelection.range(r.anchor, r.head)),
+            ranges.length - 1,
+          ),
+          scrollIntoView: true,
+        });
+      }
     } else {
       // Character-wise visual mode
       const anchorOffset = cursorToOffset(content, anchor);
@@ -232,6 +327,7 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
       const scroll = scrollKeys[e.key];
       if (scroll) {
         e.preventDefault();
+        e.stopPropagation();
         handleScroll(scroll.direction, scroll.amount);
         return;
       }
@@ -239,12 +335,21 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
 
     if (shouldPreventDefault(e)) {
       e.preventDefault();
+      e.stopPropagation();
     }
 
     const { newCtx, actions } = processKeystroke(e.key, ctx, buffer, e.ctrlKey, readOnly);
 
     ctx = newCtx;
     processActions(actions, newCtx, e.key);
+
+    // Sync search highlight: show only while typing /query or ?query
+    const searchHighlight =
+      (ctx.commandType === "/" || ctx.commandType === "?") ? ctx.commandBuffer : "";
+    if (searchHighlight !== prevSearchHighlight) {
+      prevSearchHighlight = searchHighlight;
+      cmDispatch({ effects: setSearchPattern.of(searchHighlight) });
+    }
   }
 
   // --- IME composition handlers ---
@@ -258,7 +363,7 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
 
   // --- Attach event listeners ---
   const target = view.contentDOM;
-  target.addEventListener("keydown", onKeyDown);
+  target.addEventListener("keydown", onKeyDown, { capture: true });
   target.addEventListener("compositionstart", onCompositionStart);
   target.addEventListener("compositionend", onCompositionEnd);
 
@@ -271,7 +376,7 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
     getCursor: () => ({ ...ctx.cursor }),
     getContent: () => buffer.getContent(),
     destroy: () => {
-      target.removeEventListener("keydown", onKeyDown);
+      target.removeEventListener("keydown", onKeyDown, { capture: true });
       target.removeEventListener("compositionstart", onCompositionStart);
       target.removeEventListener("compositionend", onCompositionEnd);
     },

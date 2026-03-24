@@ -55,6 +55,10 @@ export function attach(editor: MonacoEditor, options: AttachOptions = {}): VimMo
   // --- Visual mode decorations ---
   const decorationCollection = editor.createDecorationsCollection();
 
+  // --- Search highlight decorations ---
+  const searchDecorationCollection = editor.createDecorationsCollection();
+  let prevSearchHighlight = "";
+
   // --- Update Monaco cursor style based on vim mode ---
   function updateCursorStyle(mode: string): void {
     // Monaco CursorStyle: Line = 1, Block = 2, Underline = 3
@@ -101,6 +105,23 @@ export function attach(editor: MonacoEditor, options: AttachOptions = {}): VimMo
           options: { className: "vimee-visual-selection", isWholeLine: true },
         },
       ]);
+    } else if (ctx.mode === "visual-block") {
+      const startCol = Math.min(anchor.col, ctx.cursor.col);
+      const endCol = Math.max(anchor.col, ctx.cursor.col);
+      const decorations = [];
+      for (let line = start.line; line <= end.line; line++) {
+        const lineLen = buffer.getLineLength(line) || 0;
+        decorations.push({
+          range: {
+            startLineNumber: line + 1,
+            startColumn: Math.min(startCol, lineLen) + 1,
+            endLineNumber: line + 1,
+            endColumn: Math.min(endCol, lineLen) + 2,
+          },
+          options: { className: "vimee-visual-selection" },
+        });
+      }
+      decorationCollection.set(decorations);
     } else {
       decorationCollection.set([
         {
@@ -152,6 +173,51 @@ export function attach(editor: MonacoEditor, options: AttachOptions = {}): VimMo
     syncCursorToEditor(newCtx.cursor);
     revealLine(editor, newCtx.cursor.line);
     updateVisualDecorations();
+  }
+
+  // --- Update search highlight decorations ---
+  function updateSearchHighlight(): void {
+    const pattern =
+      (ctx.commandType === "/" || ctx.commandType === "?") ? ctx.commandBuffer : "";
+    if (pattern === prevSearchHighlight) return;
+    prevSearchHighlight = pattern;
+
+    if (!pattern) {
+      searchDecorationCollection.clear();
+      return;
+    }
+
+    let regex: RegExp;
+    try {
+      regex = new RegExp(pattern, "gi");
+    } catch {
+      searchDecorationCollection.clear();
+      return;
+    }
+
+    const content = buffer.getContent();
+    const lines = content.split("\n");
+    const decorations: Array<{
+      range: { startLineNumber: number; startColumn: number; endLineNumber: number; endColumn: number };
+      options: { className: string };
+    }> = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      for (const match of lines[i].matchAll(regex)) {
+        if (match[0].length === 0) continue;
+        decorations.push({
+          range: {
+            startLineNumber: i + 1,
+            startColumn: match.index! + 1,
+            endLineNumber: i + 1,
+            endColumn: match.index! + match[0].length + 1,
+          },
+          options: { className: "vimee-search-match" },
+        });
+      }
+    }
+
+    searchDecorationCollection.set(decorations);
   }
 
   // --- Update viewport info on the VimContext ---
@@ -253,6 +319,7 @@ export function attach(editor: MonacoEditor, options: AttachOptions = {}): VimMo
 
     ctx = newCtx;
     processActions(actions, newCtx, browserEvent.key);
+    updateSearchHighlight();
   }
 
   // --- Attach event listeners ---
@@ -279,6 +346,7 @@ export function attach(editor: MonacoEditor, options: AttachOptions = {}): VimMo
         d.dispose();
       }
       decorationCollection.clear();
+      searchDecorationCollection.clear();
       // Reset cursor style to line (default)
       editor.updateOptions({ cursorStyle: 1 });
     },

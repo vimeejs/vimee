@@ -73,20 +73,29 @@ The plugin automatically switches Monaco's cursor style based on vim mode:
 - **Normal / Visual / Command-line mode** → Block cursor
 - **Insert mode** → Line cursor
 
-## Visual Mode Decorations
+## Styling
 
-In visual and visual-line mode, the plugin applies a CSS class `vimee-visual-selection` to the selected range. You can style it:
+The plugin uses Monaco decorations with CSS classes for visual selection and search highlighting. Add the following CSS to your project:
 
 ```css
+/* Visual mode selection (visual, visual-line, visual-block) */
 .vimee-visual-selection {
   background-color: rgba(255, 165, 0, 0.3);
 }
+
+/* Incremental search highlighting (/query, ?query) */
+.vimee-search-match {
+  background-color: rgba(255, 210, 0, 0.3);
+}
 ```
+
+> **Note:** Without these styles, visual selection and search highlighting will not be visible. Visual-block creates per-line decorations for proper rectangular selection. Search highlights are shown while typing the pattern and removed on `<CR>` .
 
 ## Features
 
 - Automatic cursor style switching (block ↔ line)
-- Visual mode selection highlighting via decorations
+- Visual mode selection highlighting via decorations (including visual-block)
+- Incremental search highlighting ( `/` / `?` )
 - H/M/L motions with viewport tracking
 - Ctrl-U/D/B/F page scrolling
 - IME composition support (CJK input)
