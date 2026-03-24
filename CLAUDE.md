@@ -10,8 +10,10 @@ vimee — headless Vim engine for the web. TypeScript monorepo (Bun workspaces).
 - `@vimee/react` — React useVim hook
 - `@vimee/plugin-textarea` — Textarea binding
 - `@vimee/plugin-monaco` — Monaco Editor binding
+- `@vimee/plugin-codemirror` — CodeMirror 6 binding
 - `@vimee/shiki-editor` — Shiki code editor component
 - `@vimee/testkit` — Test utilities for Vim operations
+- `debug` — Debug app for E2E testing and local development (Vite MPA, not published)
 
 ## Commands
 
@@ -20,13 +22,15 @@ vimee — headless Vim engine for the web. TypeScript monorepo (Bun workspaces).
 - `bun run fmt` — Format (oxfmt)
 - `bun run typecheck` — Type check all packages (tsgo)
 - `bun run build` — Build all packages (tsup)
+- `bun run e2e` — Run E2E tests (Playwright, requires Chromium)
+- `bun run debug` — Start debug app dev server
 
 ## Commit Convention
 
 `<type>(<scope>): <description>`
 
 - Types: `feat`, `fix`, `test`, `chore`, `ci`, `docs`
-- Scope: package name (`core`, `react`, `plugin-textarea`, `plugin-monaco`, `shiki-editor`, `testkit`) or omit for root
+- Scope: package name (`core`, `react`, `plugin-textarea`, `plugin-monaco`, `plugin-codemirror`, `shiki-editor`, `testkit`) or omit for root
 - Examples: `feat(core): add mark jumping`, `chore: update deps`
 
 ## Before Committing
