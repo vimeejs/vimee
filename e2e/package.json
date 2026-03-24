@@ -1,5 +1,8 @@
 {
   "name": "e2e",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "1.52.0"
+  }
 }
