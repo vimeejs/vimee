@@ -2,17 +2,12 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", ":timezone(Asia/Tokyo)"],
   "postUpdateOptions": ["bundlerConservative"],
-  "enabledManagers": ["bun", "git-submodules"],
+  "enabledManagers": ["bun"],
   "minimumReleaseAge": "3 days",
   "packageRules": [
     {
       "matchUpdateTypes": ["major"],
       "minimumReleaseAge": "7 days"
-    },
-    {
-      "matchManagers": ["git-submodules"],
-      "automerge": true,
-      "schedule": ["at any time"]
     }
   ],
   "labels": ["renovate"],
