@@ -45,6 +45,6 @@
     "@vimee/core": "workspace:*",
     "@codemirror/view": "6.40.0",
     "@codemirror/state": "6.6.0",
-    "happy-dom": "20.8.4"
+    "happy-dom": "20.9.0"
   }
 }

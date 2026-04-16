@@ -42,6 +42,6 @@
   },
   "devDependencies": {
     "@vimee/core": "workspace:*",
-    "happy-dom": "20.8.4"
+    "happy-dom": "20.9.0"
   }
 }
