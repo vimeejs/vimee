@@ -26,7 +26,7 @@
  * ```
  */
 
-import { useRef, useCallback, useMemo, useEffect } from "react";
+import { useRef, useCallback, useMemo, useEffect, useLayoutEffect, useState } from "react";
 import type { HighlighterGeneric } from "shiki/types";
 import type { VimMode, VimAction, CursorPosition } from "@vimee/core";
 import { useVim } from "@vimee/react";
@@ -139,20 +139,39 @@ export function Vim<L extends string, T extends string>({
   // --- Tab size for rendering and cursor calculation ---
   const tabSize = indentWidth ?? 4;
 
-  // --- Calculate visual column (accounting for tab width) ---
-  const visualCol = useMemo(() => {
+  // --- Measure cursor position in pixels via DOM (handles CJK, tabs, etc.) ---
+  const measureRef = useRef<HTMLSpanElement>(null);
+  const [cursorPx, setCursorPx] = useState({ left: 0, width: 0 });
+
+  useLayoutEffect(() => {
+    const measure = measureRef.current;
+    const area = codeAreaRef.current;
+    if (!measure || !area) return;
+
     const lines = engine.content.split("\n");
     const line = lines[engine.cursor.line] ?? "";
-    let col = 0;
-    for (let i = 0; i < engine.cursor.col && i < line.length; i++) {
-      if (line[i] === "\t") {
-        col += tabSize - (col % tabSize);
-      } else {
-        col++;
-      }
+
+    // Measure text width before cursor
+    measure.textContent = line.slice(0, engine.cursor.col) || "\u200b";
+    const textWidth = line.slice(0, engine.cursor.col)
+      ? measure.getBoundingClientRect().width
+      : 0;
+
+    // Measure character at cursor (for block cursor width)
+    const charAtCursor = line[engine.cursor.col];
+    if (charAtCursor) {
+      measure.textContent = charAtCursor;
+    } else {
+      measure.textContent = " ";
     }
-    return col;
-  }, [engine.content, engine.cursor.line, engine.cursor.col, tabSize]);
+    const charWidth = measure.getBoundingClientRect().width;
+
+    // Measure gutter offset from first line-number element
+    const gutterEl = area.querySelector(".sv-line-number");
+    const gutterWidth = gutterEl ? gutterEl.getBoundingClientRect().width : 0;
+
+    setCursorPx({ left: gutterWidth + textWidth, width: charWidth });
+  }, [engine.content, engine.cursor.line, engine.cursor.col]);
 
   // --- Calculate search match positions per line ---
   const searchMatchesByLine = useMemo(() => {
@@ -271,13 +290,25 @@ export function Vim<L extends string, T extends string>({
     >
       {/* Code area */}
       <div ref={codeAreaRef} className="sv-code-area">
+        {/* Hidden span for measuring character widths (inherits font from code area) */}
+        <span
+          ref={measureRef}
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            visibility: "hidden",
+            whiteSpace: "pre",
+            font: "inherit",
+            pointerEvents: "none",
+          }}
+        />
         {/* Cursor (overlay) */}
         <Cursor
-          position={engine.cursor}
-          visualCol={visualCol}
+          line={engine.cursor.line}
+          col={engine.cursor.col}
+          leftPx={cursorPx.left}
+          widthPx={cursorPx.width}
           mode={engine.mode}
-          showLineNumbers={effectiveShowLineNumbers}
-          gutterWidth={gutterWidth}
         />
 
         {/* Render each line */}
