@@ -7,36 +7,31 @@
  * - Insert mode: line cursor (vertical bar)
  * - Visual mode: block cursor
  *
- * Cursor position is controlled via CSS variables,
- * calculated using `ch` / `lh` units of a monospace font.
+ * Cursor position is controlled via pixel values measured from the DOM,
+ * ensuring correct alignment with CJK and other variable-width characters.
  */
 
 import { useState, useEffect, useRef } from "react";
-import type { CursorPosition, VimMode } from "@vimee/core";
+import type { VimMode } from "@vimee/core";
 
 export interface CursorProps {
-  /** Cursor position (0-based) */
-  position: CursorPosition;
-  /** Visual column (accounting for tab width) */
-  visualCol: number;
+  /** Cursor line (0-based) */
+  line: number;
+  /** Cursor column (0-based, for blink restart detection) */
+  col: number;
+  /** Left offset in pixels (measured from DOM) */
+  leftPx: number;
+  /** Character width in pixels (measured from DOM) */
+  widthPx: number;
   /** Current Vim mode */
   mode: VimMode;
-  /** Whether line numbers are displayed */
-  showLineNumbers: boolean;
-  /** Gutter width for line numbers (in ch units) */
-  gutterWidth: number;
 }
 
-/**
- * Renders the editor cursor.
- *
- * Displayed as an overlay using absolute positioning.
- * left / top are calculated accounting for the line number gutter offset.
- */
 const BLINK_RESTART_DELAY = 500;
 
-export function Cursor({ position, visualCol, mode, showLineNumbers, gutterWidth }: CursorProps) {
+export function Cursor({ line, col, leftPx, widthPx, mode }: CursorProps) {
   const cursorClass = getCursorClass(mode);
+  const isBlock = mode !== "insert";
 
   // Pause blink while cursor is moving, resume after idle
   const [blinking, setBlinking] = useState(true);
@@ -47,17 +42,15 @@ export function Cursor({ position, visualCol, mode, showLineNumbers, gutterWidth
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setBlinking(true), BLINK_RESTART_DELAY);
     return () => clearTimeout(timerRef.current);
-  }, [position.line, position.col]);
-
-  // Gutter offset (only when line numbers are displayed)
-  const gutterOffset = showLineNumbers ? gutterWidth + 1 : 0;
+  }, [line, col]);
 
   return (
     <div
       className={`sv-cursor ${cursorClass}`}
       style={{
-        ["--cursor-col" as string]: visualCol + gutterOffset,
-        ["--cursor-line" as string]: position.line,
+        ["--cursor-line" as string]: line,
+        left: `${leftPx}px`,
+        width: isBlock ? `${widthPx}px` : undefined,
         animation: blinking && mode !== "command-line" ? undefined : "none",
         opacity: mode === "command-line" ? 0 : blinking ? undefined : 1,
       }}
@@ -66,9 +59,6 @@ export function Cursor({ position, visualCol, mode, showLineNumbers, gutterWidth
   );
 }
 
-/**
- * Returns the CSS class for the cursor based on the mode.
- */
 function getCursorClass(mode: VimMode): string {
   switch (mode) {
     case "insert":

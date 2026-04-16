@@ -103,14 +103,13 @@
 .sv-cursor {
   position: absolute;
   top: calc(var(--cursor-line) * 1lh + 8px);
-  left: calc(var(--cursor-col) * 1ch);
+  /* left and width are set via inline style (pixel-based DOM measurement) */
   pointer-events: none;
   z-index: 10;
 }
 
 /* Block cursor (normal mode) */
 .sv-cursor-block {
-  width: 1ch;
   height: 1lh;
   background-color: var(--sv-cursor-color, rgba(255, 255, 255, 0.6));
   animation: sv-blink 1s step-start infinite;
