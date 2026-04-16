@@ -57,7 +57,7 @@
         "@codemirror/state": "6.6.0",
         "@codemirror/view": "6.40.0",
         "@vimee/core": "workspace:*",
-        "happy-dom": "20.8.4",
+        "happy-dom": "20.9.0",
       },
       "peerDependencies": {
         "@codemirror/state": "^6.0.0",
@@ -70,7 +70,7 @@
       "version": "0.2.0",
       "devDependencies": {
         "@vimee/core": "workspace:*",
-        "happy-dom": "20.8.4",
+        "happy-dom": "20.9.0",
       },
       "peerDependencies": {
         "@vimee/core": ">=0.1.0 <1.0.0",
@@ -82,7 +82,7 @@
       "version": "0.1.2",
       "devDependencies": {
         "@vimee/core": "workspace:*",
-        "happy-dom": "20.8.4",
+        "happy-dom": "20.9.0",
       },
       "peerDependencies": {
         "@vimee/core": ">=0.1.0 <1.0.0",
@@ -96,7 +96,7 @@
         "@types/react": "19.2.14",
         "@types/react-dom": "19.2.3",
         "@vimee/core": "workspace:*",
-        "happy-dom": "20.8.4",
+        "happy-dom": "20.9.0",
         "react": "19.2.4",
         "react-dom": "19.2.4",
       },
@@ -112,7 +112,7 @@
         "@types/react": "19.2.14",
         "@vimee/core": "workspace:*",
         "@vimee/react": "workspace:*",
-        "happy-dom": "20.8.4",
+        "happy-dom": "20.9.0",
         "react": "19.2.4",
         "react-dom": "19.2.4",
         "shiki": "4.0.2",
@@ -651,7 +651,7 @@
 
     "graceful-fs": ["graceful-fs@4.2.11", "", {}, "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ=="],
 
-    "happy-dom": ["happy-dom@20.8.4", "", { "dependencies": { "@types/node": ">=20.0.0", "@types/whatwg-mimetype": "^3.0.2", "@types/ws": "^8.18.1", "entities": "^7.0.1", "whatwg-mimetype": "^3.0.0", "ws": "^8.18.3" } }, "sha512-GKhjq4OQCYB4VLFBzv8mmccUadwlAusOZOI7hC1D9xDIT5HhzkJK17c4el2f6R6C715P9xB4uiMxeKUa2nHMwQ=="],
+    "happy-dom": ["happy-dom@20.9.0", "", { "dependencies": { "@types/node": ">=20.0.0", "@types/whatwg-mimetype": "^3.0.2", "@types/ws": "^8.18.1", "entities": "^7.0.1", "whatwg-mimetype": "^3.0.0", "ws": "^8.18.3" } }, "sha512-GZZ9mKe8r646NUAf/zemnGbjYh4Bt8/MqASJY+pSm5ZDtc3YQox+4gsLI7yi1hba6o+eCsGxpHn5+iEVn31/FQ=="],
 
     "has-flag": ["has-flag@4.0.0", "", {}, "sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ=="],
 
