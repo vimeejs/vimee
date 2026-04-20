@@ -7,7 +7,7 @@
       "devDependencies": {
         "@changesets/changelog-github": "0.6.0",
         "@changesets/cli": "2.30.0",
-        "@codspeed/vitest-plugin": "5.2.0",
+        "@codspeed/vitest-plugin": "5.3.0",
         "@typescript/native-preview": "7.0.0-dev.20260322.1",
         "@vitest/coverage-v8": "4.1.2",
         "tsup": "8.5.1",
@@ -205,9 +205,9 @@
 
     "@codemirror/view": ["@codemirror/view@6.40.0", "", { "dependencies": { "@codemirror/state": "^6.6.0", "crelt": "^1.0.6", "style-mod": "^4.1.0", "w3c-keyname": "^2.2.4" } }, "sha512-WA0zdU7xfF10+5I3HhUUq3kqOx3KjqmtQ9lqZjfK7jtYk4G72YW9rezcSywpaUMCWOMlq+6E0pO1IWg1TNIhtg=="],
 
-    "@codspeed/core": ["@codspeed/core@5.2.0", "", { "dependencies": { "axios": "^1.4.0", "find-up": "^6.3.0", "form-data": "^4.0.4", "node-gyp-build": "^4.6.0" } }, "sha512-CmDhpWjcOJg2iBOQ/BmBnSBq8qxlM3r4h8uvYDkoUaba+EKRT3T73BZtKuml/48jZMsB+4/FG2UbTBinDWtuvw=="],
+    "@codspeed/core": ["@codspeed/core@5.3.0", "", { "dependencies": { "axios": "^1.4.0", "find-up": "^6.3.0", "form-data": "^4.0.4", "node-gyp-build": "^4.6.0" } }, "sha512-++/kkPHPFI+dzX6FD+w+jFgKk8rgm5O1Tpg5nKUuFLENaB9ma///CZv76HdYZTJHu46dEeWwxGH+z0G3lLh59Q=="],
 
-    "@codspeed/vitest-plugin": ["@codspeed/vitest-plugin@5.2.0", "", { "dependencies": { "@codspeed/core": "^5.2.0" }, "peerDependencies": { "tinybench": ">=2.9.0", "vite": "^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0", "vitest": "^3.2 || ^4" } }, "sha512-soXKIQBqJzjVQyWRwe2HNfhCaBgxhG25m8+PI3F5zFFsV3FQxMJXHsMECNtrgm+SRiCiWv/OFTcfCMZRy4nKtw=="],
+    "@codspeed/vitest-plugin": ["@codspeed/vitest-plugin@5.3.0", "", { "dependencies": { "@codspeed/core": "^5.3.0" }, "peerDependencies": { "tinybench": ">=2.9.0", "vite": "^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0", "vitest": "^3.2 || ^4" } }, "sha512-rkuG6BCyw/haGMsB+E5Zv3DWzfzMj/8LJ4jdRSnzWwKzUxS+NlnOFWNYw/QfeWL7HfT388plefa0HSyRtoLMRA=="],
 
     "@emnapi/core": ["@emnapi/core@1.9.1", "", { "dependencies": { "@emnapi/wasi-threads": "1.2.0", "tslib": "^2.4.0" } }, "sha512-mukuNALVsoix/w1BJwFzwXBN/dHeejQtuVzcDsfOEsdpCumXb/E9j8w11h5S54tT1xhifGfbbSm/ICrObRb3KA=="],
 
