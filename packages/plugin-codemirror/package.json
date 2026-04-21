@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@vimee/core": "workspace:*",
-    "@codemirror/view": "6.40.0",
+    "@codemirror/view": "6.41.1",
     "@codemirror/state": "6.6.0",
     "happy-dom": "20.8.4"
   }
