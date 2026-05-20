@@ -20,7 +20,7 @@
   "devDependencies": {
     "@changesets/changelog-github": "0.6.0",
     "@changesets/cli": "2.30.0",
-    "@codspeed/vitest-plugin": "5.2.0",
+    "@codspeed/vitest-plugin": "5.4.0",
     "@typescript/native-preview": "7.0.0-dev.20260322.1",
     "@vitest/coverage-v8": "4.1.2",
     "tsup": "8.5.1",
