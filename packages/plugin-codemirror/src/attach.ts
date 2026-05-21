@@ -309,9 +309,28 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
     syncCursorToEditor(newCursor);
   }
 
+  // --- Sync cursor from CodeMirror selection (handles mouse clicks) ---
+  // In visual modes the editor selection head represents the visual range
+  // boundary, not the cursor position, so we must skip syncing there.
+  function syncCursorFromEditor(): void {
+    if (ctx.mode === "visual" || ctx.mode === "visual-line" || ctx.mode === "visual-block") {
+      return;
+    }
+    const offset = view.state.selection.main.head;
+    const editorCursor = offsetToCursor(buffer.getContent(), offset);
+    if (editorCursor.line !== ctx.cursor.line || editorCursor.col !== ctx.cursor.col) {
+      ctx = { ...ctx, cursor: editorCursor };
+    }
+  }
+
   // --- Keyboard handler ---
   function onKeyDown(e: KeyboardEvent): void {
     if (isComposing) return;
+
+    // Sync cursor from CodeMirror selection before processing.
+    // This ensures mouse clicks and other external selection changes
+    // are reflected in the vim context.
+    syncCursorFromEditor();
 
     // Update viewport before processing (for H/M/L motions)
     syncViewport();
@@ -345,7 +364,7 @@ export function attach(view: CodeMirrorView, options: AttachOptions = {}): VimCo
 
     // Sync search highlight: show only while typing /query or ?query
     const searchHighlight =
-      (ctx.commandType === "/" || ctx.commandType === "?") ? ctx.commandBuffer : "";
+      ctx.commandType === "/" || ctx.commandType === "?" ? ctx.commandBuffer : "";
     if (searchHighlight !== prevSearchHighlight) {
       prevSearchHighlight = searchHighlight;
       cmDispatch({ effects: setSearchPattern.of(searchHighlight) });

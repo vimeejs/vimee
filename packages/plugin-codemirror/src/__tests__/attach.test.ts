@@ -20,11 +20,13 @@ interface MockViewResult {
   triggerCompositionStart: () => void;
   triggerCompositionEnd: () => void;
   getLastSelection: () => AnySelection;
+  setSelectionHead: (offset: number) => void;
 }
 
 function createMockView(value = "", viewportLines = 20): MockViewResult {
   let content = value;
   let lastSelection: AnySelection;
+  let selectionHead = 0;
 
   // Real DOM element so addEventListener/removeEventListener work
   const contentDOM = document.createElement("div");
@@ -73,7 +75,7 @@ function createMockView(value = "", viewportLines = 20): MockViewResult {
     dom: document.createElement("div"),
     contentDOM,
     get state() {
-      return { doc: buildDoc() };
+      return { doc: buildDoc(), selection: { main: { head: selectionHead } } };
     },
     get viewport() {
       const totalLines = content.split("\n").length;
@@ -96,6 +98,11 @@ function createMockView(value = "", viewportLines = 20): MockViewResult {
         }
         if (spec.selection) {
           lastSelection = spec.selection;
+          if ("anchor" in spec.selection) {
+            selectionHead =
+              (spec.selection as { anchor: number; head?: number }).head ??
+              (spec.selection as { anchor: number }).anchor;
+          }
         }
       }
     },
@@ -126,6 +133,9 @@ function createMockView(value = "", viewportLines = 20): MockViewResult {
     triggerCompositionStart,
     triggerCompositionEnd,
     getLastSelection: () => lastSelection,
+    setSelectionHead: (offset: number) => {
+      selectionHead = offset;
+    },
   };
 }
 
@@ -608,6 +618,40 @@ describe("attach", () => {
       (args) => args[0] && typeof args[0] === "object" && "effects" in args[0],
     );
     expect(effectCalls.length).toBeGreaterThan(0);
+
+    vim.destroy();
+  });
+
+  it("syncs cursor from CodeMirror selection on keydown (simulates mouse click)", () => {
+    const mock = createMockView("hello\nworld\nfoo");
+    const vim = attach(mock.view);
+
+    expect(vim.getCursor()).toEqual({ line: 0, col: 0 });
+
+    // Simulate a mouse click that moves CodeMirror selection to line 1, col 2 (offset = 8)
+    mock.setSelectionHead(8);
+
+    // Press 'l' — should move from the clicked position, not from (0,0)
+    mock.pressKey("l");
+
+    expect(vim.getCursor()).toEqual({ line: 1, col: 3 });
+
+    vim.destroy();
+  });
+
+  it("syncs cursor from editor before entering insert mode", () => {
+    const mock = createMockView("hello\nworld");
+    const vim = attach(mock.view);
+
+    // Simulate click at offset 6 → line 1, col 0
+    mock.setSelectionHead(6);
+
+    mock.pressKey("i");
+    expect(vim.getMode()).toBe("insert");
+
+    // Type a character — should insert at line 1, col 0
+    mock.pressKey("X");
+    expect(vim.getContent()).toBe("hello\nXworld");
 
     vim.destroy();
   });

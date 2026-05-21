@@ -38,9 +38,21 @@ export interface CodeMirrorDoc {
   line(n: number): CodeMirrorLine;
 }
 
+/** Minimal selection range with a head offset. */
+export interface CodeMirrorSelectionRange {
+  /** The head (cursor) offset. */
+  readonly head: number;
+}
+
+/** Minimal selection with a main range. */
+export interface CodeMirrorSelection {
+  readonly main: CodeMirrorSelectionRange;
+}
+
 /** Minimal subset of CodeMirror's `EditorState`. */
 export interface CodeMirrorState {
   readonly doc: CodeMirrorDoc;
+  readonly selection: CodeMirrorSelection;
 }
 
 /** Transaction spec for `EditorView.dispatch()`. */
