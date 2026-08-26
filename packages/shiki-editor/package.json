@@ -46,12 +46,12 @@
     "shiki": "^4.0.0"
   },
   "devDependencies": {
-    "@types/react": "19.2.14",
+    "@types/react": "19.2.18",
     "@vimee/core": "workspace:*",
     "@vimee/react": "workspace:*",
     "happy-dom": "20.8.4",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "shiki": "4.0.2"
   }
 }
